@@ -27,43 +27,43 @@ local function getRootParent()
 end
 
 local RootGuiParent = getRootParent()
-
 local CREATOR_NAME = "MORTAL"
 local GANG_NAME = "MORTALS"
 local SFX_ID = "rbxassetid://12221967"
 local STAR_TEXTURE = "rbxassetid://243098098"
 local MAX_AURA_LEVEL = 5
 
-local oldGuiNames = {
-	"MortalDeltaRecodeV4", "MortalDeltaRecodeV3", "MortalDeltaRecodeV2",
-	"MortalDeltaRecodeV1", "MortalNewCompleteHub", "MortalFreshRecodeV4",
-	"MortalFreshRecodeV3", "MortalHyperCoolHubV5", "MortalGodTierHubV6",
-	"MortalCyberDeckV7", "MortalApexCoreV8", "MortalVioletNexusV9",
-	"MortalDarkNeonV10", "MortalDarkNeonV11", "MortalDarkNeonV12",
-	"MortalCosmicRiftV13", "MortalCosmicRiftV14", "MortalCosmicRiftV15",
-	"MortalCosmicRiftV16", "MortalCosmicRiftV17", "MortalCosmicRiftV18",
-	"MortalCosmicRiftV19", "MortalCosmicRiftCombinedV19", "MortalDualEyeV19",
-	"MortalVoidSigilV19", "MortalV19FixedDual", "MortalV19VideoSync",
-	"MortalV20CosmicRift", "MortalV21CosmicRift", "MortalV22CosmicRift",
-	"MortalV23CosmicRift", "MortalV24CosmicRift", "MortalV25CosmicRift",
-	"MortalV26CosmicRift", "MortalV27CosmicRift", "MortalV28CosmicRift",
-	"MortalV29CosmicRift", "MortalV30CosmicRift", "MortalV31CosmicRift",
-	"MortalV32CosmicRift", "MortalV33CosmicRift", "MortalV34CosmicRift",
-	"MortalV35CosmicRift", "MortalV36CosmicRift", "MortalV37CosmicRift",
-	"MortalV38CosmicRift", "MortalV39CosmicRift", "MortalV40CosmicRift",
-	"MortalV41CosmicRift", "MortalV42CosmicRift", "MortalV43CosmicRift",
-	"MortalV44CosmicRift", "MortalV45CosmicRift", "MortalV46CosmicRift",
-	"MortalV47CosmicRift", "MortalV48CosmicRift", "MortalV48CosmicRiftFixed",
-	"MortalV48CosmicRiftRecoded", "MortalCompactHub", "MortalEightHub",
-	"MortalAuraColorWheelGUI"
-}
-
-for _, guiName in ipairs(oldGuiNames) do
-	for _, parentObj in ipairs({ PlayerGui, RootGuiParent }) do
-		pcall(function()
-			local existing = parentObj and parentObj:FindFirstChild(guiName)
-			if existing then existing:Destroy() end
-		end)
+do
+	local oldGuiNames = {
+		"MortalDeltaRecodeV4", "MortalDeltaRecodeV3", "MortalDeltaRecodeV2",
+		"MortalDeltaRecodeV1", "MortalNewCompleteHub", "MortalFreshRecodeV4",
+		"MortalFreshRecodeV3", "MortalHyperCoolHubV5", "MortalGodTierHubV6",
+		"MortalCyberDeckV7", "MortalApexCoreV8", "MortalVioletNexusV9",
+		"MortalDarkNeonV10", "MortalDarkNeonV11", "MortalDarkNeonV12",
+		"MortalCosmicRiftV13", "MortalCosmicRiftV14", "MortalCosmicRiftV15",
+		"MortalCosmicRiftV16", "MortalCosmicRiftV17", "MortalCosmicRiftV18",
+		"MortalCosmicRiftV19", "MortalCosmicRiftCombinedV19", "MortalDualEyeV19",
+		"MortalVoidSigilV19", "MortalV19FixedDual", "MortalV19VideoSync",
+		"MortalV20CosmicRift", "MortalV21CosmicRift", "MortalV22CosmicRift",
+		"MortalV23CosmicRift", "MortalV24CosmicRift", "MortalV25CosmicRift",
+		"MortalV26CosmicRift", "MortalV27CosmicRift", "MortalV28CosmicRift",
+		"MortalV29CosmicRift", "MortalV30CosmicRift", "MortalV31CosmicRift",
+		"MortalV32CosmicRift", "MortalV33CosmicRift", "MortalV34CosmicRift",
+		"MortalV35CosmicRift", "MortalV36CosmicRift", "MortalV37CosmicRift",
+		"MortalV38CosmicRift", "MortalV39CosmicRift", "MortalV40CosmicRift",
+		"MortalV41CosmicRift", "MortalV42CosmicRift", "MortalV43CosmicRift",
+		"MortalV44CosmicRift", "MortalV45CosmicRift", "MortalV46CosmicRift",
+		"MortalV47CosmicRift", "MortalV48CosmicRift", "MortalV48CosmicRiftFixed",
+		"MortalV48CosmicRiftRecoded", "MortalCompactHub", "MortalEightHub",
+		"MortalAuraColorWheelGUI"
+	}
+	for _, guiName in ipairs(oldGuiNames) do
+		for _, parentObj in ipairs({ PlayerGui, RootGuiParent }) do
+			pcall(function()
+				local existing = parentObj and parentObj:FindFirstChild(guiName)
+				if existing then existing:Destroy() end
+			end)
+		end
 	end
 end
 
@@ -75,7 +75,6 @@ local NEON_RING = Color3.fromRGB(112, 0, 218)
 local NEON_RIFT = Color3.fromRGB(142, 0, 255)
 local TEXT_MAIN = Color3.fromRGB(242, 232, 255)
 local TEXT_DIM = Color3.fromRGB(168, 118, 245)
-
 local TAG_DARK_BAR = Color3.fromRGB(4, 1, 9)
 local TAG_NEON_PURPLE = Color3.fromRGB(148, 35, 255)
 local TAG_NEON_OUTLINE = Color3.fromRGB(112, 0, 218)
@@ -85,21 +84,21 @@ local AURA_SAVE_FILE = "MortalHubAuraConfig_" .. tostring(LocalPlayer.UserId) ..
 local AURA_OWNER_ATTR = "MortalHubAuraOwner_" .. tostring(LocalPlayer.UserId)
 
 local DEFAULT_AURA_PURPLE = {
-	Start   = Color3.fromRGB(95, 0, 145),
-	Mid     = Color3.fromRGB(68, 0, 108),
-	Deep    = Color3.fromRGB(45, 0, 75),
-	End     = Color3.fromRGB(28, 0, 48),
+	Start = Color3.fromRGB(95, 0, 145),
+	Mid = Color3.fromRGB(68, 0, 108),
+	Deep = Color3.fromRGB(45, 0, 75),
+	End = Color3.fromRGB(28, 0, 48),
 	Outline = Color3.fromRGB(125, 10, 190),
-	Light   = Color3.fromRGB(88, 0, 138),
+	Light = Color3.fromRGB(88, 0, 138),
 }
 
 local DEFAULT_SURGE_PURPLE = {
-	Start   = Color3.fromRGB(112, 12, 178),
-	Mid     = Color3.fromRGB(86, 8, 142),
-	Deep    = Color3.fromRGB(64, 5, 110),
-	End     = Color3.fromRGB(46, 3, 82),
+	Start = Color3.fromRGB(112, 12, 178),
+	Mid = Color3.fromRGB(86, 8, 142),
+	Deep = Color3.fromRGB(64, 5, 110),
+	End = Color3.fromRGB(46, 3, 82),
 	Outline = Color3.fromRGB(135, 22, 208),
-	Light   = Color3.fromRGB(104, 10, 168),
+	Light = Color3.fromRGB(104, 10, 168),
 }
 
 local COLUMN_TEXTURES = {
@@ -109,10 +108,10 @@ local COLUMN_TEXTURES = {
 }
 
 local COLUMN_CONFIG = {
-	[1] = { rate = 340,  sizeStart = 1.5, sizeEnd = 4.2,  speedMin = 3.8, speedMax = 7.4,  spread = 58, accelY = 9.5,  lightBright = 2.4, lightRange = 14 },
-	[2] = { rate = 540,  sizeStart = 1.9, sizeEnd = 5.4,  speedMin = 4.8, speedMax = 9.0,  spread = 68, accelY = 12.0, lightBright = 3.5, lightRange = 17 },
-	[3] = { rate = 780,  sizeStart = 2.4, sizeEnd = 6.8,  speedMin = 5.8, speedMax = 10.8, spread = 78, accelY = 14.5, lightBright = 4.8, lightRange = 20 },
-	[4] = { rate = 1060, sizeStart = 2.9, sizeEnd = 8.4,  speedMin = 6.8, speedMax = 12.8, spread = 88, accelY = 17.5, lightBright = 6.3, lightRange = 24 },
+	[1] = { rate = 340, sizeStart = 1.5, sizeEnd = 4.2, speedMin = 3.8, speedMax = 7.4, spread = 58, accelY = 9.5, lightBright = 2.4, lightRange = 14 },
+	[2] = { rate = 540, sizeStart = 1.9, sizeEnd = 5.4, speedMin = 4.8, speedMax = 9.0, spread = 68, accelY = 12.0, lightBright = 3.5, lightRange = 17 },
+	[3] = { rate = 780, sizeStart = 2.4, sizeEnd = 6.8, speedMin = 5.8, speedMax = 10.8, spread = 78, accelY = 14.5, lightBright = 4.8, lightRange = 20 },
+	[4] = { rate = 1060, sizeStart = 2.9, sizeEnd = 8.4, speedMin = 6.8, speedMax = 12.8, spread = 88, accelY = 17.5, lightBright = 6.3, lightRange = 24 },
 	[5] = { rate = 1400, sizeStart = 3.5, sizeEnd = 10.2, speedMin = 8.0, speedMax = 15.0, spread = 98, accelY = 21.0, lightBright = 8.0, lightRange = 29 },
 }
 
@@ -123,19 +122,19 @@ local SURGE_TEXTURES = {
 }
 
 local SURGE_CONFIG = {
-	[1] = { rate = 65,  sizeStart = 1.6, sizeEnd = 4.2,  speedMin = 1.3, speedMax = 3.2, spread = 115, wispRate = 28,  idleMult = 2.0, lightBright = 2.0, lightRange = 12 },
-	[2] = { rate = 110, sizeStart = 2.1, sizeEnd = 5.6,  speedMin = 1.7, speedMax = 4.0, spread = 135, wispRate = 48,  idleMult = 3.0, lightBright = 3.0, lightRange = 16 },
-	[3] = { rate = 170, sizeStart = 2.7, sizeEnd = 7.2,  speedMin = 2.2, speedMax = 5.0, spread = 155, wispRate = 75,  idleMult = 5.0, lightBright = 4.2, lightRange = 20 },
-	[4] = { rate = 245, sizeStart = 3.3, sizeEnd = 9.0,  speedMin = 2.8, speedMax = 6.2, spread = 175, wispRate = 110, idleMult = 7.0, lightBright = 5.6, lightRange = 24 },
+	[1] = { rate = 65, sizeStart = 1.6, sizeEnd = 4.2, speedMin = 1.3, speedMax = 3.2, spread = 115, wispRate = 28, idleMult = 2.0, lightBright = 2.0, lightRange = 12 },
+	[2] = { rate = 110, sizeStart = 2.1, sizeEnd = 5.6, speedMin = 1.7, speedMax = 4.0, spread = 135, wispRate = 48, idleMult = 3.0, lightBright = 3.0, lightRange = 16 },
+	[3] = { rate = 170, sizeStart = 2.7, sizeEnd = 7.2, speedMin = 2.2, speedMax = 5.0, spread = 155, wispRate = 75, idleMult = 5.0, lightBright = 4.2, lightRange = 20 },
+	[4] = { rate = 245, sizeStart = 3.3, sizeEnd = 9.0, speedMin = 2.8, speedMax = 6.2, spread = 175, wispRate = 110, idleMult = 7.0, lightBright = 5.6, lightRange = 24 },
 	[5] = { rate = 340, sizeStart = 4.0, sizeEnd = 11.2, speedMin = 3.4, speedMax = 7.5, spread = 195, wispRate = 155, idleMult = 9.0, lightBright = 7.2, lightRange = 30 },
 }
 
 local SMOKE_PRESETS = {
-	[1] = { label = "1 (Soft)",   rateMult = 1.25, sizeMult = 0.85, speedMult = 0.95, shards = true, surge = false },
-	[2] = { label = "2 (Medium)", rateMult = 3.2,  sizeMult = 1.35, speedMult = 1.2,  shards = true, surge = false },
-	[3] = { label = "3 (High-)",  rateMult = 6.2,  sizeMult = 2.0,  speedMult = 1.5,  shards = true, surge = true },
-	[4] = { label = "4 (High)",   rateMult = 8.0,  sizeMult = 2.35, speedMult = 1.7,  shards = true, surge = true },
-	[5] = { label = "5 (Max)",    rateMult = 10.5, sizeMult = 2.8,  speedMult = 1.95, shards = true, surge = true },
+	[1] = { label = "1 (Soft)", rateMult = 1.25, sizeMult = 0.85, speedMult = 0.95, shards = true, surge = false },
+	[2] = { label = "2 (Medium)", rateMult = 3.2, sizeMult = 1.35, speedMult = 1.2, shards = true, surge = false },
+	[3] = { label = "3 (High-)", rateMult = 6.2, sizeMult = 2.0, speedMult = 1.5, shards = true, surge = true },
+	[4] = { label = "4 (High)", rateMult = 8.0, sizeMult = 2.35, speedMult = 1.7, shards = true, surge = true },
+	[5] = { label = "5 (Max)", rateMult = 10.5, sizeMult = 2.8, speedMult = 1.95, shards = true, surge = true },
 }
 
 local ULTIMATE_SPREAD_PRESET = {
@@ -157,19 +156,16 @@ local Cfg = {
 	AuraSat = 0.94,
 	AuraVal = 0.65,
 	AuraCustomColor = false,
-
 	Speed = false, SpeedVal = 16,
 	Jump = false, JumpVal = 50,
 	Fly = false, FlyVal = 50,
 	AirWalk = false, AirY = 0, AirUp = false, AirDown = false, AirStep = 1.15,
 	Spin = false, SpinVal = 50,
 	EmoteSpeed = false, EmoteVal = 1,
-
 	ESPAll = false,
 	Noclip = false,
 	AntiSit = false,
 	ClickTP = false,
-
 	Target = "",
 	PlayerListOpen = false,
 	SpectateTarget = false,
@@ -183,7 +179,6 @@ local Cfg = {
 	MultiBang = false,
 	MultiBangSpeed = 2.2,
 	HeadSit = false,
-
 	ChatSpam = false,
 	SpamText = "MORTAL On Top!"
 }
@@ -254,7 +249,6 @@ local function loadAuraConfig()
 		Cfg.AuraCustomColor = (loaded.AuraCustomColor == true)
 	end
 end
-
 loadAuraConfig()
 
 local friendEspSet = {}
@@ -268,7 +262,6 @@ local noclipJumpEndTick = 0
 local jointStore = {}
 local mimicTracks = {}
 local lastMimicTarget = nil
-
 local airY = nil
 local airMoveDir = 0
 local orbitAngle = 0
@@ -280,7 +273,6 @@ local notifiedFriends = {}
 local spectatedFriend = nil
 local lastSpectatedTargetHum = nil
 local headSitActiveLastFrame = false
-
 local flyConnection = nil
 local flyVelocity = nil
 local flyGyro = nil
@@ -308,6 +300,7 @@ local topEyeBtn = nil
 local topEyePupil = nil
 local topAuraLvlLbl = nil
 local topAuraOnOffBtn = nil
+local topStatsLbl = nil
 local auraToggleBtn = nil
 local auraModeBtn = nil
 local auraLevelBtn = nil
@@ -378,7 +371,6 @@ local function findPlayer(query)
 	if not query then return nil end
 	local q = string.lower((tostring(query):gsub("^%s+", ""):gsub("%s+$", "")))
 	if q == "" then return nil end
-
 	local partialList = {}
 	for _, plr in ipairs(Players:GetPlayers()) do
 		if plr ~= LocalPlayer then
@@ -390,19 +382,16 @@ local function findPlayer(query)
 			table.insert(partialList, { plr = plr, u = u, d = d })
 		end
 	end
-
 	for _, entry in ipairs(partialList) do
 		if string.sub(entry.u, 1, #q) == q or (entry.d ~= "" and string.sub(entry.d, 1, #q) == q) then
 			return entry.plr
 		end
 	end
-
 	for _, entry in ipairs(partialList) do
 		if string.find(entry.u, q, 1, true) or (entry.d ~= "" and string.find(entry.d, q, 1, true)) then
 			return entry.plr
 		end
 	end
-
 	return nil
 end
 
@@ -533,13 +522,11 @@ local function makeDraggable(frame, handle, holdMode, lockedFn)
 	local startPos = nil
 	local frameStart = nil
 	local token = 0
-
 	local function resetDrag()
 		pressed = false
 		activeDrag = false
 		token = token + 1
 	end
-
 	dragHandle.InputBegan:Connect(function(inp)
 		if lockedFn and lockedFn() then
 			resetDrag()
@@ -566,7 +553,6 @@ local function makeDraggable(frame, handle, holdMode, lockedFn)
 			end
 		end
 	end)
-
 	UserInputService.InputChanged:Connect(function(inp)
 		if lockedFn and lockedFn() then
 			resetDrag()
@@ -591,19 +577,16 @@ local function makeDraggable(frame, handle, holdMode, lockedFn)
 			end
 		end
 	end)
-
 	dragHandle.InputEnded:Connect(function(inp)
 		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
 			resetDrag()
 		end
 	end)
-
 	UserInputService.InputEnded:Connect(function(inp)
 		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
 			resetDrag()
 		end
 	end)
-
 	return function()
 		local wasMove = moved
 		moved = false
@@ -732,15 +715,12 @@ local function startFly()
 	stopFly()
 	local char, hum, root = getRig()
 	if not hum or not root then return end
-
 	Cfg.Fly = true
 	clearAllCharacterAnims(char, hum)
 	pcall(function() hum.PlatformStand = true end)
-
 	pcall(function()
 		root.CFrame = root.CFrame + Vector3.new(0, 3.5, 0)
 	end)
-
 	local vel = Instance.new("BodyVelocity")
 	vel.MaxForce = Vector3.new(1e6, 1e6, 1e6)
 	vel.Velocity = Vector3.zero
@@ -762,12 +742,10 @@ local function startFly()
 			stopFly()
 			return
 		end
-
 		local camera = workspace.CurrentCamera
 		local move = hum.MoveDirection
 		local rawSpd = tonumber(Cfg.FlyVal)
 		local spd = (rawSpd and rawSpd == rawSpd) and rawSpd or 50
-
 		if hum then
 			pcall(function()
 				local animator = hum:FindFirstChildOfClass("Animator")
@@ -778,7 +756,6 @@ local function startFly()
 				end
 			end)
 		end
-
 		local desiredVel = Vector3.zero
 		if move.Magnitude > 0.05 and camera then
 			local camCF = camera.CFrame
@@ -788,7 +765,6 @@ local function startFly()
 			if horizRight.Magnitude > 1e-4 then
 				horizRight = horizRight.Unit
 			end
-
 			local flatLook = Vector3.new(camLook.X, 0, camLook.Z)
 			local forwardAmt = 0
 			if flatLook.Magnitude > 1e-4 then
@@ -797,7 +773,6 @@ local function startFly()
 				forwardAmt = move.Magnitude
 			end
 			local rightAmt = move:Dot(horizRight)
-
 			local aimDir = (camLook * forwardAmt) + (horizRight * rightAmt)
 			if aimDir.Magnitude > 1e-4 then
 				desiredVel = aimDir.Unit * math.clamp(move.Magnitude, 0, 1) * spd
@@ -807,13 +782,11 @@ local function startFly()
 		elseif move.Magnitude > 0.05 then
 			desiredVel = move.Unit * spd
 		end
-
 		vel.Velocity = desiredVel
 		root.AssemblyLinearVelocity = desiredVel
 		if desiredVel.Magnitude > 0.05 then
 			root.CFrame = root.CFrame + (desiredVel * dt)
 		end
-
 		if camera then
 			gyro.CFrame = camera.CFrame
 		end
@@ -841,12 +814,10 @@ local function setNoclip(char, hum, enabled)
 			end
 		end)
 	end
-
 	if not char then
 		noclipAnchorY = nil
 		return
 	end
-
 	if enabled then
 		for _, p in ipairs(char:GetDescendants()) do
 			if p:IsA("BasePart") then
@@ -872,7 +843,6 @@ local function applyNoclipHorizontalLock(char, hum, hrp)
 		noclipAnchorY = nil
 		return
 	end
-
 	local now = os.clock()
 	local state = hum:GetState()
 	local isJumping = hum.Jump or state == Enum.HumanoidStateType.Jumping or state == Enum.HumanoidStateType.Freefall
@@ -884,7 +854,6 @@ local function applyNoclipHorizontalLock(char, hum, hrp)
 	if now < noclipJumpEndTick then
 		return
 	end
-
 	local moving = hum.MoveDirection.Magnitude > 0.05
 	local vel = hrp.AssemblyLinearVelocity
 	if moving then
@@ -940,7 +909,6 @@ local function applyHeadSitLock(char, hum, hrp, tgtChar, tgtRoot, tgtHead)
 	else
 		flatLook = flatLook.Unit
 	end
-
 	pcall(function()
 		hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
 		hum.Sit = true
@@ -948,7 +916,6 @@ local function applyHeadSitLock(char, hum, hrp, tgtChar, tgtRoot, tgtHead)
 			hum:ChangeState(Enum.HumanoidStateType.Seated)
 		end
 	end)
-
 	local headPos = tgtHead and tgtHead.Position or (tgtRoot.Position + Vector3.new(0, 1.5 * hRatio, 0))
 	local headTopY = headPos.Y + ((tgtHead and tgtHead.Size.Y or (1.2 * hRatio)) * 0.5)
 	local sitY = headTopY + (1.05 * myRatio)
@@ -997,7 +964,6 @@ local function runMimic(myChar, myHum, targetPlr)
 	end
 	local myAnimator = myHum:FindFirstChildOfClass("Animator") or Instance.new("Animator", myHum)
 	local active = {}
-
 	pcall(function()
 		for _, src in ipairs(tHum:GetPlayingAnimationTracks()) do
 			local anim = src.Animation
@@ -1029,7 +995,6 @@ local function runMimic(myChar, myHum, targetPlr)
 			end
 		end
 	end)
-
 	for id, tr in pairs(mimicTracks) do
 		if not active[id] then
 			pcall(function()
@@ -1109,7 +1074,6 @@ local function updateThirdEyeTag(plr)
 		pcall(function()
 			local dispName = plr.DisplayName
 			local barW = math.clamp(#dispName * 7.2 + 40, 108, 175)
-
 			local bb = Instance.new("BillboardGui")
 			bb.Name = "MortalMemberTag"
 			bb.Size = UDim2.new(0, barW, 0, 24)
@@ -1180,7 +1144,6 @@ local function drawESP(plr, bodyCol, nameCol, mode)
 		clearESP(plr)
 		return
 	end
-
 	local entry = espStore[plr]
 	if not entry or entry.Char ~= pChar or entry.Mode ~= mode then
 		clearESP(plr)
@@ -1215,6 +1178,7 @@ local function drawESP(plr, bodyCol, nameCol, mode)
 				badge.TextStrokeTransparency = 1
 				badge.Parent = bb
 				Instance.new("UICorner", badge).CornerRadius = UDim.new(0, 5)
+
 				local glowStroke = Instance.new("UIStroke")
 				glowStroke.Color = Color3.fromRGB(255, 230, 0)
 				glowStroke.Thickness = 2.2
@@ -1269,7 +1233,6 @@ local function syncAllESP()
 			local isTgt = (targetPlr == plr) or (targetEspSet[plr] == true)
 			local isFrd = (friendEspSet[plr] == true)
 			local isAll = (Cfg.ESPAll == true)
-
 			if isTgt then
 				drawESP(plr, Color3.fromRGB(255, 25, 25), Color3.fromRGB(255, 235, 30), "TARGET")
 			elseif isFrd then
@@ -1293,53 +1256,54 @@ airGui.IgnoreGuiInset = true
 airGui.Enabled = false
 airGui.Parent = RootGuiParent
 
-local upBtn = Instance.new("TextButton")
-upBtn.Size = UDim2.new(0, 44, 0, 44)
-upBtn.Position = UDim2.new(1, -135, 1, -155)
-upBtn.BackgroundColor3 = BTN_ON
-upBtn.TextColor3 = TEXT_MAIN
-upBtn.Text = "UP"
-upBtn.Font = Enum.Font.GothamBlack
-upBtn.TextSize = 11
-upBtn.Active = true
-upBtn.Parent = airGui
-Instance.new("UICorner", upBtn).CornerRadius = UDim.new(1, 0)
-addBorder(upBtn, NEON_RIFT, 1.5, 0.1)
+do
+	local upBtn = Instance.new("TextButton")
+	upBtn.Size = UDim2.new(0, 44, 0, 44)
+	upBtn.Position = UDim2.new(1, -135, 1, -155)
+	upBtn.BackgroundColor3 = BTN_ON
+	upBtn.TextColor3 = TEXT_MAIN
+	upBtn.Text = "UP"
+	upBtn.Font = Enum.Font.GothamBlack
+	upBtn.TextSize = 11
+	upBtn.Active = true
+	upBtn.Parent = airGui
+	Instance.new("UICorner", upBtn).CornerRadius = UDim.new(1, 0)
+	addBorder(upBtn, NEON_RIFT, 1.5, 0.1)
 
-local downBtn = Instance.new("TextButton")
-downBtn.Size = UDim2.new(0, 44, 0, 44)
-downBtn.Position = UDim2.new(1, -135, 1, -102)
-downBtn.BackgroundColor3 = BTN_OFF
-downBtn.TextColor3 = TEXT_MAIN
-downBtn.Text = "DOWN"
-downBtn.Font = Enum.Font.GothamBlack
-downBtn.TextSize = 9
-downBtn.Active = true
-downBtn.Parent = airGui
-Instance.new("UICorner", downBtn).CornerRadius = UDim.new(1, 0)
-addBorder(downBtn, NEON_RIFT, 1.5, 0.1)
+	local downBtn = Instance.new("TextButton")
+	downBtn.Size = UDim2.new(0, 44, 0, 44)
+	downBtn.Position = UDim2.new(1, -135, 1, -102)
+	downBtn.BackgroundColor3 = BTN_OFF
+	downBtn.TextColor3 = TEXT_MAIN
+	downBtn.Text = "DOWN"
+	downBtn.Font = Enum.Font.GothamBlack
+	downBtn.TextSize = 9
+	downBtn.Active = true
+	downBtn.Parent = airGui
+	Instance.new("UICorner", downBtn).CornerRadius = UDim.new(1, 0)
+	addBorder(downBtn, NEON_RIFT, 1.5, 0.1)
 
-upBtn.InputBegan:Connect(function(inp)
-	if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-		airMoveDir = 1
-	end
-end)
-upBtn.InputEnded:Connect(function(inp)
-	if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-		if airMoveDir == 1 then airMoveDir = 0 end
-	end
-end)
-
-downBtn.InputBegan:Connect(function(inp)
-	if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-		airMoveDir = -1
-	end
-end)
-downBtn.InputEnded:Connect(function(inp)
-	if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-		if airMoveDir == -1 then airMoveDir = 0 end
-	end
-end)
+	upBtn.InputBegan:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+			airMoveDir = 1
+		end
+	end)
+	upBtn.InputEnded:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+			if airMoveDir == 1 then airMoveDir = 0 end
+		end
+	end)
+	downBtn.InputBegan:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+			airMoveDir = -1
+		end
+	end)
+	downBtn.InputEnded:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+			if airMoveDir == -1 then airMoveDir = 0 end
+		end
+	end)
+end
 
 local function sanitizeAirWalkAnim(hum)
 	if not hum then return end
@@ -1364,7 +1328,6 @@ local function sanitizeAirWalkAnim(hum)
 				loaded:Play(0.05)
 			end
 		end
-
 		for _, tr in ipairs(hum:GetPlayingAnimationTracks()) do
 			local animName = string.lower((tr.Animation and tr.Animation.Name) or "")
 			local isBlocked = string.find(animName, "fall", 1, true)
@@ -1432,27 +1395,25 @@ local function buildAuraColorSet(modeName)
 	if not Cfg.AuraCustomColor then
 		if modeName == "SURGE" then
 			return {
-				Start   = DEFAULT_SURGE_PURPLE.Start,
-				Mid     = DEFAULT_SURGE_PURPLE.Mid,
-				Deep    = DEFAULT_SURGE_PURPLE.Deep,
-				End     = DEFAULT_SURGE_PURPLE.End,
+				Start = DEFAULT_SURGE_PURPLE.Start,
+				Mid = DEFAULT_SURGE_PURPLE.Mid,
+				Deep = DEFAULT_SURGE_PURPLE.Deep,
+				End = DEFAULT_SURGE_PURPLE.End,
 				Outline = DEFAULT_SURGE_PURPLE.Outline,
-				Light   = DEFAULT_SURGE_PURPLE.Light,
+				Light = DEFAULT_SURGE_PURPLE.Light,
 			}
 		end
 		return DEFAULT_AURA_PURPLE
 	end
-
 	local baseCol = getPickedAuraColor()
 	local surgeBoost = (modeName == "SURGE") and 1.12 or 1.0
-
 	return {
-		Start   = scaleAuraColor3(baseCol, math.clamp(1.0 * surgeBoost, 0.15, 1.25)),
-		Mid     = scaleAuraColor3(baseCol, math.clamp(0.75 * surgeBoost, 0.12, 1.1)),
-		Deep    = scaleAuraColor3(baseCol, math.clamp(0.52 * surgeBoost, 0.08, 0.9)),
-		End     = scaleAuraColor3(baseCol, math.clamp(0.32 * surgeBoost, 0.05, 0.7)),
+		Start = scaleAuraColor3(baseCol, math.clamp(1.0 * surgeBoost, 0.15, 1.25)),
+		Mid = scaleAuraColor3(baseCol, math.clamp(0.75 * surgeBoost, 0.12, 1.1)),
+		Deep = scaleAuraColor3(baseCol, math.clamp(0.52 * surgeBoost, 0.08, 0.9)),
+		End = scaleAuraColor3(baseCol, math.clamp(0.32 * surgeBoost, 0.05, 0.7)),
 		Outline = scaleAuraColor3(baseCol, math.clamp(1.22 * surgeBoost, 0.25, 1.45)),
-		Light   = scaleAuraColor3(baseCol, math.clamp(0.95 * surgeBoost, 0.15, 1.2)),
+		Light = scaleAuraColor3(baseCol, math.clamp(0.95 * surgeBoost, 0.15, 1.2)),
 	}
 end
 
@@ -1497,18 +1458,15 @@ local function clearAuraEffects()
 		end
 	end
 	table.clear(activeAuraItems)
-
 	for _, pe in ipairs(activeAuraEmitters) do
 		local emitter = pe.emitter or pe
 		pcall(function() emitter.Enabled = false; emitter:Clear(); emitter:Destroy() end)
 	end
 	table.clear(activeAuraEmitters)
-
 	for _, att in ipairs(activeAuraAttachments) do
 		pcall(function() att:Destroy() end)
 	end
 	table.clear(activeAuraAttachments)
-
 	for _, ex in ipairs(activeAuraExtras) do
 		pcall(function() ex:Destroy() end)
 	end
@@ -1517,7 +1475,6 @@ local function clearAuraEffects()
 	local roots = {}
 	if LocalPlayer.Character then table.insert(roots, LocalPlayer.Character) end
 	table.insert(roots, workspace)
-
 	for _, root in ipairs(roots) do
 		local ok, descList = pcall(function() return root:GetDescendants() end)
 		if ok and descList then
@@ -1528,7 +1485,6 @@ local function clearAuraEffects()
 			end
 		end
 	end
-
 	builtAuraMode = nil
 	builtAuraLevel = nil
 	builtAuraUltimate = nil
@@ -1541,14 +1497,12 @@ local function applyLiveAuraColorOnly()
 	local modeName = AURA_MODES[Cfg.AuraModeIdx] or "COLUMN"
 	local seq = makeAuraSequence(modeName)
 	local set = buildAuraColorSet(modeName)
-
 	for _, pe in ipairs(activeAuraEmitters) do
 		local emitter = pe.emitter or pe
 		if emitter and emitter.Parent then
 			emitter.Color = seq
 		end
 	end
-
 	for _, item in ipairs(activeAuraItems) do
 		if item.emitters then
 			for _, pe in ipairs(item.emitters) do
@@ -1581,7 +1535,6 @@ local function applyLiveAuraColorOnly()
 			end
 		end
 	end
-
 	for _, ex in ipairs(activeAuraExtras) do
 		if ex and ex.Parent then
 			if ex:IsA("Highlight") then
@@ -1592,7 +1545,6 @@ local function applyLiveAuraColorOnly()
 			end
 		end
 	end
-
 	builtAuraColorSig = getAuraColorSignature()
 end
 
@@ -1669,7 +1621,6 @@ local function attachAuraUltimateSpread(char, modeName, texList, spreadOut)
 	}
 	local seq = makeAuraSequence(modeName)
 	local isColumn = (modeName == "COLUMN")
-
 	for _, part in ipairs(parts) do
 		local legBoost = isAuraLegOrFoot(part) and 1.35 or 1.0
 		for i = 1, 4 do
@@ -1685,7 +1636,6 @@ local function attachAuraUltimateSpread(char, modeName, texList, spreadOut)
 			markAuraOwned(pe, "MortalUltimateSpreadPe")
 			pe.Texture = texList and (texList[((i - 1) % #texList) + 1]) or STAR_TEXTURE
 			pe.Color = seq
-
 			if isColumn then
 				pe.EmissionDirection = Enum.NormalId.Top
 				pe.Size = NumberSequence.new({
@@ -1762,7 +1712,6 @@ local function attachAuraUltimateSpread(char, modeName, texList, spreadOut)
 				pe.LightEmission = 0
 				pe.LightInfluence = 0.35
 			end
-
 			pe.Enabled = true
 			pe.Parent = att
 			table.insert(spreadOut, pe)
@@ -1776,13 +1725,11 @@ local function createColumnEmitterEntry(part, cfg, partCount, isCoreDark, texIdx
 	markAuraOwned(pe, "MortalColumnAura")
 	pe.Texture = COLUMN_TEXTURES[texIdx] or COLUMN_TEXTURES[1]
 	pe.Color = makeAuraSequence("COLUMN")
-
 	local baseSize = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, cfg.sizeStart),
 		NumberSequenceKeypoint.new(0.5, (cfg.sizeStart + cfg.sizeEnd) * 0.56),
 		NumberSequenceKeypoint.new(1, cfg.sizeEnd * 0.65),
 	})
-
 	pe.Size = baseSize
 	pe.Transparency = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0.30),
@@ -1790,7 +1737,6 @@ local function createColumnEmitterEntry(part, cfg, partCount, isCoreDark, texIdx
 		NumberSequenceKeypoint.new(0.72, isCoreDark and 0.28 or 0.36),
 		NumberSequenceKeypoint.new(1, 1),
 	})
-
 	local legBoost = isAuraLegOrFoot(part) and 2.2 or 1.0
 	pe.EmissionDirection = Enum.NormalId.Top
 	pe.Lifetime = NumberRange.new(0.55, 1.05)
@@ -1806,7 +1752,6 @@ local function createColumnEmitterEntry(part, cfg, partCount, isCoreDark, texIdx
 	pe.Acceleration = Vector3.new(0, cfg.accelY, 0)
 	pe.Enabled = true
 	pe.Parent = part
-
 	return {
 		emitter = pe,
 		kind = "column",
@@ -1826,20 +1771,17 @@ local function createColumnSparkEntry(part, cfg, partCount)
 	markAuraOwned(pe, "MortalColumnAura")
 	pe.Texture = STAR_TEXTURE
 	pe.Color = makeAuraSequence("COLUMN")
-
 	local baseSize = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0.45),
 		NumberSequenceKeypoint.new(0.5, 0.72),
 		NumberSequenceKeypoint.new(1, 0),
 	})
-
 	pe.Size = baseSize
 	pe.Transparency = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0.14),
 		NumberSequenceKeypoint.new(0.7, 0.42),
 		NumberSequenceKeypoint.new(1, 1),
 	})
-
 	local legBoost = isAuraLegOrFoot(part) and 2.0 or 1.0
 	pe.EmissionDirection = Enum.NormalId.Top
 	pe.Lifetime = NumberRange.new(0.65, 1.25)
@@ -1853,7 +1795,6 @@ local function createColumnSparkEntry(part, cfg, partCount)
 	pe.Acceleration = Vector3.new(0, cfg.accelY * 0.85, 0)
 	pe.Enabled = true
 	pe.Parent = part
-
 	return {
 		emitter = pe,
 		kind = "spark",
@@ -1873,16 +1814,13 @@ local function createSurgeCloudEntry(part, cfg, partCount, isDeepVoid, texIdx)
 	markAuraOwned(pe, "MortalSurgeAura")
 	pe.Texture = SURGE_TEXTURES[texIdx] or SURGE_TEXTURES[1]
 	pe.Color = makeAuraSequence("SURGE")
-
 	local baseSize = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, cfg.sizeStart),
 		NumberSequenceKeypoint.new(0.45, (cfg.sizeStart + cfg.sizeEnd) * 0.54),
 		NumberSequenceKeypoint.new(1, cfg.sizeEnd),
 	})
-
 	local baseRate = math.max(16, math.floor(cfg.rate / math.max(1, partCount)))
 	local baseAccel = Vector3.new(0, 1.6 + (Cfg.AuraLevel * 0.35), 0)
-
 	pe.Size = baseSize
 	pe.Transparency = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0.72),
@@ -1890,7 +1828,6 @@ local function createSurgeCloudEntry(part, cfg, partCount, isDeepVoid, texIdx)
 		NumberSequenceKeypoint.new(0.68, isDeepVoid and 0.58 or 0.66),
 		NumberSequenceKeypoint.new(1, 1),
 	})
-
 	pe.Lifetime = NumberRange.new(1.15, 2.15)
 	pe.Rate = baseRate
 	pe.Speed = NumberRange.new(cfg.speedMin, cfg.speedMax)
@@ -1903,7 +1840,6 @@ local function createSurgeCloudEntry(part, cfg, partCount, isDeepVoid, texIdx)
 	pe.Acceleration = baseAccel
 	pe.Enabled = true
 	pe.Parent = part
-
 	return {
 		emitter = pe,
 		kind = "cloud",
@@ -1923,23 +1859,19 @@ local function createSurgeWispEntry(part, cfg, partCount, texIdx)
 	markAuraOwned(pe, "MortalSurgeAura")
 	pe.Texture = SURGE_TEXTURES[texIdx] or SURGE_TEXTURES[2]
 	pe.Color = makeAuraSequence("SURGE")
-
 	local baseSize = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, cfg.sizeStart * 0.48),
 		NumberSequenceKeypoint.new(0.5, cfg.sizeEnd * 0.45),
 		NumberSequenceKeypoint.new(1, 0),
 	})
-
 	local baseRate = math.max(10, math.floor(cfg.wispRate / math.max(1, partCount)))
 	local baseAccel = Vector3.new(0, 3.0 + (Cfg.AuraLevel * 0.45), 0)
-
 	pe.Size = baseSize
 	pe.Transparency = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0.36),
 		NumberSequenceKeypoint.new(0.6, 0.56),
 		NumberSequenceKeypoint.new(1, 1),
 	})
-
 	pe.Lifetime = NumberRange.new(0.9, 1.7)
 	pe.Rate = baseRate
 	pe.Speed = NumberRange.new(cfg.speedMin * 1.25, cfg.speedMax * 1.35)
@@ -1952,7 +1884,6 @@ local function createSurgeWispEntry(part, cfg, partCount, texIdx)
 	pe.Acceleration = baseAccel
 	pe.Enabled = true
 	pe.Parent = part
-
 	return {
 		emitter = pe,
 		kind = "wisp",
@@ -1985,7 +1916,6 @@ local function buildAura(char, hrp)
 	local lvl = math.clamp(tonumber(Cfg.AuraLevel) or 1, 1, MAX_AURA_LEVEL)
 	local isUltimate = (Cfg.UltimateSpread == true)
 	clearAuraEffects()
-
 	builtAuraMode = modeName
 	builtAuraLevel = lvl
 	builtAuraUltimate = isUltimate
@@ -2002,12 +1932,10 @@ local function buildAura(char, hrp)
 		local preset = isUltimate and ULTIMATE_SPREAD_PRESET or (SMOKE_PRESETS[lvl] or SMOKE_PRESETS[1])
 		local parts = getAuraTargetParts(char)
 		local smokeSeq = makeAuraSequence("SMOKE")
-
 		if isUltimate then
 			applyAuraUltimateGlow(char, "SMOKE", extras)
 			attachAuraUltimateSpread(char, "SMOKE", SURGE_TEXTURES, spreadEmitters)
 		end
-
 		local offsets = isUltimate and {
 			Vector3.new(-0.55, 0.35, 0),
 			Vector3.new(0.55, -0.25, 0),
@@ -2019,7 +1947,6 @@ local function buildAura(char, hrp)
 			Vector3.new(0, 0, 0.32),
 			Vector3.new(0, -0.35, 0),
 		}
-
 		local minAuraRate = isUltimate and 40 or ((lvl == 1) and 10 or ((lvl == 2) and 28 or 42))
 		local maxAuraRate = isUltimate and 16000 or 1200
 		local maxShardRate = isUltimate and 11000 or 900
@@ -2130,14 +2057,12 @@ local function buildAura(char, hrp)
 			table.insert(activeAuraEmitters, e2)
 			table.insert(activeAuraEmitters, e3)
 		end
-
 		ptLight = Instance.new("PointLight")
 		markAuraOwned(ptLight, "MortalColumnAura")
 		ptLight.Color = activeSet.Light
 		ptLight.Brightness = cfg.lightBright
 		ptLight.Range = cfg.lightRange
 		ptLight.Parent = hrp
-
 		if isUltimate then
 			applyAuraUltimateGlow(char, "COLUMN", extras)
 			attachAuraUltimateSpread(char, "COLUMN", COLUMN_TEXTURES, spreadEmitters)
@@ -2157,14 +2082,12 @@ local function buildAura(char, hrp)
 			table.insert(activeAuraEmitters, c2)
 			table.insert(activeAuraEmitters, w1)
 		end
-
 		ptLight = Instance.new("PointLight")
 		markAuraOwned(ptLight, "MortalSurgeAura")
 		ptLight.Color = activeSet.Light
 		ptLight.Brightness = cfg.lightBright
 		ptLight.Range = cfg.lightRange
 		ptLight.Parent = hrp
-
 		if isUltimate then
 			applyAuraUltimateGlow(char, "SURGE", extras)
 			attachAuraUltimateSpread(char, "SURGE", SURGE_TEXTURES, spreadEmitters)
@@ -2218,7 +2141,6 @@ local function stepAura(now, char, hum, hrp)
 			if shouldBurst then
 				lastSurgeBurstTick = burstTick
 			end
-
 			for _, entry in ipairs(item.emitters or {}) do
 				local pe = entry.emitter
 				if pe and pe.Parent and entry.baseRate then
@@ -2258,7 +2180,6 @@ local function stepAura(now, char, hum, hrp)
 					end
 				end
 			end
-
 			if item.light and item.light.Parent then
 				item.light.Range = cfg.lightRange
 				item.light.Brightness = cfg.lightBright + math.sin(now * 4.5) * 0.25
@@ -2298,7 +2219,6 @@ local function stepAura(now, char, hum, hrp)
 					end
 				end
 			end
-
 			if item.light and item.light.Parent then
 				item.light.Range = cfg.lightRange
 				item.light.Brightness = cfg.lightBright + math.sin(now * 4.5) * 0.25
@@ -2318,328 +2238,316 @@ wheelGui.DisplayOrder = 60
 wheelGui.Enabled = false
 wheelGui.Parent = RootGuiParent
 
-local wheelFrame = Instance.new("Frame")
-wheelFrame.Size = UDim2.new(0, 236, 0, 290)
-wheelFrame.Position = UDim2.new(0.5, 136, 0.2, 0)
-wheelFrame.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
-wheelFrame.BorderSizePixel = 0
-wheelFrame.Active = true
-wheelFrame.ZIndex = 62
-wheelFrame.Parent = wheelGui
-Instance.new("UICorner", wheelFrame).CornerRadius = UDim.new(0, 12)
-addBorder(wheelFrame, Color3.fromRGB(95, 95, 118), 1.6, 0.08)
+local refreshAuraUI
 
-local wheelTitle = Instance.new("TextLabel")
-wheelTitle.Size = UDim2.new(1, -44, 0, 24)
-wheelTitle.Position = UDim2.new(0, 10, 0, 4)
-wheelTitle.BackgroundTransparency = 1
-wheelTitle.TextXAlignment = Enum.TextXAlignment.Left
-wheelTitle.Text = "AURA COLOR CIRCLE"
-wheelTitle.TextColor3 = Color3.fromRGB(235, 235, 245)
-wheelTitle.Font = Enum.Font.GothamBold
-wheelTitle.TextSize = 11
-wheelTitle.ZIndex = 63
-wheelTitle.Parent = wheelFrame
+do
+	local wheelFrame = Instance.new("Frame")
+	wheelFrame.Size = UDim2.new(0, 236, 0, 290)
+	wheelFrame.Position = UDim2.new(0.5, 136, 0.2, 0)
+	wheelFrame.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
+	wheelFrame.BorderSizePixel = 0
+	wheelFrame.Active = true
+	wheelFrame.ZIndex = 62
+	wheelFrame.Parent = wheelGui
+	Instance.new("UICorner", wheelFrame).CornerRadius = UDim.new(0, 12)
+	addBorder(wheelFrame, Color3.fromRGB(95, 95, 118), 1.6, 0.08)
 
-local closeWheelBtn = Instance.new("TextButton")
-closeWheelBtn.Size = UDim2.new(0, 26, 0, 22)
-closeWheelBtn.Position = UDim2.new(1, -34, 0, 5)
-closeWheelBtn.BackgroundColor3 = Color3.fromRGB(55, 16, 26)
-closeWheelBtn.BorderSizePixel = 0
-closeWheelBtn.Text = "X"
-closeWheelBtn.TextColor3 = Color3.fromRGB(255, 185, 185)
-closeWheelBtn.Font = Enum.Font.GothamBold
-closeWheelBtn.TextSize = 11
-closeWheelBtn.ZIndex = 64
-closeWheelBtn.Parent = wheelFrame
-Instance.new("UICorner", closeWheelBtn).CornerRadius = UDim.new(0, 6)
+	local wheelTitle = Instance.new("TextLabel")
+	wheelTitle.Size = UDim2.new(1, -44, 0, 24)
+	wheelTitle.Position = UDim2.new(0, 10, 0, 4)
+	wheelTitle.BackgroundTransparency = 1
+	wheelTitle.TextXAlignment = Enum.TextXAlignment.Left
+	wheelTitle.Text = "AURA COLOR CIRCLE"
+	wheelTitle.TextColor3 = Color3.fromRGB(235, 235, 245)
+	wheelTitle.Font = Enum.Font.GothamBold
+	wheelTitle.TextSize = 11
+	wheelTitle.ZIndex = 63
+	wheelTitle.Parent = wheelFrame
 
-local wheelPreviewBox = Instance.new("Frame")
-wheelPreviewBox.Size = UDim2.new(0, 46, 0, 28)
-wheelPreviewBox.Position = UDim2.new(0, 12, 0, 30)
-wheelPreviewBox.BackgroundColor3 = getPickedAuraColor()
-wheelPreviewBox.BorderSizePixel = 0
-wheelPreviewBox.ZIndex = 63
-wheelPreviewBox.Parent = wheelFrame
-Instance.new("UICorner", wheelPreviewBox).CornerRadius = UDim.new(0, 6)
-addBorder(wheelPreviewBox, Color3.fromRGB(255, 255, 255), 1.4, 0.1)
+	local closeWheelBtn = Instance.new("TextButton")
+	closeWheelBtn.Size = UDim2.new(0, 26, 0, 22)
+	closeWheelBtn.Position = UDim2.new(1, -34, 0, 5)
+	closeWheelBtn.BackgroundColor3 = Color3.fromRGB(55, 16, 26)
+	closeWheelBtn.BorderSizePixel = 0
+	closeWheelBtn.Text = "X"
+	closeWheelBtn.TextColor3 = Color3.fromRGB(255, 185, 185)
+	closeWheelBtn.Font = Enum.Font.GothamBold
+	closeWheelBtn.TextSize = 11
+	closeWheelBtn.ZIndex = 64
+	closeWheelBtn.Parent = wheelFrame
+	Instance.new("UICorner", closeWheelBtn).CornerRadius = UDim.new(0, 6)
 
-local wheelPreviewInfo = Instance.new("TextLabel")
-wheelPreviewInfo.Size = UDim2.new(1, -72, 0, 28)
-wheelPreviewInfo.Position = UDim2.new(0, 64, 0, 30)
-wheelPreviewInfo.BackgroundTransparency = 1
-wheelPreviewInfo.TextXAlignment = Enum.TextXAlignment.Left
-wheelPreviewInfo.Text = "TAP CIRCLE OR SHADE BOX"
-wheelPreviewInfo.TextColor3 = Color3.fromRGB(225, 225, 238)
-wheelPreviewInfo.Font = Enum.Font.GothamBold
-wheelPreviewInfo.TextSize = 10
-wheelPreviewInfo.ZIndex = 63
-wheelPreviewInfo.Parent = wheelFrame
+	local wheelPreviewBox = Instance.new("Frame")
+	wheelPreviewBox.Size = UDim2.new(0, 46, 0, 28)
+	wheelPreviewBox.Position = UDim2.new(0, 12, 0, 30)
+	wheelPreviewBox.BackgroundColor3 = getPickedAuraColor()
+	wheelPreviewBox.BorderSizePixel = 0
+	wheelPreviewBox.ZIndex = 63
+	wheelPreviewBox.Parent = wheelFrame
+	Instance.new("UICorner", wheelPreviewBox).CornerRadius = UDim.new(0, 6)
+	addBorder(wheelPreviewBox, Color3.fromRGB(255, 255, 255), 1.4, 0.1)
 
-local wheelCircleArea = Instance.new("Frame")
-wheelCircleArea.Size = UDim2.new(0, 184, 0, 184)
-wheelCircleArea.Position = UDim2.new(0.5, -92, 0, 64)
-wheelCircleArea.BackgroundTransparency = 1
-wheelCircleArea.ZIndex = 63
-wheelCircleArea.Parent = wheelFrame
+	local wheelPreviewInfo = Instance.new("TextLabel")
+	wheelPreviewInfo.Size = UDim2.new(1, -72, 0, 28)
+	wheelPreviewInfo.Position = UDim2.new(0, 64, 0, 30)
+	wheelPreviewInfo.BackgroundTransparency = 1
+	wheelPreviewInfo.TextXAlignment = Enum.TextXAlignment.Left
+	wheelPreviewInfo.Text = "TAP CIRCLE OR SHADE BOX"
+	wheelPreviewInfo.TextColor3 = Color3.fromRGB(225, 225, 238)
+	wheelPreviewInfo.Font = Enum.Font.GothamBold
+	wheelPreviewInfo.TextSize = 10
+	wheelPreviewInfo.ZIndex = 63
+	wheelPreviewInfo.Parent = wheelFrame
 
-local wheelOuterCircle = Instance.new("Frame")
-wheelOuterCircle.Size = UDim2.new(1, 0, 1, 0)
-wheelOuterCircle.BackgroundColor3 = Color3.fromRGB(26, 26, 32)
-wheelOuterCircle.BorderSizePixel = 0
-wheelOuterCircle.ZIndex = 63
-wheelOuterCircle.Parent = wheelCircleArea
-Instance.new("UICorner", wheelOuterCircle).CornerRadius = UDim.new(1, 0)
+	local wheelCircleArea = Instance.new("Frame")
+	wheelCircleArea.Size = UDim2.new(0, 184, 0, 184)
+	wheelCircleArea.Position = UDim2.new(0.5, -92, 0, 64)
+	wheelCircleArea.BackgroundTransparency = 1
+	wheelCircleArea.ZIndex = 63
+	wheelCircleArea.Parent = wheelFrame
 
-local wheelRingCount = 48
-for i = 0, wheelRingCount - 1 do
-	local h = i / wheelRingCount
-	local angleRad = (h * math.pi * 2) - (math.pi / 2)
-	local radiusPct = 0.425
-	local cx = 0.5 + math.cos(angleRad) * radiusPct
-	local cy = 0.5 + math.sin(angleRad) * radiusPct
+	local wheelOuterCircle = Instance.new("Frame")
+	wheelOuterCircle.Size = UDim2.new(1, 0, 1, 0)
+	wheelOuterCircle.BackgroundColor3 = Color3.fromRGB(26, 26, 32)
+	wheelOuterCircle.BorderSizePixel = 0
+	wheelOuterCircle.ZIndex = 63
+	wheelOuterCircle.Parent = wheelCircleArea
+	Instance.new("UICorner", wheelOuterCircle).CornerRadius = UDim.new(1, 0)
 
-	local seg = Instance.new("Frame")
-	seg.Size = UDim2.new(0, 16, 0, 16)
-	seg.Position = UDim2.new(cx, -8, cy, -8)
-	seg.BackgroundColor3 = Color3.fromHSV(h, 0.96, 1)
-	seg.BorderSizePixel = 0
-	seg.ZIndex = 64
-	seg.Parent = wheelOuterCircle
-	Instance.new("UICorner", seg).CornerRadius = UDim.new(1, 0)
-end
-
-local wheelRingDot = Instance.new("Frame")
-wheelRingDot.Size = UDim2.new(0, 14, 0, 14)
-wheelRingDot.Position = UDim2.new(0.5, -7, 0.5, -7)
-wheelRingDot.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
-wheelRingDot.BorderSizePixel = 0
-wheelRingDot.ZIndex = 67
-wheelRingDot.Parent = wheelOuterCircle
-Instance.new("UICorner", wheelRingDot).CornerRadius = UDim.new(1, 0)
-addBorder(wheelRingDot, Color3.fromRGB(255, 255, 255), 2.2, 0)
-
-local wheelRingSurface = Instance.new("TextButton")
-wheelRingSurface.Size = UDim2.new(1, 0, 1, 0)
-wheelRingSurface.BackgroundTransparency = 1
-wheelRingSurface.Text = ""
-wheelRingSurface.ZIndex = 66
-wheelRingSurface.Parent = wheelOuterCircle
-
-local wheelShadeBox = Instance.new("Frame")
-wheelShadeBox.Size = UDim2.new(0, 96, 0, 96)
-wheelShadeBox.Position = UDim2.new(0.5, -48, 0.5, -48)
-wheelShadeBox.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
-wheelShadeBox.BorderSizePixel = 0
-wheelShadeBox.ClipsDescendants = true
-wheelShadeBox.ZIndex = 68
-wheelShadeBox.Parent = wheelCircleArea
-Instance.new("UICorner", wheelShadeBox).CornerRadius = UDim.new(0, 8)
-addBorder(wheelShadeBox, Color3.fromRGB(235, 235, 245), 1.2, 0.1)
-
-local wheelSatOverlay = Instance.new("Frame")
-wheelSatOverlay.Size = UDim2.new(1, 0, 1, 0)
-wheelSatOverlay.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-wheelSatOverlay.BorderSizePixel = 0
-wheelSatOverlay.ZIndex = 69
-wheelSatOverlay.Parent = wheelShadeBox
-Instance.new("UICorner", wheelSatOverlay).CornerRadius = UDim.new(0, 8)
-
-local wheelSatGrad = Instance.new("UIGradient")
-wheelSatGrad.Transparency = NumberSequence.new({
-	NumberSequenceKeypoint.new(0, 0.05),
-	NumberSequenceKeypoint.new(1, 1.0),
-})
-wheelSatGrad.Parent = wheelSatOverlay
-
-local wheelValOverlay = Instance.new("Frame")
-wheelValOverlay.Size = UDim2.new(1, 0, 1, 0)
-wheelValOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-wheelValOverlay.BorderSizePixel = 0
-wheelValOverlay.ZIndex = 70
-wheelValOverlay.Parent = wheelShadeBox
-Instance.new("UICorner", wheelValOverlay).CornerRadius = UDim.new(0, 8)
-
-local wheelValGrad = Instance.new("UIGradient")
-wheelValGrad.Rotation = 90
-wheelValGrad.Transparency = NumberSequence.new({
-	NumberSequenceKeypoint.new(0, 1.0),
-	NumberSequenceKeypoint.new(1, 0.12),
-})
-wheelValGrad.Parent = wheelValOverlay
-
-local wheelPickerDot = Instance.new("Frame")
-wheelPickerDot.Size = UDim2.new(0, 14, 0, 14)
-wheelPickerDot.Position = UDim2.new(0.94, -7, 0.35, -7)
-wheelPickerDot.BackgroundColor3 = getPickedAuraColor()
-wheelPickerDot.BorderSizePixel = 0
-wheelPickerDot.ZIndex = 72
-wheelPickerDot.Parent = wheelShadeBox
-Instance.new("UICorner", wheelPickerDot).CornerRadius = UDim.new(1, 0)
-addBorder(wheelPickerDot, Color3.fromRGB(255, 255, 255), 2.2, 0)
-
-local wheelShadeSurface = Instance.new("TextButton")
-wheelShadeSurface.Size = UDim2.new(1, 0, 1, 0)
-wheelShadeSurface.BackgroundTransparency = 1
-wheelShadeSurface.Text = ""
-wheelShadeSurface.ZIndex = 71
-wheelShadeSurface.Parent = wheelShadeBox
-
-local function refreshAuraUI()
-	local modeName = AURA_MODES[Cfg.AuraModeIdx] or "COLUMN"
-	local lvl = math.clamp(tonumber(Cfg.AuraLevel) or 1, 1, MAX_AURA_LEVEL)
-	local picked = getPickedAuraColor()
-
-	if topAuraLvlLbl then
-		topAuraLvlLbl.Text = "LV." .. tostring(lvl)
-	end
-	if topAuraOnOffBtn then
-		topAuraOnOffBtn.Text = "AURA: " .. (Cfg.AuraEnabled and "ON" or "OFF")
-		topAuraOnOffBtn.BackgroundColor3 = Cfg.AuraEnabled and BTN_ON or BTN_OFF
-	end
-	if auraToggleBtn then
-		auraToggleBtn.Text = "AURA: " .. (Cfg.AuraEnabled and "ON" or "OFF")
-		auraToggleBtn.BackgroundColor3 = Cfg.AuraEnabled and BTN_ON or BTN_OFF
-	end
-	if auraModeBtn then
-		auraModeBtn.Text = "MODE: " .. modeName .. " (Tap)"
-	end
-	if auraLevelBtn then
-		if modeName == "SMOKE" then
-			local preset = SMOKE_PRESETS[lvl] or SMOKE_PRESETS[1]
-			auraLevelBtn.Text = "LEVEL: " .. preset.label .. " (Tap)"
-		else
-			auraLevelBtn.Text = "LEVEL: LV." .. tostring(lvl) .. " (Tap)"
-		end
-	end
-	if auraUltimateBtn then
-		auraUltimateBtn.Text = "ULTIMATE AURA SPREAD: " .. (Cfg.UltimateSpread and "ON" or "OFF")
-		auraUltimateBtn.BackgroundColor3 = Cfg.UltimateSpread and BTN_ON or BTN_OFF
+	local wheelRingCount = 48
+	for i = 0, wheelRingCount - 1 do
+		local h = i / wheelRingCount
+		local angleRad = (h * math.pi * 2) - (math.pi / 2)
+		local radiusPct = 0.425
+		local cx = 0.5 + math.cos(angleRad) * radiusPct
+		local cy = 0.5 + math.sin(angleRad) * radiusPct
+		local seg = Instance.new("Frame")
+		seg.Size = UDim2.new(0, 16, 0, 16)
+		seg.Position = UDim2.new(cx, -8, cy, -8)
+		seg.BackgroundColor3 = Color3.fromHSV(h, 0.96, 1)
+		seg.BorderSizePixel = 0
+		seg.ZIndex = 64
+		seg.Parent = wheelOuterCircle
+		Instance.new("UICorner", seg).CornerRadius = UDim.new(1, 0)
 	end
 
-	local colorTag = Cfg.AuraCustomColor
-		and string.format("H:%d S:%d%% V:%d%%", math.floor(Cfg.AuraHue * 360), math.floor(Cfg.AuraSat * 100), math.floor(Cfg.AuraVal * 100))
-		or "PURPLE"
-
-	if auraColorStatusLbl then
-		auraColorStatusLbl.Text = "AURA COLOR: " .. colorTag .. " (SAVED)"
-	end
-
-	wheelPreviewBox.BackgroundColor3 = picked
-	wheelPickerDot.BackgroundColor3 = picked
-	wheelShadeBox.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
-	wheelPreviewInfo.Text = colorTag .. " | TAP OR DRAG"
-
-	local dotX = math.clamp(Cfg.AuraSat, 0, 1)
-	local dotY = math.clamp((1 - Cfg.AuraVal) / 0.82, 0, 1)
-	wheelPickerDot.Position = UDim2.new(dotX, -7, dotY, -7)
-
-	local angleRad = (Cfg.AuraHue * math.pi * 2) - (math.pi / 2)
-	local ringX = 0.5 + math.cos(angleRad) * 0.425
-	local ringY = 0.5 + math.sin(angleRad) * 0.425
-	wheelRingDot.Position = UDim2.new(ringX, -7, ringY, -7)
+	local wheelRingDot = Instance.new("Frame")
+	wheelRingDot.Size = UDim2.new(0, 14, 0, 14)
+	wheelRingDot.Position = UDim2.new(0.5, -7, 0.5, -7)
 	wheelRingDot.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
-end
+	wheelRingDot.BorderSizePixel = 0
+	wheelRingDot.ZIndex = 67
+	wheelRingDot.Parent = wheelOuterCircle
+	Instance.new("UICorner", wheelRingDot).CornerRadius = UDim.new(1, 0)
+	addBorder(wheelRingDot, Color3.fromRGB(255, 255, 255), 2.2, 0)
 
-local wheelDragTarget = nil
+	local wheelRingSurface = Instance.new("TextButton")
+	wheelRingSurface.Size = UDim2.new(1, 0, 1, 0)
+	wheelRingSurface.BackgroundTransparency = 1
+	wheelRingSurface.Text = ""
+	wheelRingSurface.ZIndex = 66
+	wheelRingSurface.Parent = wheelOuterCircle
 
-local function updateAuraHueFromPos(posX, posY)
-	local cPos = wheelOuterCircle.AbsolutePosition
-	local cSize = wheelOuterCircle.AbsoluteSize
-	if cSize.X <= 1 or cSize.Y <= 1 then return end
+	local wheelShadeBox = Instance.new("Frame")
+	wheelShadeBox.Size = UDim2.new(0, 96, 0, 96)
+	wheelShadeBox.Position = UDim2.new(0.5, -48, 0.5, -48)
+	wheelShadeBox.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
+	wheelShadeBox.BorderSizePixel = 0
+	wheelShadeBox.ClipsDescendants = true
+	wheelShadeBox.ZIndex = 68
+	wheelShadeBox.Parent = wheelCircleArea
+	Instance.new("UICorner", wheelShadeBox).CornerRadius = UDim.new(0, 8)
+	addBorder(wheelShadeBox, Color3.fromRGB(235, 235, 245), 1.2, 0.1)
 
-	local dx = posX - (cPos.X + cSize.X * 0.5)
-	local dy = posY - (cPos.Y + cSize.Y * 0.5)
-	local angle = math.atan2(dy, dx) + (math.pi / 2)
-	if angle < 0 then angle = angle + (math.pi * 2) end
+	local wheelSatOverlay = Instance.new("Frame")
+	wheelSatOverlay.Size = UDim2.new(1, 0, 1, 0)
+	wheelSatOverlay.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	wheelSatOverlay.BorderSizePixel = 0
+	wheelSatOverlay.ZIndex = 69
+	wheelSatOverlay.Parent = wheelShadeBox
+	Instance.new("UICorner", wheelSatOverlay).CornerRadius = UDim.new(0, 8)
 
-	Cfg.AuraCustomColor = true
-	Cfg.AuraHue = math.clamp(angle / (math.pi * 2), 0, 1)
-	applyLiveAuraColorOnly()
-	refreshAuraUI()
-	scheduleAuraSave(0.18)
-end
+	local wheelSatGrad = Instance.new("UIGradient")
+	wheelSatGrad.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.05),
+		NumberSequenceKeypoint.new(1, 1.0),
+	})
+	wheelSatGrad.Parent = wheelSatOverlay
 
-local function updateAuraShadeFromPos(posX, posY)
-	local bPos = wheelShadeBox.AbsolutePosition
-	local bSize = wheelShadeBox.AbsoluteSize
-	if bSize.X <= 1 or bSize.Y <= 1 then return end
+	local wheelValOverlay = Instance.new("Frame")
+	wheelValOverlay.Size = UDim2.new(1, 0, 1, 0)
+	wheelValOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	wheelValOverlay.BorderSizePixel = 0
+	wheelValOverlay.ZIndex = 70
+	wheelValOverlay.Parent = wheelShadeBox
+	Instance.new("UICorner", wheelValOverlay).CornerRadius = UDim.new(0, 8)
 
-	local nx = math.clamp((posX - bPos.X) / bSize.X, 0, 1)
-	local ny = math.clamp((posY - bPos.Y) / bSize.Y, 0, 1)
+	local wheelValGrad = Instance.new("UIGradient")
+	wheelValGrad.Rotation = 90
+	wheelValGrad.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1.0),
+		NumberSequenceKeypoint.new(1, 0.12),
+	})
+	wheelValGrad.Parent = wheelValOverlay
 
-	Cfg.AuraCustomColor = true
-	Cfg.AuraSat = math.clamp(nx, 0.02, 1)
-	Cfg.AuraVal = math.clamp(1 - (ny * 0.82), 0.18, 1)
-	applyLiveAuraColorOnly()
-	refreshAuraUI()
-	scheduleAuraSave(0.18)
-end
+	local wheelPickerDot = Instance.new("Frame")
+	wheelPickerDot.Size = UDim2.new(0, 14, 0, 14)
+	wheelPickerDot.Position = UDim2.new(0.94, -7, 0.35, -7)
+	wheelPickerDot.BackgroundColor3 = getPickedAuraColor()
+	wheelPickerDot.BorderSizePixel = 0
+	wheelPickerDot.ZIndex = 72
+	wheelPickerDot.Parent = wheelShadeBox
+	Instance.new("UICorner", wheelPickerDot).CornerRadius = UDim.new(1, 0)
+	addBorder(wheelPickerDot, Color3.fromRGB(255, 255, 255), 2.2, 0)
 
-wheelRingSurface.InputBegan:Connect(function(inp)
-	if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-		wheelDragTarget = "ring"
-		updateAuraHueFromPos(inp.Position.X, inp.Position.Y)
+	local wheelShadeSurface = Instance.new("TextButton")
+	wheelShadeSurface.Size = UDim2.new(1, 0, 1, 0)
+	wheelShadeSurface.BackgroundTransparency = 1
+	wheelShadeSurface.Text = ""
+	wheelShadeSurface.ZIndex = 71
+	wheelShadeSurface.Parent = wheelShadeBox
+
+	refreshAuraUI = function()
+		local modeName = AURA_MODES[Cfg.AuraModeIdx] or "COLUMN"
+		local lvl = math.clamp(tonumber(Cfg.AuraLevel) or 1, 1, MAX_AURA_LEVEL)
+		local picked = getPickedAuraColor()
+		if topAuraLvlLbl then
+			topAuraLvlLbl.Text = "LV." .. tostring(lvl)
+		end
+		if topAuraOnOffBtn then
+			topAuraOnOffBtn.Text = "AURA: " .. (Cfg.AuraEnabled and "ON" or "OFF")
+			topAuraOnOffBtn.BackgroundColor3 = Cfg.AuraEnabled and BTN_ON or BTN_OFF
+		end
+		if auraToggleBtn then
+			auraToggleBtn.Text = "AURA: " .. (Cfg.AuraEnabled and "ON" or "OFF")
+			auraToggleBtn.BackgroundColor3 = Cfg.AuraEnabled and BTN_ON or BTN_OFF
+		end
+		if auraModeBtn then
+			auraModeBtn.Text = "MODE: " .. modeName .. " (Tap)"
+		end
+		if auraLevelBtn then
+			if modeName == "SMOKE" then
+				local preset = SMOKE_PRESETS[lvl] or SMOKE_PRESETS[1]
+				auraLevelBtn.Text = "LEVEL: " .. preset.label .. " (Tap)"
+			else
+				auraLevelBtn.Text = "LEVEL: LV." .. tostring(lvl) .. " (Tap)"
+			end
+		end
+		if auraUltimateBtn then
+			auraUltimateBtn.Text = "ULTIMATE AURA SPREAD: " .. (Cfg.UltimateSpread and "ON" or "OFF")
+			auraUltimateBtn.BackgroundColor3 = Cfg.UltimateSpread and BTN_ON or BTN_OFF
+		end
+		local colorTag = Cfg.AuraCustomColor
+			and string.format("H:%d S:%d%% V:%d%%", math.floor(Cfg.AuraHue * 360), math.floor(Cfg.AuraSat * 100), math.floor(Cfg.AuraVal * 100))
+			or "PURPLE"
+		if auraColorStatusLbl then
+			auraColorStatusLbl.Text = "AURA COLOR: " .. colorTag .. " (SAVED)"
+		end
+		wheelPreviewBox.BackgroundColor3 = picked
+		wheelPickerDot.BackgroundColor3 = picked
+		wheelShadeBox.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
+		wheelPreviewInfo.Text = colorTag .. " | TAP OR DRAG"
+		local dotX = math.clamp(Cfg.AuraSat, 0, 1)
+		local dotY = math.clamp((1 - Cfg.AuraVal) / 0.82, 0, 1)
+		wheelPickerDot.Position = UDim2.new(dotX, -7, dotY, -7)
+		local angleRad = (Cfg.AuraHue * math.pi * 2) - (math.pi / 2)
+		local ringX = 0.5 + math.cos(angleRad) * 0.425
+		local ringY = 0.5 + math.sin(angleRad) * 0.425
+		wheelRingDot.Position = UDim2.new(ringX, -7, ringY, -7)
+		wheelRingDot.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
 	end
-end)
 
-wheelShadeSurface.InputBegan:Connect(function(inp)
-	if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-		wheelDragTarget = "shade"
-		updateAuraShadeFromPos(inp.Position.X, inp.Position.Y)
+	local wheelDragTarget = nil
+	local function updateAuraHueFromPos(posX, posY)
+		local cPos = wheelOuterCircle.AbsolutePosition
+		local cSize = wheelOuterCircle.AbsoluteSize
+		if cSize.X <= 1 or cSize.Y <= 1 then return end
+		local dx = posX - (cPos.X + cSize.X * 0.5)
+		local dy = posY - (cPos.Y + cSize.Y * 0.5)
+		local angle = math.atan2(dy, dx) + (math.pi / 2)
+		if angle < 0 then angle = angle + (math.pi * 2) end
+		Cfg.AuraCustomColor = true
+		Cfg.AuraHue = math.clamp(angle / (math.pi * 2), 0, 1)
+		applyLiveAuraColorOnly()
+		refreshAuraUI()
+		scheduleAuraSave(0.18)
 	end
-end)
 
-UserInputService.InputChanged:Connect(function(inp)
-	if not wheelDragTarget then return end
-	if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
-		if wheelDragTarget == "ring" then
+	local function updateAuraShadeFromPos(posX, posY)
+		local bPos = wheelShadeBox.AbsolutePosition
+		local bSize = wheelShadeBox.AbsoluteSize
+		if bSize.X <= 1 or bSize.Y <= 1 then return end
+		local nx = math.clamp((posX - bPos.X) / bSize.X, 0, 1)
+		local ny = math.clamp((posY - bPos.Y) / bSize.Y, 0, 1)
+		Cfg.AuraCustomColor = true
+		Cfg.AuraSat = math.clamp(nx, 0.02, 1)
+		Cfg.AuraVal = math.clamp(1 - (ny * 0.82), 0.18, 1)
+		applyLiveAuraColorOnly()
+		refreshAuraUI()
+		scheduleAuraSave(0.18)
+	end
+
+	wheelRingSurface.InputBegan:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+			wheelDragTarget = "ring"
 			updateAuraHueFromPos(inp.Position.X, inp.Position.Y)
-		elseif wheelDragTarget == "shade" then
+		end
+	end)
+	wheelShadeSurface.InputBegan:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+			wheelDragTarget = "shade"
 			updateAuraShadeFromPos(inp.Position.X, inp.Position.Y)
 		end
-	end
-end)
-
-UserInputService.InputEnded:Connect(function(inp)
-	if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-		if wheelDragTarget then
-			wheelDragTarget = nil
-			saveAuraConfigNow()
+	end)
+	UserInputService.InputChanged:Connect(function(inp)
+		if not wheelDragTarget then return end
+		if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
+			if wheelDragTarget == "ring" then
+				updateAuraHueFromPos(inp.Position.X, inp.Position.Y)
+			elseif wheelDragTarget == "shade" then
+				updateAuraShadeFromPos(inp.Position.X, inp.Position.Y)
+			end
 		end
-	end
-end)
+	end)
+	UserInputService.InputEnded:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+			if wheelDragTarget then
+				wheelDragTarget = nil
+				saveAuraConfigNow()
+			end
+		end
+	end)
 
-local resetAuraPurpleBtn = Instance.new("TextButton")
-resetAuraPurpleBtn.Size = UDim2.new(1, -24, 0, 24)
-resetAuraPurpleBtn.Position = UDim2.new(0, 12, 0, 256)
-resetAuraPurpleBtn.BackgroundColor3 = Color3.fromRGB(48, 10, 72)
-resetAuraPurpleBtn.BorderSizePixel = 0
-resetAuraPurpleBtn.Text = "RESET PURPLE"
-resetAuraPurpleBtn.TextColor3 = Color3.fromRGB(238, 212, 255)
-resetAuraPurpleBtn.Font = Enum.Font.GothamBold
-resetAuraPurpleBtn.TextSize = 10
-resetAuraPurpleBtn.ZIndex = 64
-resetAuraPurpleBtn.Parent = wheelFrame
-Instance.new("UICorner", resetAuraPurpleBtn).CornerRadius = UDim.new(0, 6)
+	local resetAuraPurpleBtn = Instance.new("TextButton")
+	resetAuraPurpleBtn.Size = UDim2.new(1, -24, 0, 24)
+	resetAuraPurpleBtn.Position = UDim2.new(0, 12, 0, 256)
+	resetAuraPurpleBtn.BackgroundColor3 = Color3.fromRGB(48, 10, 72)
+	resetAuraPurpleBtn.BorderSizePixel = 0
+	resetAuraPurpleBtn.Text = "RESET PURPLE"
+	resetAuraPurpleBtn.TextColor3 = Color3.fromRGB(238, 212, 255)
+	resetAuraPurpleBtn.Font = Enum.Font.GothamBold
+	resetAuraPurpleBtn.TextSize = 10
+	resetAuraPurpleBtn.ZIndex = 64
+	resetAuraPurpleBtn.Parent = wheelFrame
+	Instance.new("UICorner", resetAuraPurpleBtn).CornerRadius = UDim.new(0, 6)
+	resetAuraPurpleBtn.MouseButton1Click:Connect(function()
+		Cfg.AuraCustomColor = false
+		Cfg.AuraHue = 0.77
+		Cfg.AuraSat = 0.94
+		Cfg.AuraVal = 0.65
+		applyLiveAuraColorOnly()
+		refreshAuraUI()
+		saveAuraConfigNow()
+		playClick(1.0)
+	end)
 
-resetAuraPurpleBtn.MouseButton1Click:Connect(function()
-	Cfg.AuraCustomColor = false
-	Cfg.AuraHue = 0.77
-	Cfg.AuraSat = 0.94
-	Cfg.AuraVal = 0.65
-	applyLiveAuraColorOnly()
-	refreshAuraUI()
-	saveAuraConfigNow()
-	playClick(1.0)
-end)
+	closeWheelBtn.MouseButton1Click:Connect(function()
+		wheelGui.Enabled = false
+		playClick(0.9)
+	end)
 
-closeWheelBtn.MouseButton1Click:Connect(function()
-	wheelGui.Enabled = false
-	playClick(0.9)
-end)
-
-makeDraggable(wheelFrame, wheelTitle, false, nil)
+	makeDraggable(wheelFrame, wheelTitle, false, nil)
+end
 
 -- ============================================================================
 -- GUI ROOT, 1ST EYE (MAIN HUB), TOP-RIGHT EYE
@@ -2651,289 +2559,291 @@ sg.IgnoreGuiInset = true
 sg.DisplayOrder = 50
 sg.Parent = RootGuiParent
 
-eye1Holder = Instance.new("Frame")
-eye1Holder.Name = "MortalFirstEyeHolder"
-eye1Holder.Size = UDim2.new(0, 62, 0, 62)
-eye1Holder.Position = UDim2.new(0.03, 0, 0.25, 0)
-eye1Holder.BackgroundColor3 = CARD_BG
-eye1Holder.Active = true
-eye1Holder.Parent = sg
-Instance.new("UICorner", eye1Holder).CornerRadius = UDim.new(1, 0)
-addBorder(eye1Holder, NEON_RING, 2, 0.05)
-
-eye1Pupil = createEyeGraphic(eye1Holder, 32, 19, 12, 5, 10)
-
-eye1FpsLbl = Instance.new("TextLabel")
-eye1FpsLbl.Size = UDim2.new(1, 14, 0, 15)
-eye1FpsLbl.Position = UDim2.new(0, -7, 1, 2)
-eye1FpsLbl.BackgroundColor3 = TAG_DARK_BAR
-eye1FpsLbl.BackgroundTransparency = 0.08
-eye1FpsLbl.Font = Enum.Font.GothamBlack
-eye1FpsLbl.TextSize = 10
-eye1FpsLbl.Text = "60 FPS"
-eye1FpsLbl.TextColor3 = TAG_NEON_PURPLE
-eye1FpsLbl.ZIndex = 12
-eye1FpsLbl.Parent = eye1Holder
-Instance.new("UICorner", eye1FpsLbl).CornerRadius = UDim.new(0, 6)
-addBorder(eye1FpsLbl, TAG_NEON_OUTLINE, 1.1, 0.15)
-
-eye1TapBtn = Instance.new("TextButton")
-eye1TapBtn.Size = UDim2.new(1, 0, 1, 0)
-eye1TapBtn.BackgroundTransparency = 1
-eye1TapBtn.Text = ""
-eye1TapBtn.ZIndex = 20
-eye1TapBtn.Active = true
-eye1TapBtn.Parent = eye1Holder
-
-topEyeBtn = Instance.new("TextButton")
-topEyeBtn.Name = "MortalThirdEyeCornerBtn"
-topEyeBtn.Size = UDim2.new(0, 44, 0, 32)
-topEyeBtn.Position = UDim2.new(1, -54, 0, 10)
-topEyeBtn.BackgroundColor3 = CARD_BG
-topEyeBtn.Text = ""
-topEyeBtn.Active = true
-topEyeBtn.ZIndex = 22
-topEyeBtn.Parent = sg
-Instance.new("UICorner", topEyeBtn).CornerRadius = UDim.new(0, 10)
-addBorder(topEyeBtn, NEON_RIFT, 1.5, 0.1)
-topEyePupil = createEyeGraphic(topEyeBtn, 26, 15, 10, 4, 24)
-
-topEyePanel = Instance.new("Frame")
-topEyePanel.Name = "MortalThirdEyePanel"
-topEyePanel.Size = UDim2.new(0, 292, 0, 32)
-topEyePanel.Position = UDim2.new(1, -352, 0, 10)
-topEyePanel.BackgroundColor3 = TAG_DARK_BAR
-topEyePanel.BackgroundTransparency = 0.06
-topEyePanel.Visible = Cfg.TopEyeOpen
-topEyePanel.ZIndex = 20
-topEyePanel.Parent = sg
-Instance.new("UICorner", topEyePanel).CornerRadius = UDim.new(0, 10)
-addBorder(topEyePanel, TAG_NEON_OUTLINE, 1.6, 0.08)
-
-local topStatsLbl = Instance.new("TextLabel")
-topStatsLbl.Size = UDim2.new(0, 128, 1, 0)
-topStatsLbl.Position = UDim2.new(0, 6, 0, 0)
-topStatsLbl.BackgroundTransparency = 1
-topStatsLbl.Font = Enum.Font.GothamBold
-topStatsLbl.TextSize = 9
-topStatsLbl.Text = "PLAYERS: 1 | PING: 0ms"
-topStatsLbl.TextColor3 = TEXT_MAIN
-topStatsLbl.TextXAlignment = Enum.TextXAlignment.Left
-topStatsLbl.ZIndex = 21
-topStatsLbl.Parent = topEyePanel
-
-topAuraOnOffBtn = Instance.new("TextButton")
-topAuraOnOffBtn.Size = UDim2.new(0, 72, 0, 22)
-topAuraOnOffBtn.Position = UDim2.new(0, 136, 0.5, -11)
-topAuraOnOffBtn.BackgroundColor3 = BTN_OFF
-topAuraOnOffBtn.Font = Enum.Font.GothamBlack
-topAuraOnOffBtn.TextSize = 9
-topAuraOnOffBtn.Text = "AURA: OFF"
-topAuraOnOffBtn.TextColor3 = TEXT_MAIN
-topAuraOnOffBtn.ZIndex = 21
-topAuraOnOffBtn.Parent = topEyePanel
-Instance.new("UICorner", topAuraOnOffBtn).CornerRadius = UDim.new(0, 6)
-addBorder(topAuraOnOffBtn, NEON_RING, 1, 0.25)
-topAuraOnOffBtn.MouseButton1Click:Connect(function()
-	Cfg.AuraEnabled = not Cfg.AuraEnabled
-	refreshAuraUI()
-	saveAuraConfigNow()
-	playClick(Cfg.AuraEnabled and 1.15 or 0.9)
-end)
-
-local topMinusBtn = Instance.new("TextButton")
-topMinusBtn.Size = UDim2.new(0, 18, 0, 22)
-topMinusBtn.Position = UDim2.new(0, 212, 0.5, -11)
-topMinusBtn.BackgroundColor3 = BTN_OFF
-topMinusBtn.Font = Enum.Font.GothamBlack
-topMinusBtn.TextSize = 11
-topMinusBtn.Text = "-"
-topMinusBtn.TextColor3 = TEXT_MAIN
-topMinusBtn.ZIndex = 21
-topMinusBtn.Parent = topEyePanel
-Instance.new("UICorner", topMinusBtn).CornerRadius = UDim.new(0, 6)
-addBorder(topMinusBtn, NEON_RING, 1, 0.25)
-
-topAuraLvlLbl = Instance.new("TextLabel")
-topAuraLvlLbl.Size = UDim2.new(0, 34, 0, 22)
-topAuraLvlLbl.Position = UDim2.new(0, 232, 0.5, -11)
-topAuraLvlLbl.BackgroundColor3 = VOID_BG
-topAuraLvlLbl.Font = Enum.Font.GothamBlack
-topAuraLvlLbl.TextSize = 10
-topAuraLvlLbl.Text = "LV.1"
-topAuraLvlLbl.TextColor3 = TAG_NEON_PURPLE
-topAuraLvlLbl.ZIndex = 21
-topAuraLvlLbl.Parent = topEyePanel
-Instance.new("UICorner", topAuraLvlLbl).CornerRadius = UDim.new(0, 6)
-addBorder(topAuraLvlLbl, NEON_RING, 1, 0.25)
-
-local topPlusBtn = Instance.new("TextButton")
-topPlusBtn.Size = UDim2.new(0, 18, 0, 22)
-topPlusBtn.Position = UDim2.new(0, 268, 0.5, -11)
-topPlusBtn.BackgroundColor3 = BTN_OFF
-topPlusBtn.Font = Enum.Font.GothamBlack
-topPlusBtn.TextSize = 11
-topPlusBtn.Text = "+"
-topPlusBtn.TextColor3 = TEXT_MAIN
-topPlusBtn.ZIndex = 21
-topPlusBtn.Parent = topEyePanel
-Instance.new("UICorner", topPlusBtn).CornerRadius = UDim.new(0, 6)
-addBorder(topPlusBtn, NEON_RING, 1, 0.25)
-
-topMinusBtn.MouseButton1Click:Connect(function()
-	Cfg.AuraLevel = math.max(1, Cfg.AuraLevel - 1)
-	builtAuraLevel = nil
-	refreshAuraUI()
-	saveAuraConfigNow()
-	playClick(0.95)
-end)
-
-topPlusBtn.MouseButton1Click:Connect(function()
-	Cfg.AuraLevel = math.min(MAX_AURA_LEVEL, Cfg.AuraLevel + 1)
-	builtAuraLevel = nil
-	refreshAuraUI()
-	saveAuraConfigNow()
-	playClick(1.1)
-end)
-
-topEyeBtn.MouseButton1Click:Connect(function()
-	Cfg.TopEyeOpen = not Cfg.TopEyeOpen
-	topEyePanel.Visible = Cfg.TopEyeOpen
-	playClick(Cfg.TopEyeOpen and 1.15 or 0.9)
-end)
-
-mainFrame = Instance.new("Frame")
-mainFrame.Name = "MortalMainWindow"
-mainFrame.Size = UDim2.new(0, 440, 0, 320)
-mainFrame.Position = UDim2.new(0.5, -220, 0.5, -160)
-mainFrame.BackgroundColor3 = VOID_BG
-mainFrame.Visible = false
-mainFrame.Active = true
-mainFrame.ZIndex = 30
-mainFrame.Parent = sg
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 14)
-addBorder(mainFrame, NEON_RING, 2, 0.06)
-
-local header = Instance.new("Frame")
-header.Size = UDim2.new(1, 0, 0, 34)
-header.BackgroundColor3 = CARD_BG
-header.Active = true
-header.ZIndex = 31
-header.Parent = mainFrame
-Instance.new("UICorner", header).CornerRadius = UDim.new(0, 14)
-
-local titleLbl = Instance.new("TextLabel")
-titleLbl.Size = UDim2.new(1, -80, 1, 0)
-titleLbl.Position = UDim2.new(0, 12, 0, 0)
-titleLbl.BackgroundTransparency = 1
-titleLbl.Font = Enum.Font.GothamBlack
-titleLbl.TextSize = 13
-titleLbl.Text = GANG_NAME .. " HUB  |  BY " .. CREATOR_NAME
-titleLbl.TextColor3 = TEXT_MAIN
-titleLbl.TextXAlignment = Enum.TextXAlignment.Left
-titleLbl.ZIndex = 32
-titleLbl.Parent = header
-
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 26, 0, 26)
-closeBtn.Position = UDim2.new(1, -32, 0, 4)
-closeBtn.BackgroundColor3 = BTN_ON
-closeBtn.Font = Enum.Font.GothamBlack
-closeBtn.TextSize = 12
-closeBtn.Text = "X"
-closeBtn.TextColor3 = TEXT_MAIN
-closeBtn.ZIndex = 33
-closeBtn.Parent = header
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 7)
-closeBtn.MouseButton1Click:Connect(function()
-	mainFrame.Visible = false
-	playClick(0.9)
-end)
-
-local sideScroll = Instance.new("ScrollingFrame")
-sideScroll.Size = UDim2.new(0, 114, 1, -42)
-sideScroll.Position = UDim2.new(0, 6, 0, 38)
-sideScroll.BackgroundColor3 = CARD_BG
-sideScroll.ScrollBarThickness = 2
-sideScroll.ZIndex = 31
-sideScroll.Parent = mainFrame
-Instance.new("UICorner", sideScroll).CornerRadius = UDim.new(0, 10)
-addBorder(sideScroll, NEON_RING, 1.2, 0.25)
-
-local sideList = Instance.new("UIListLayout", sideScroll)
-sideList.Padding = UDim.new(0, 4)
-sideList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-sideList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	sideScroll.CanvasSize = UDim2.new(0, 0, 0, sideList.AbsoluteContentSize.Y + 8)
-end)
-
-local contentHolder = Instance.new("Frame")
-contentHolder.Size = UDim2.new(1, -130, 1, -42)
-contentHolder.Position = UDim2.new(0, 124, 0, 38)
-contentHolder.BackgroundColor3 = CARD_BG
-contentHolder.ZIndex = 31
-contentHolder.Parent = mainFrame
-Instance.new("UICorner", contentHolder).CornerRadius = UDim.new(0, 10)
-addBorder(contentHolder, NEON_RING, 1.2, 0.25)
-
-local sectionNames = {
-	"Info",
-	"Friends",
-	"Player",
-	"Exploits",
-	"Troll",
-	"Server Time",
-	"Aura",
-	"Spams",
-}
-
 local pages = {}
 local tabButtons = {}
+local switchSection
 
-local function switchSection(idx)
-	for i, page in ipairs(pages) do
-		page.Visible = (i == idx)
-	end
-	for i, btn in ipairs(tabButtons) do
-		btn.BackgroundColor3 = (i == idx) and BTN_ON or BTN_OFF
-		btn.TextColor3 = (i == idx) and TEXT_MAIN or TEXT_DIM
-	end
-	local cb = refreshCallbacks[idx]
-	if cb then pcall(cb) end
-	playClick(1.05)
-end
+do
+	eye1Holder = Instance.new("Frame")
+	eye1Holder.Name = "MortalFirstEyeHolder"
+	eye1Holder.Size = UDim2.new(0, 62, 0, 62)
+	eye1Holder.Position = UDim2.new(0.03, 0, 0.25, 0)
+	eye1Holder.BackgroundColor3 = CARD_BG
+	eye1Holder.Active = true
+	eye1Holder.Parent = sg
+	Instance.new("UICorner", eye1Holder).CornerRadius = UDim.new(1, 0)
+	addBorder(eye1Holder, NEON_RING, 2, 0.05)
 
-for idx, secName in ipairs(sectionNames) do
-	local page = Instance.new("ScrollingFrame")
-	page.Name = "Section_" .. tostring(idx) .. "_" .. secName
-	page.Size = UDim2.new(1, -8, 1, -8)
-	page.Position = UDim2.new(0, 4, 0, 4)
-	page.BackgroundTransparency = 1
-	page.ScrollBarThickness = 3
-	page.Visible = (idx == 1)
-	page.ZIndex = 32
-	page.Parent = contentHolder
+	eye1Pupil = createEyeGraphic(eye1Holder, 32, 19, 12, 5, 10)
 
-	local lay = Instance.new("UIListLayout", page)
-	lay.Padding = UDim.new(0, 6)
-	lay.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	lay:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		page.CanvasSize = UDim2.new(0, 0, 0, lay.AbsoluteContentSize.Y + 10)
+	eye1FpsLbl = Instance.new("TextLabel")
+	eye1FpsLbl.Size = UDim2.new(1, 14, 0, 15)
+	eye1FpsLbl.Position = UDim2.new(0, -7, 1, 2)
+	eye1FpsLbl.BackgroundColor3 = TAG_DARK_BAR
+	eye1FpsLbl.BackgroundTransparency = 0.08
+	eye1FpsLbl.Font = Enum.Font.GothamBlack
+	eye1FpsLbl.TextSize = 10
+	eye1FpsLbl.Text = "60 FPS"
+	eye1FpsLbl.TextColor3 = TAG_NEON_PURPLE
+	eye1FpsLbl.ZIndex = 12
+	eye1FpsLbl.Parent = eye1Holder
+	Instance.new("UICorner", eye1FpsLbl).CornerRadius = UDim.new(0, 6)
+	addBorder(eye1FpsLbl, TAG_NEON_OUTLINE, 1.1, 0.15)
+
+	eye1TapBtn = Instance.new("TextButton")
+	eye1TapBtn.Size = UDim2.new(1, 0, 1, 0)
+	eye1TapBtn.BackgroundTransparency = 1
+	eye1TapBtn.Text = ""
+	eye1TapBtn.ZIndex = 20
+	eye1TapBtn.Active = true
+	eye1TapBtn.Parent = eye1Holder
+
+	topEyeBtn = Instance.new("TextButton")
+	topEyeBtn.Name = "MortalThirdEyeCornerBtn"
+	topEyeBtn.Size = UDim2.new(0, 44, 0, 32)
+	topEyeBtn.Position = UDim2.new(1, -54, 0, 10)
+	topEyeBtn.BackgroundColor3 = CARD_BG
+	topEyeBtn.Text = ""
+	topEyeBtn.Active = true
+	topEyeBtn.ZIndex = 22
+	topEyeBtn.Parent = sg
+	Instance.new("UICorner", topEyeBtn).CornerRadius = UDim.new(0, 10)
+	addBorder(topEyeBtn, NEON_RIFT, 1.5, 0.1)
+
+	topEyePupil = createEyeGraphic(topEyeBtn, 26, 15, 10, 4, 24)
+
+	topEyePanel = Instance.new("Frame")
+	topEyePanel.Name = "MortalThirdEyePanel"
+	topEyePanel.Size = UDim2.new(0, 292, 0, 32)
+	topEyePanel.Position = UDim2.new(1, -352, 0, 10)
+	topEyePanel.BackgroundColor3 = TAG_DARK_BAR
+	topEyePanel.BackgroundTransparency = 0.06
+	topEyePanel.Visible = Cfg.TopEyeOpen
+	topEyePanel.ZIndex = 20
+	topEyePanel.Parent = sg
+	Instance.new("UICorner", topEyePanel).CornerRadius = UDim.new(0, 10)
+	addBorder(topEyePanel, TAG_NEON_OUTLINE, 1.6, 0.08)
+
+	topStatsLbl = Instance.new("TextLabel")
+	topStatsLbl.Size = UDim2.new(0, 128, 1, 0)
+	topStatsLbl.Position = UDim2.new(0, 6, 0, 0)
+	topStatsLbl.BackgroundTransparency = 1
+	topStatsLbl.Font = Enum.Font.GothamBold
+	topStatsLbl.TextSize = 9
+	topStatsLbl.Text = "PLAYERS: 1 | PING: 0ms"
+	topStatsLbl.TextColor3 = TEXT_MAIN
+	topStatsLbl.TextXAlignment = Enum.TextXAlignment.Left
+	topStatsLbl.ZIndex = 21
+	topStatsLbl.Parent = topEyePanel
+
+	topAuraOnOffBtn = Instance.new("TextButton")
+	topAuraOnOffBtn.Size = UDim2.new(0, 72, 0, 22)
+	topAuraOnOffBtn.Position = UDim2.new(0, 136, 0.5, -11)
+	topAuraOnOffBtn.BackgroundColor3 = BTN_OFF
+	topAuraOnOffBtn.Font = Enum.Font.GothamBlack
+	topAuraOnOffBtn.TextSize = 9
+	topAuraOnOffBtn.Text = "AURA: OFF"
+	topAuraOnOffBtn.TextColor3 = TEXT_MAIN
+	topAuraOnOffBtn.ZIndex = 21
+	topAuraOnOffBtn.Parent = topEyePanel
+	Instance.new("UICorner", topAuraOnOffBtn).CornerRadius = UDim.new(0, 6)
+	addBorder(topAuraOnOffBtn, NEON_RING, 1, 0.25)
+	topAuraOnOffBtn.MouseButton1Click:Connect(function()
+		Cfg.AuraEnabled = not Cfg.AuraEnabled
+		refreshAuraUI()
+		saveAuraConfigNow()
+		playClick(Cfg.AuraEnabled and 1.15 or 0.9)
 	end)
-	pages[idx] = page
 
-	local tBtn = Instance.new("TextButton")
-	tBtn.Size = UDim2.new(0.92, 0, 0, 28)
-	tBtn.BackgroundColor3 = (idx == 1) and BTN_ON or BTN_OFF
-	tBtn.Font = Enum.Font.GothamBold
-	tBtn.TextSize = 11
-	tBtn.Text = tostring(idx) .. ". " .. secName
-	tBtn.TextColor3 = (idx == 1) and TEXT_MAIN or TEXT_DIM
-	tBtn.ZIndex = 32
-	tBtn.Parent = sideScroll
-	Instance.new("UICorner", tBtn).CornerRadius = UDim.new(0, 7)
-	tBtn.MouseButton1Click:Connect(function() switchSection(idx) end)
-	tabButtons[idx] = tBtn
+	local topMinusBtn = Instance.new("TextButton")
+	topMinusBtn.Size = UDim2.new(0, 18, 0, 22)
+	topMinusBtn.Position = UDim2.new(0, 212, 0.5, -11)
+	topMinusBtn.BackgroundColor3 = BTN_OFF
+	topMinusBtn.Font = Enum.Font.GothamBlack
+	topMinusBtn.TextSize = 11
+	topMinusBtn.Text = "-"
+	topMinusBtn.TextColor3 = TEXT_MAIN
+	topMinusBtn.ZIndex = 21
+	topMinusBtn.Parent = topEyePanel
+	Instance.new("UICorner", topMinusBtn).CornerRadius = UDim.new(0, 6)
+	addBorder(topMinusBtn, NEON_RING, 1, 0.25)
+
+	topAuraLvlLbl = Instance.new("TextLabel")
+	topAuraLvlLbl.Size = UDim2.new(0, 34, 0, 22)
+	topAuraLvlLbl.Position = UDim2.new(0, 232, 0.5, -11)
+	topAuraLvlLbl.BackgroundColor3 = VOID_BG
+	topAuraLvlLbl.Font = Enum.Font.GothamBlack
+	topAuraLvlLbl.TextSize = 10
+	topAuraLvlLbl.Text = "LV.1"
+	topAuraLvlLbl.TextColor3 = TAG_NEON_PURPLE
+	topAuraLvlLbl.ZIndex = 21
+	topAuraLvlLbl.Parent = topEyePanel
+	Instance.new("UICorner", topAuraLvlLbl).CornerRadius = UDim.new(0, 6)
+	addBorder(topAuraLvlLbl, NEON_RING, 1, 0.25)
+
+	local topPlusBtn = Instance.new("TextButton")
+	topPlusBtn.Size = UDim2.new(0, 18, 0, 22)
+	topPlusBtn.Position = UDim2.new(0, 268, 0.5, -11)
+	topPlusBtn.BackgroundColor3 = BTN_OFF
+	topPlusBtn.Font = Enum.Font.GothamBlack
+	topPlusBtn.TextSize = 11
+	topPlusBtn.Text = "+"
+	topPlusBtn.TextColor3 = TEXT_MAIN
+	topPlusBtn.ZIndex = 21
+	topPlusBtn.Parent = topEyePanel
+	Instance.new("UICorner", topPlusBtn).CornerRadius = UDim.new(0, 6)
+	addBorder(topPlusBtn, NEON_RING, 1, 0.25)
+
+	topMinusBtn.MouseButton1Click:Connect(function()
+		Cfg.AuraLevel = math.max(1, Cfg.AuraLevel - 1)
+		builtAuraLevel = nil
+		refreshAuraUI()
+		saveAuraConfigNow()
+		playClick(0.95)
+	end)
+	topPlusBtn.MouseButton1Click:Connect(function()
+		Cfg.AuraLevel = math.min(MAX_AURA_LEVEL, Cfg.AuraLevel + 1)
+		builtAuraLevel = nil
+		refreshAuraUI()
+		saveAuraConfigNow()
+		playClick(1.1)
+	end)
+	topEyeBtn.MouseButton1Click:Connect(function()
+		Cfg.TopEyeOpen = not Cfg.TopEyeOpen
+		topEyePanel.Visible = Cfg.TopEyeOpen
+		playClick(Cfg.TopEyeOpen and 1.15 or 0.9)
+	end)
+
+	mainFrame = Instance.new("Frame")
+	mainFrame.Name = "MortalMainWindow"
+	mainFrame.Size = UDim2.new(0, 440, 0, 320)
+	mainFrame.Position = UDim2.new(0.5, -220, 0.5, -160)
+	mainFrame.BackgroundColor3 = VOID_BG
+	mainFrame.Visible = false
+	mainFrame.Active = true
+	mainFrame.ZIndex = 30
+	mainFrame.Parent = sg
+	Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 14)
+	addBorder(mainFrame, NEON_RING, 2, 0.06)
+
+	local header = Instance.new("Frame")
+	header.Size = UDim2.new(1, 0, 0, 34)
+	header.BackgroundColor3 = CARD_BG
+	header.Active = true
+	header.ZIndex = 31
+	header.Parent = mainFrame
+	Instance.new("UICorner", header).CornerRadius = UDim.new(0, 14)
+
+	local titleLbl = Instance.new("TextLabel")
+	titleLbl.Size = UDim2.new(1, -80, 1, 0)
+	titleLbl.Position = UDim2.new(0, 12, 0, 0)
+	titleLbl.BackgroundTransparency = 1
+	titleLbl.Font = Enum.Font.GothamBlack
+	titleLbl.TextSize = 13
+	titleLbl.Text = GANG_NAME .. " HUB | BY " .. CREATOR_NAME
+	titleLbl.TextColor3 = TEXT_MAIN
+	titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+	titleLbl.ZIndex = 32
+	titleLbl.Parent = header
+
+	local closeBtn = Instance.new("TextButton")
+	closeBtn.Size = UDim2.new(0, 26, 0, 26)
+	closeBtn.Position = UDim2.new(1, -32, 0, 4)
+	closeBtn.BackgroundColor3 = BTN_ON
+	closeBtn.Font = Enum.Font.GothamBlack
+	closeBtn.TextSize = 12
+	closeBtn.Text = "X"
+	closeBtn.TextColor3 = TEXT_MAIN
+	closeBtn.ZIndex = 33
+	closeBtn.Parent = header
+	Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 7)
+	closeBtn.MouseButton1Click:Connect(function()
+		mainFrame.Visible = false
+		playClick(0.9)
+	end)
+
+	local sideScroll = Instance.new("ScrollingFrame")
+	sideScroll.Size = UDim2.new(0, 114, 1, -42)
+	sideScroll.Position = UDim2.new(0, 6, 0, 38)
+	sideScroll.BackgroundColor3 = CARD_BG
+	sideScroll.ScrollBarThickness = 2
+	sideScroll.ZIndex = 31
+	sideScroll.Parent = mainFrame
+	Instance.new("UICorner", sideScroll).CornerRadius = UDim.new(0, 10)
+	addBorder(sideScroll, NEON_RING, 1.2, 0.25)
+
+	local sideList = Instance.new("UIListLayout", sideScroll)
+	sideList.Padding = UDim.new(0, 4)
+	sideList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	sideList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		sideScroll.CanvasSize = UDim2.new(0, 0, 0, sideList.AbsoluteContentSize.Y + 8)
+	end)
+
+	local contentHolder = Instance.new("Frame")
+	contentHolder.Size = UDim2.new(1, -130, 1, -42)
+	contentHolder.Position = UDim2.new(0, 124, 0, 38)
+	contentHolder.BackgroundColor3 = CARD_BG
+	contentHolder.ZIndex = 31
+	contentHolder.Parent = mainFrame
+	Instance.new("UICorner", contentHolder).CornerRadius = UDim.new(0, 10)
+	addBorder(contentHolder, NEON_RING, 1.2, 0.25)
+
+	local sectionNames = {
+		"Info",
+		"Friends",
+		"Player",
+		"Exploits",
+		"Troll",
+		"Server Time",
+		"Aura",
+		"Spams",
+	}
+
+	switchSection = function(idx)
+		for i, page in ipairs(pages) do
+			page.Visible = (i == idx)
+		end
+		for i, btn in ipairs(tabButtons) do
+			btn.BackgroundColor3 = (i == idx) and BTN_ON or BTN_OFF
+			btn.TextColor3 = (i == idx) and TEXT_MAIN or TEXT_DIM
+		end
+		local cb = refreshCallbacks[idx]
+		if cb then pcall(cb) end
+		playClick(1.05)
+	end
+
+	for idx, secName in ipairs(sectionNames) do
+		local page = Instance.new("ScrollingFrame")
+		page.Name = "Section_" .. tostring(idx) .. "_" .. secName
+		page.Size = UDim2.new(1, -8, 1, -8)
+		page.Position = UDim2.new(0, 4, 0, 4)
+		page.BackgroundTransparency = 1
+		page.ScrollBarThickness = 3
+		page.Visible = (idx == 1)
+		page.ZIndex = 32
+		page.Parent = contentHolder
+
+		local lay = Instance.new("UIListLayout", page)
+		lay.Padding = UDim.new(0, 6)
+		lay.HorizontalAlignment = Enum.HorizontalAlignment.Center
+		lay:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+			page.CanvasSize = UDim2.new(0, 0, 0, lay.AbsoluteContentSize.Y + 10)
+		end)
+		pages[idx] = page
+
+		local tBtn = Instance.new("TextButton")
+		tBtn.Size = UDim2.new(0.92, 0, 0, 28)
+		tBtn.BackgroundColor3 = (idx == 1) and BTN_ON or BTN_OFF
+		tBtn.Font = Enum.Font.GothamBold
+		tBtn.TextSize = 11
+		tBtn.Text = tostring(idx) .. ". " .. secName
+		tBtn.TextColor3 = (idx == 1) and TEXT_MAIN or TEXT_DIM
+		tBtn.ZIndex = 32
+		tBtn.Parent = sideScroll
+		Instance.new("UICorner", tBtn).CornerRadius = UDim.new(0, 7)
+		tBtn.MouseButton1Click:Connect(function() switchSection(idx) end)
+		tabButtons[idx] = tBtn
+	end
 end
 
 local function makeBtn(parent, txt, onClick)
@@ -3268,39 +3178,45 @@ do
 	refreshCallbacks[2] = rebuildFriendsList
 end
 
-local joinBanner = Instance.new("Frame")
-joinBanner.Size = UDim2.new(0, 260, 0, 44)
-joinBanner.Position = UDim2.new(0.5, -130, 0, 14)
-joinBanner.BackgroundColor3 = TAG_DARK_BAR
-joinBanner.Visible = false
-joinBanner.ZIndex = 60
-joinBanner.Parent = sg
-Instance.new("UICorner", joinBanner).CornerRadius = UDim.new(0, 10)
-addBorder(joinBanner, NEON_RIFT, 1.6, 0.08)
-
-local joinBannerLbl = Instance.new("TextLabel")
-joinBannerLbl.Size = UDim2.new(1, -12, 1, 0)
-joinBannerLbl.Position = UDim2.new(0, 6, 0, 0)
-joinBannerLbl.BackgroundTransparency = 1
-joinBannerLbl.Font = Enum.Font.GothamBlack
-joinBannerLbl.TextSize = 11
-joinBannerLbl.TextColor3 = TAG_NEON_PURPLE
-joinBannerLbl.TextWrapped = true
-joinBannerLbl.ZIndex = 61
-joinBannerLbl.Parent = joinBanner
-
+local joinBannerLbl = nil
 local function showFriendJoinNotify(plr)
 	if not plr or notifiedFriends[plr.UserId] then return end
 	if not isFriend(plr) then return end
 	notifiedFriends[plr.UserId] = true
-	joinBannerLbl.Text = "FRIEND JOINED: " .. plr.DisplayName .. " (@" .. plr.Name .. ")"
-	joinBanner.Visible = true
-	playClick(1.25)
-	task.delay(5, function()
-		if joinBanner and joinBannerLbl.Text:find(plr.Name, 1, true) then
-			joinBanner.Visible = false
-		end
-	end)
+	if joinBannerLbl and joinBannerLbl.Parent then
+		local banner = joinBannerLbl.Parent
+		joinBannerLbl.Text = "FRIEND JOINED: " .. plr.DisplayName .. " (@" .. plr.Name .. ")"
+		banner.Visible = true
+		playClick(1.25)
+		task.delay(5, function()
+			if banner and joinBannerLbl and joinBannerLbl.Text:find(plr.Name, 1, true) then
+				banner.Visible = false
+			end
+		end)
+	end
+end
+
+do
+	local joinBanner = Instance.new("Frame")
+	joinBanner.Size = UDim2.new(0, 260, 0, 44)
+	joinBanner.Position = UDim2.new(0.5, -130, 0, 14)
+	joinBanner.BackgroundColor3 = TAG_DARK_BAR
+	joinBanner.Visible = false
+	joinBanner.ZIndex = 60
+	joinBanner.Parent = sg
+	Instance.new("UICorner", joinBanner).CornerRadius = UDim.new(0, 10)
+	addBorder(joinBanner, NEON_RIFT, 1.6, 0.08)
+
+	joinBannerLbl = Instance.new("TextLabel")
+	joinBannerLbl.Size = UDim2.new(1, -12, 1, 0)
+	joinBannerLbl.Position = UDim2.new(0, 6, 0, 0)
+	joinBannerLbl.BackgroundTransparency = 1
+	joinBannerLbl.Font = Enum.Font.GothamBlack
+	joinBannerLbl.TextSize = 11
+	joinBannerLbl.TextColor3 = TAG_NEON_PURPLE
+	joinBannerLbl.TextWrapped = true
+	joinBannerLbl.ZIndex = 61
+	joinBannerLbl.Parent = joinBanner
 end
 
 -- ============================================================================
@@ -3710,7 +3626,10 @@ do
 			playClick(mainFrame.Visible and 1.15 or 0.9)
 		end
 	end)
-	makeDraggable(mainFrame, header, false, nil)
+	local hdr = mainFrame:FindFirstChildOfClass("Frame")
+	if hdr then
+		makeDraggable(mainFrame, hdr, false, nil)
+	end
 end
 
 -- ============================================================================
@@ -3799,198 +3718,202 @@ if LocalPlayer.Character then
 	markSelfScriptPresence(LocalPlayer.Character)
 end
 
-local lastStatsRefresh = 0
-local lastTimeListRefresh = 0
+do
+	local lastStatsRefresh = 0
+	local lastTimeListRefresh = 0
 
-RunService.Stepped:Connect(function()
-	local char, hum, hrp = getRig()
-	if Cfg.Noclip then
-		setNoclip(char, hum, true)
-		applyNoclipHorizontalLock(char, hum, hrp)
-	elseif next(ncStore) ~= nil or (hum and not Cfg.AirWalk) then
-		setNoclip(char, hum, false)
-	end
-	if hum then
-		setAntiSit(hum, Cfg.AntiSit)
-	end
-	if Cfg.HeadSit and char and hum and hrp then
+	RunService.Stepped:Connect(function()
+		local char, hum, hrp = getRig()
+		if Cfg.Noclip then
+			setNoclip(char, hum, true)
+			applyNoclipHorizontalLock(char, hum, hrp)
+		elseif next(ncStore) ~= nil or (hum and not Cfg.AirWalk) then
+			setNoclip(char, hum, false)
+		end
+		if hum then
+			setAntiSit(hum, Cfg.AntiSit)
+		end
+		if Cfg.HeadSit and char and hum and hrp then
+			local tgtPlr = findPlayer(getTargetQuery())
+			local tgtChar = tgtPlr and tgtPlr.Character
+			local tgtRoot = tgtChar and tgtChar:FindFirstChild("HumanoidRootPart")
+			local tgtHead = tgtChar and tgtChar:FindFirstChild("Head")
+			if tgtRoot then
+				headSitActiveLastFrame = true
+				applyHeadSitLock(char, hum, hrp, tgtChar, tgtRoot, tgtHead)
+			end
+		end
+	end)
+
+	RunService.RenderStepped:Connect(function(dt)
+		local now = os.clock()
+
+		if eye1FpsLbl and dt > 0 then
+			local fps = math.clamp(math.floor((1 / dt) + 0.5), 1, 240)
+			eye1FpsLbl.Text = tostring(fps) .. " FPS"
+		end
+
+		if eye1Pupil then
+			eye1Pupil.Position = UDim2.new(0.5 + math.cos(now * 2.0) * 0.14, -2.5, 0.5 + math.sin(now * 1.5) * 0.12, -2.5)
+		end
+		if topEyePupil then
+			topEyePupil.Position = UDim2.new(0.5 + math.cos(now * 2.2) * 0.12, -2, 0.5 + math.sin(now * 1.8) * 0.1, -2)
+		end
+
+		if now - lastStatsRefresh >= 0.5 then
+			lastStatsRefresh = now
+			if topStatsLbl then
+				local plrCount = #Players:GetPlayers()
+				local pingMs = getPing()
+				topStatsLbl.Text = "PLAYERS: " .. tostring(plrCount) .. " | PING: " .. tostring(pingMs) .. "ms"
+			end
+		end
+
+		for _, plr in ipairs(Players:GetPlayers()) do
+			updateThirdEyeTag(plr)
+		end
+		syncAllESP()
+
+		if pages[6] and pages[6].Visible and (now - lastTimeListRefresh >= 1) then
+			lastTimeListRefresh = now
+			rebuildServerTimeList()
+		end
+
+		if Cfg.ChatSpam and (now - lastSpamTick >= 1.4) then
+			lastSpamTick = now
+			sendChatMessage(Cfg.SpamText ~= "" and Cfg.SpamText or "MORTAL On Top!")
+		end
+
+		local char, hum, hrp = getRig()
+		if not char or not hum or not hrp then return end
+
+		stepAura(now, char, hum, hrp)
+
+		if Cfg.Noclip then
+			setNoclip(char, hum, true)
+			applyNoclipHorizontalLock(char, hum, hrp)
+		end
+
+		if Cfg.AntiSit and not Cfg.HeadSit and (hum.Sit or hum.SeatPart) then
+			hum.Sit = false
+			pcall(function() hum:ChangeState(Enum.HumanoidStateType.Jumping) end)
+		end
+
+		if Cfg.Speed then hum.WalkSpeed = Cfg.SpeedVal end
+		if Cfg.Jump then hum.UseJumpPower = true; hum.JumpPower = Cfg.JumpVal end
+
+		if Cfg.EmoteSpeed then
+			local safeSpd = tonumber(Cfg.EmoteVal) or 1
+			if safeSpd ~= safeSpd or safeSpd == math.huge then safeSpd = 100
+			elseif safeSpd == -math.huge then safeSpd = -100
+			else safeSpd = math.clamp(safeSpd, -100, 100) end
+			for _, tr in ipairs(hum:GetPlayingAnimationTracks()) do
+				pcall(function() tr:AdjustSpeed(safeSpd) end)
+			end
+		end
+
+		if Cfg.AirWalk then
+			sanitizeAirWalkAnim(hum)
+			enforceAirWalkStates(hum)
+			if airY == nil then airY = hrp.Position.Y end
+			if airMoveDir ~= 0 then
+				airY = airY + (airMoveDir * Cfg.AirStep * math.clamp(dt * 60, 0.25, 2.5))
+			end
+			local pos = hrp.Position
+			hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, 0, hrp.AssemblyLinearVelocity.Z)
+			hrp.CFrame = CFrame.new(pos.X, airY, pos.Z) * (hrp.CFrame - hrp.Position)
+		end
+
 		local tgtPlr = findPlayer(getTargetQuery())
 		local tgtChar = tgtPlr and tgtPlr.Character
 		local tgtRoot = tgtChar and tgtChar:FindFirstChild("HumanoidRootPart")
 		local tgtHead = tgtChar and tgtChar:FindFirstChild("Head")
-		if tgtRoot then
-			headSitActiveLastFrame = true
-			applyHeadSitLock(char, hum, hrp, tgtChar, tgtRoot, tgtHead)
-		end
-	end
-end)
+		local tgtHum = tgtChar and tgtChar:FindFirstChildOfClass("Humanoid")
 
-RunService.RenderStepped:Connect(function(dt)
-	local now = os.clock()
-
-	if eye1FpsLbl and dt > 0 then
-		local fps = math.clamp(math.floor((1 / dt) + 0.5), 1, 240)
-		eye1FpsLbl.Text = tostring(fps) .. " FPS"
-	end
-
-	if eye1Pupil then
-		eye1Pupil.Position = UDim2.new(0.5 + math.cos(now * 2.0) * 0.14, -2.5, 0.5 + math.sin(now * 1.5) * 0.12, -2.5)
-	end
-	if topEyePupil then
-		topEyePupil.Position = UDim2.new(0.5 + math.cos(now * 2.2) * 0.12, -2, 0.5 + math.sin(now * 1.8) * 0.1, -2)
-	end
-
-	if now - lastStatsRefresh >= 0.5 then
-		lastStatsRefresh = now
-		local plrCount = #Players:GetPlayers()
-		local pingMs = getPing()
-		topStatsLbl.Text = "PLAYERS: " .. tostring(plrCount) .. " | PING: " .. tostring(pingMs) .. "ms"
-	end
-
-	for _, plr in ipairs(Players:GetPlayers()) do
-		updateThirdEyeTag(plr)
-	end
-	syncAllESP()
-
-	if pages[6] and pages[6].Visible and (now - lastTimeListRefresh >= 1) then
-		lastTimeListRefresh = now
-		rebuildServerTimeList()
-	end
-
-	if Cfg.ChatSpam and (now - lastSpamTick >= 1.4) then
-		lastSpamTick = now
-		sendChatMessage(Cfg.SpamText ~= "" and Cfg.SpamText or "MORTAL On Top!")
-	end
-
-	local char, hum, hrp = getRig()
-	if not char or not hum or not hrp then return end
-
-	stepAura(now, char, hum, hrp)
-
-	if Cfg.Noclip then
-		setNoclip(char, hum, true)
-		applyNoclipHorizontalLock(char, hum, hrp)
-	end
-
-	if Cfg.AntiSit and not Cfg.HeadSit and (hum.Sit or hum.SeatPart) then
-		hum.Sit = false
-		pcall(function() hum:ChangeState(Enum.HumanoidStateType.Jumping) end)
-	end
-
-	if Cfg.Speed then hum.WalkSpeed = Cfg.SpeedVal end
-	if Cfg.Jump then hum.UseJumpPower = true; hum.JumpPower = Cfg.JumpVal end
-
-	if Cfg.EmoteSpeed then
-		local safeSpd = tonumber(Cfg.EmoteVal) or 1
-		if safeSpd ~= safeSpd or safeSpd == math.huge then safeSpd = 100
-		elseif safeSpd == -math.huge then safeSpd = -100
-		else safeSpd = math.clamp(safeSpd, -100, 100) end
-		for _, tr in ipairs(hum:GetPlayingAnimationTracks()) do
-			pcall(function() tr:AdjustSpeed(safeSpd) end)
-		end
-	end
-
-	if Cfg.AirWalk then
-		sanitizeAirWalkAnim(hum)
-		enforceAirWalkStates(hum)
-		if airY == nil then airY = hrp.Position.Y end
-		if airMoveDir ~= 0 then
-			airY = airY + (airMoveDir * Cfg.AirStep * math.clamp(dt * 60, 0.25, 2.5))
-		end
-		local pos = hrp.Position
-		hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, 0, hrp.AssemblyLinearVelocity.Z)
-		hrp.CFrame = CFrame.new(pos.X, airY, pos.Z) * (hrp.CFrame - hrp.Position)
-	end
-
-	local tgtPlr = findPlayer(getTargetQuery())
-	local tgtChar = tgtPlr and tgtPlr.Character
-	local tgtRoot = tgtChar and tgtChar:FindFirstChild("HumanoidRootPart")
-	local tgtHead = tgtChar and tgtChar:FindFirstChild("Head")
-	local tgtHum = tgtChar and tgtChar:FindFirstChildOfClass("Humanoid")
-
-	if Cfg.SpectateTarget then
-		local cam = workspace.CurrentCamera
-		if cam and tgtHum then
-			if cam.CameraSubject ~= tgtHum or lastSpectatedTargetHum ~= tgtHum then
-				pcall(function() cam.CameraSubject = tgtHum end)
-				lastSpectatedTargetHum = tgtHum
+		if Cfg.SpectateTarget then
+			local cam = workspace.CurrentCamera
+			if cam and tgtHum then
+				if cam.CameraSubject ~= tgtHum or lastSpectatedTargetHum ~= tgtHum then
+					pcall(function() cam.CameraSubject = tgtHum end)
+					lastSpectatedTargetHum = tgtHum
+				end
+			elseif lastSpectatedTargetHum ~= nil then
+				resetSpectateCamera()
 			end
 		elseif lastSpectatedTargetHum ~= nil then
 			resetSpectateCamera()
 		end
-	elseif lastSpectatedTargetHum ~= nil then
-		resetSpectateCamera()
-	end
 
-	if Cfg.Mimic and tgtPlr then
-		runMimic(char, hum, tgtPlr)
-	elseif next(mimicTracks) ~= nil then
-		clearMimic()
-	end
-
-	local didHeadSit = false
-
-	if tgtRoot then
-		local hRatio = getAvatarHeightRatio(tgtChar, tgtHead)
-		local lookDir = tgtRoot.CFrame.LookVector
-		local flatLook = Vector3.new(lookDir.X, 0, lookDir.Z)
-		if flatLook.Magnitude < 1e-4 then
-			flatLook = Vector3.new(0, 0, -1)
-		else
-			flatLook = flatLook.Unit
+		if Cfg.Mimic and tgtPlr then
+			runMimic(char, hum, tgtPlr)
+		elseif next(mimicTracks) ~= nil then
+			clearMimic()
 		end
 
-		if Cfg.LoopTP then
-			hrp.CFrame = tgtRoot.CFrame * CFrame.new(0, 0, 3)
-		elseif Cfg.FollowTarget then
-			local backPos = tgtRoot.Position - (tgtRoot.CFrame.LookVector * 3.5)
-			hrp.CFrame = CFrame.new(hrp.Position:Lerp(Vector3.new(backPos.X, tgtRoot.Position.Y, backPos.Z), math.clamp(dt * 8, 0, 1)), tgtRoot.Position)
-		elseif Cfg.Orbit then
-			orbitAngle = orbitAngle + (3.5 * dt)
-			local rad = 5
-			local ox = tgtRoot.Position.X + math.cos(orbitAngle) * rad
-			local oz = tgtRoot.Position.Z + math.sin(orbitAngle) * rad
-			hrp.CFrame = CFrame.new(Vector3.new(ox, tgtRoot.Position.Y, oz), tgtRoot.Position)
-		elseif Cfg.HeadSit then
-			didHeadSit = true
-			headSitActiveLastFrame = true
-			applyHeadSitLock(char, hum, hrp, tgtChar, tgtRoot, tgtHead)
-		else
-			local mode = nil
-			local mbSpeed = math.max(0.1, tonumber(Cfg.MultiBangSpeed) or 2.2)
-			if Cfg.MultiBang then
-				if now - lastMultiSwitchTick >= (1 / mbSpeed) then
-					lastMultiSwitchTick = now
-					multiBangIndex = (multiBangIndex % 3) + 1
-				end
-				mode = (multiBangIndex == 1 and "FaceBang") or (multiBangIndex == 2 and "Bang") or "FrontBang"
-			elseif Cfg.FaceBang then mode = "FaceBang"
-			elseif Cfg.FrontBang then mode = "FrontBang"
-			elseif Cfg.Bang then mode = "Bang" end
+		local didHeadSit = false
 
-			if mode then
-				local activeSpeed = (mode == "FaceBang" or Cfg.MultiBang) and mbSpeed or 3.5
-				local pulse = math.sin(now * (activeSpeed * 3.2)) * (0.42 * hRatio)
-				if mode == "FaceBang" then
-					local faceCenter = tgtHead and tgtHead.Position or (tgtRoot.Position + Vector3.new(0, 1.5 * hRatio, 0))
-					local headRadius = (tgtHead and math.max(tgtHead.Size.Z, tgtHead.Size.X) * 0.5) or (0.6 * hRatio)
-					local closeDist = headRadius + (1.15 * hRatio) + pulse
-					local posAtFace = Vector3.new(faceCenter.X, faceCenter.Y, faceCenter.Z) + (flatLook * closeDist)
-					hrp.CFrame = CFrame.lookAt(posAtFace, posAtFace + flatLook)
-				elseif mode == "FrontBang" then
-					hrp.CFrame = CFrame.new(tgtRoot.Position + tgtRoot.CFrame.LookVector * (2.2 + pulse), tgtRoot.Position)
-				else
-					hrp.CFrame = tgtRoot.CFrame * CFrame.new(0, 0, 2.2 + pulse)
+		if tgtRoot then
+			local hRatio = getAvatarHeightRatio(tgtChar, tgtHead)
+			local lookDir = tgtRoot.CFrame.LookVector
+			local flatLook = Vector3.new(lookDir.X, 0, lookDir.Z)
+			if flatLook.Magnitude < 1e-4 then
+				flatLook = Vector3.new(0, 0, -1)
+			else
+				flatLook = flatLook.Unit
+			end
+
+			if Cfg.LoopTP then
+				hrp.CFrame = tgtRoot.CFrame * CFrame.new(0, 0, 3)
+			elseif Cfg.FollowTarget then
+				local backPos = tgtRoot.Position - (tgtRoot.CFrame.LookVector * 3.5)
+				hrp.CFrame = CFrame.new(hrp.Position:Lerp(Vector3.new(backPos.X, tgtRoot.Position.Y, backPos.Z), math.clamp(dt * 8, 0, 1)), tgtRoot.Position)
+			elseif Cfg.Orbit then
+				orbitAngle = orbitAngle + (3.5 * dt)
+				local rad = 5
+				local ox = tgtRoot.Position.X + math.cos(orbitAngle) * rad
+				local oz = tgtRoot.Position.Z + math.sin(orbitAngle) * rad
+				hrp.CFrame = CFrame.new(Vector3.new(ox, tgtRoot.Position.Y, oz), tgtRoot.Position)
+			elseif Cfg.HeadSit then
+				didHeadSit = true
+				headSitActiveLastFrame = true
+				applyHeadSitLock(char, hum, hrp, tgtChar, tgtRoot, tgtHead)
+			else
+				local mode = nil
+				local mbSpeed = math.max(0.1, tonumber(Cfg.MultiBangSpeed) or 2.2)
+				if Cfg.MultiBang then
+					if now - lastMultiSwitchTick >= (1 / mbSpeed) then
+						lastMultiSwitchTick = now
+						multiBangIndex = (multiBangIndex % 3) + 1
+					end
+					mode = (multiBangIndex == 1 and "FaceBang") or (multiBangIndex == 2 and "Bang") or "FrontBang"
+				elseif Cfg.FaceBang then mode = "FaceBang"
+				elseif Cfg.FrontBang then mode = "FrontBang"
+				elseif Cfg.Bang then mode = "Bang" end
+
+				if mode then
+					local activeSpeed = (mode == "FaceBang" or Cfg.MultiBang) and mbSpeed or 3.5
+					local pulse = math.sin(now * (activeSpeed * 3.2)) * (0.42 * hRatio)
+					if mode == "FaceBang" then
+						local faceCenter = tgtHead and tgtHead.Position or (tgtRoot.Position + Vector3.new(0, 1.5 * hRatio, 0))
+						local headRadius = (tgtHead and math.max(tgtHead.Size.Z, tgtHead.Size.X) * 0.5) or (0.6 * hRatio)
+						local closeDist = headRadius + (1.15 * hRatio) + pulse
+						local posAtFace = Vector3.new(faceCenter.X, faceCenter.Y, faceCenter.Z) + (flatLook * closeDist)
+						hrp.CFrame = CFrame.lookAt(posAtFace, posAtFace + flatLook)
+					elseif mode == "FrontBang" then
+						hrp.CFrame = CFrame.new(tgtRoot.Position + tgtRoot.CFrame.LookVector * (2.2 + pulse), tgtRoot.Position)
+					else
+						hrp.CFrame = tgtRoot.CFrame * CFrame.new(0, 0, 2.2 + pulse)
+					end
 				end
 			end
 		end
-	end
 
-	if not didHeadSit and headSitActiveLastFrame then
-		releaseHeadSit(hum)
-	end
+		if not didHeadSit and headSitActiveLastFrame then
+			releaseHeadSit(hum)
+		end
 
-	if Cfg.Spin then
-		hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(Cfg.SpinVal * 6 * dt), 0)
-	end
-end)
+		if Cfg.Spin then
+			hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(Cfg.SpinVal * 6 * dt), 0)
+		end
+	end)
+end
