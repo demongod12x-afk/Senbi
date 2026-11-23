@@ -194,6 +194,8 @@ local Cfg = {
 	SpamText = "MORTAL On Top!"
 }
 
+local UI = {}
+
 local function parseHugeNum(raw, defaultVal, minVal)
 	local str = tostring(raw or ""):gsub("[%s_,]", "")
 	if str == "" then return defaultVal end
@@ -2726,171 +2728,167 @@ wheelGui.Parent = PlayerGui
 local refreshAuraUI
 
 do
-	local wheelFrame = Instance.new("Frame")
-	wheelFrame.Size = UDim2.new(0, 236, 0, 290)
-	wheelFrame.Position = UDim2.new(0.5, 136, 0.2, 0)
-	wheelFrame.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
-	wheelFrame.BorderSizePixel = 0
-	wheelFrame.Active = true
-	wheelFrame.ZIndex = 62
-	wheelFrame.Parent = wheelGui
-	Instance.new("UICorner", wheelFrame).CornerRadius = UDim.new(0, 12)
-	addBorder(wheelFrame, Color3.fromRGB(95, 95, 118), 1.6, 0.08)
+	UI.wheelFrame = Instance.new("Frame")
+	UI.wheelFrame.Size = UDim2.new(0, 236, 0, 290)
+	UI.wheelFrame.Position = UDim2.new(0.5, 136, 0.2, 0)
+	UI.wheelFrame.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
+	UI.wheelFrame.BorderSizePixel = 0
+	UI.wheelFrame.Active = true
+	UI.wheelFrame.ZIndex = 62
+	UI.wheelFrame.Parent = wheelGui
+	Instance.new("UICorner", UI.wheelFrame).CornerRadius = UDim.new(0, 12)
+	addBorder(UI.wheelFrame, Color3.fromRGB(95, 95, 118), 1.6, 0.08)
 
-	local wheelTitle = Instance.new("TextLabel")
-	wheelTitle.Size = UDim2.new(1, -44, 0, 24)
-	wheelTitle.Position = UDim2.new(0, 10, 0, 4)
-	wheelTitle.BackgroundTransparency = 1
-	wheelTitle.TextXAlignment = Enum.TextXAlignment.Left
-	wheelTitle.Text = "AURA COLOR CIRCLE"
-	wheelTitle.TextColor3 = Color3.fromRGB(235, 235, 245)
-	wheelTitle.Font = Enum.Font.GothamBold
-	wheelTitle.TextSize = 11
-	wheelTitle.ZIndex = 63
-	wheelTitle.Parent = wheelFrame
+	UI.wheelTitle = Instance.new("TextLabel")
+	UI.wheelTitle.Size = UDim2.new(1, -44, 0, 24)
+	UI.wheelTitle.Position = UDim2.new(0, 10, 0, 4)
+	UI.wheelTitle.BackgroundTransparency = 1
+	UI.wheelTitle.TextXAlignment = Enum.TextXAlignment.Left
+	UI.wheelTitle.Text = "AURA COLOR CIRCLE"
+	UI.wheelTitle.TextColor3 = Color3.fromRGB(235, 235, 245)
+	UI.wheelTitle.Font = Enum.Font.GothamBold
+	UI.wheelTitle.TextSize = 11
+	UI.wheelTitle.ZIndex = 63
+	UI.wheelTitle.Parent = UI.wheelFrame
 
-	local closeWheelBtn = Instance.new("TextButton")
-	closeWheelBtn.Size = UDim2.new(0, 26, 0, 22)
-	closeWheelBtn.Position = UDim2.new(1, -34, 0, 5)
-	closeWheelBtn.BackgroundColor3 = Color3.fromRGB(55, 16, 26)
-	closeWheelBtn.BorderSizePixel = 0
-	closeWheelBtn.Text = "X"
-	closeWheelBtn.TextColor3 = Color3.fromRGB(255, 185, 185)
-	closeWheelBtn.Font = Enum.Font.GothamBold
-	closeWheelBtn.TextSize = 11
-	closeWheelBtn.ZIndex = 64
-	closeWheelBtn.Parent = wheelFrame
-	Instance.new("UICorner", closeWheelBtn).CornerRadius = UDim.new(0, 6)
+	UI.closeWheelBtn = Instance.new("TextButton")
+	UI.closeWheelBtn.Size = UDim2.new(0, 26, 0, 22)
+	UI.closeWheelBtn.Position = UDim2.new(1, -34, 0, 5)
+	UI.closeWheelBtn.BackgroundColor3 = Color3.fromRGB(55, 16, 26)
+	UI.closeWheelBtn.BorderSizePixel = 0
+	UI.closeWheelBtn.Text = "X"
+	UI.closeWheelBtn.TextColor3 = Color3.fromRGB(255, 185, 185)
+	UI.closeWheelBtn.Font = Enum.Font.GothamBold
+	UI.closeWheelBtn.TextSize = 11
+	UI.closeWheelBtn.ZIndex = 64
+	UI.closeWheelBtn.Parent = UI.wheelFrame
+	Instance.new("UICorner", UI.closeWheelBtn).CornerRadius = UDim.new(0, 6)
 
-	local wheelPreviewBox = Instance.new("Frame")
-	wheelPreviewBox.Size = UDim2.new(0, 46, 0, 28)
-	wheelPreviewBox.Position = UDim2.new(0, 12, 0, 30)
-	wheelPreviewBox.BackgroundColor3 = getPickedAuraColor()
-	wheelPreviewBox.BorderSizePixel = 0
-	wheelPreviewBox.ZIndex = 63
-	wheelPreviewBox.Parent = wheelFrame
-	Instance.new("UICorner", wheelPreviewBox).CornerRadius = UDim.new(0, 6)
-	addBorder(wheelPreviewBox, Color3.fromRGB(255, 255, 255), 1.4, 0.1)
+	UI.wheelPreviewBox = Instance.new("Frame")
+	UI.wheelPreviewBox.Size = UDim2.new(0, 46, 0, 28)
+	UI.wheelPreviewBox.Position = UDim2.new(0, 12, 0, 30)
+	UI.wheelPreviewBox.BackgroundColor3 = getPickedAuraColor()
+	UI.wheelPreviewBox.BorderSizePixel = 0
+	UI.wheelPreviewBox.ZIndex = 63
+	UI.wheelPreviewBox.Parent = UI.wheelFrame
+	Instance.new("UICorner", UI.wheelPreviewBox).CornerRadius = UDim.new(0, 6)
+	addBorder(UI.wheelPreviewBox, Color3.fromRGB(255, 255, 255), 1.4, 0.1)
 
-	local wheelPreviewInfo = Instance.new("TextLabel")
-	wheelPreviewInfo.Size = UDim2.new(1, -72, 0, 28)
-	wheelPreviewInfo.Position = UDim2.new(0, 64, 0, 30)
-	wheelPreviewInfo.BackgroundTransparency = 1
-	wheelPreviewInfo.TextXAlignment = Enum.TextXAlignment.Left
-	wheelPreviewInfo.Text = "TAP CIRCLE OR SHADE BOX"
-	wheelPreviewInfo.TextColor3 = Color3.fromRGB(225, 225, 238)
-	wheelPreviewInfo.Font = Enum.Font.GothamBold
-	wheelPreviewInfo.TextSize = 10
-	wheelPreviewInfo.ZIndex = 63
-	wheelPreviewInfo.Parent = wheelFrame
+	UI.wheelPreviewInfo = Instance.new("TextLabel")
+	UI.wheelPreviewInfo.Size = UDim2.new(1, -72, 0, 28)
+	UI.wheelPreviewInfo.Position = UDim2.new(0, 64, 0, 30)
+	UI.wheelPreviewInfo.BackgroundTransparency = 1
+	UI.wheelPreviewInfo.TextXAlignment = Enum.TextXAlignment.Left
+	UI.wheelPreviewInfo.Text = "TAP CIRCLE OR SHADE BOX"
+	UI.wheelPreviewInfo.TextColor3 = Color3.fromRGB(225, 225, 238)
+	UI.wheelPreviewInfo.Font = Enum.Font.GothamBold
+	UI.wheelPreviewInfo.TextSize = 10
+	UI.wheelPreviewInfo.ZIndex = 63
+	UI.wheelPreviewInfo.Parent = UI.wheelFrame
 
-	local wheelCircleArea = Instance.new("Frame")
-	wheelCircleArea.Size = UDim2.new(0, 184, 0, 184)
-	wheelCircleArea.Position = UDim2.new(0.5, -92, 0, 64)
-	wheelCircleArea.BackgroundTransparency = 1
-	wheelCircleArea.ZIndex = 63
-	wheelCircleArea.Parent = wheelFrame
+	UI.wheelCircleArea = Instance.new("Frame")
+	UI.wheelCircleArea.Size = UDim2.new(0, 184, 0, 184)
+	UI.wheelCircleArea.Position = UDim2.new(0.5, -92, 0, 64)
+	UI.wheelCircleArea.BackgroundTransparency = 1
+	UI.wheelCircleArea.ZIndex = 63
+	UI.wheelCircleArea.Parent = UI.wheelFrame
 
-	local wheelOuterCircle = Instance.new("Frame")
-	wheelOuterCircle.Size = UDim2.new(1, 0, 1, 0)
-	wheelOuterCircle.BackgroundColor3 = Color3.fromRGB(26, 26, 32)
-	wheelOuterCircle.BorderSizePixel = 0
-	wheelOuterCircle.ZIndex = 63
-	wheelOuterCircle.Parent = wheelCircleArea
-	Instance.new("UICorner", wheelOuterCircle).CornerRadius = UDim.new(1, 0)
+	UI.wheelOuterCircle = Instance.new("Frame")
+	UI.wheelOuterCircle.Size = UDim2.new(1, 0, 1, 0)
+	UI.wheelOuterCircle.BackgroundColor3 = Color3.fromRGB(26, 26, 32)
+	UI.wheelOuterCircle.BorderSizePixel = 0
+	UI.wheelOuterCircle.ZIndex = 63
+	UI.wheelOuterCircle.Parent = UI.wheelCircleArea
+	Instance.new("UICorner", UI.wheelOuterCircle).CornerRadius = UDim.new(1, 0)
 
-	local wheelRingCount = 48
-	for i = 0, wheelRingCount - 1 do
-		local h = i / wheelRingCount
+	for i = 0, 47 do
+		local h = i / 48
 		local angleRad = (h * math.pi * 2) - (math.pi / 2)
-		local radiusPct = 0.425
-		local cx = 0.5 + math.cos(angleRad) * radiusPct
-		local cy = 0.5 + math.sin(angleRad) * radiusPct
 		local seg = Instance.new("Frame")
 		seg.Size = UDim2.new(0, 16, 0, 16)
-		seg.Position = UDim2.new(cx, -8, cy, -8)
+		seg.Position = UDim2.new(0.5 + math.cos(angleRad) * 0.425, -8, 0.5 + math.sin(angleRad) * 0.425, -8)
 		seg.BackgroundColor3 = Color3.fromHSV(h, 0.96, 1)
 		seg.BorderSizePixel = 0
 		seg.ZIndex = 64
-		seg.Parent = wheelOuterCircle
+		seg.Parent = UI.wheelOuterCircle
 		Instance.new("UICorner", seg).CornerRadius = UDim.new(1, 0)
 	end
 
-	local wheelRingDot = Instance.new("Frame")
-	wheelRingDot.Size = UDim2.new(0, 14, 0, 14)
-	wheelRingDot.Position = UDim2.new(0.5, -7, 0.5, -7)
-	wheelRingDot.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
-	wheelRingDot.BorderSizePixel = 0
-	wheelRingDot.ZIndex = 67
-	wheelRingDot.Parent = wheelOuterCircle
-	Instance.new("UICorner", wheelRingDot).CornerRadius = UDim.new(1, 0)
-	addBorder(wheelRingDot, Color3.fromRGB(255, 255, 255), 2.2, 0)
+	UI.wheelRingDot = Instance.new("Frame")
+	UI.wheelRingDot.Size = UDim2.new(0, 14, 0, 14)
+	UI.wheelRingDot.Position = UDim2.new(0.5, -7, 0.5, -7)
+	UI.wheelRingDot.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
+	UI.wheelRingDot.BorderSizePixel = 0
+	UI.wheelRingDot.ZIndex = 67
+	UI.wheelRingDot.Parent = UI.wheelOuterCircle
+	Instance.new("UICorner", UI.wheelRingDot).CornerRadius = UDim.new(1, 0)
+	addBorder(UI.wheelRingDot, Color3.fromRGB(255, 255, 255), 2.2, 0)
 
-	local wheelRingSurface = Instance.new("TextButton")
-	wheelRingSurface.Size = UDim2.new(1, 0, 1, 0)
-	wheelRingSurface.BackgroundTransparency = 1
-	wheelRingSurface.Text = ""
-	wheelRingSurface.ZIndex = 66
-	wheelRingSurface.Parent = wheelOuterCircle
+	UI.wheelRingSurface = Instance.new("TextButton")
+	UI.wheelRingSurface.Size = UDim2.new(1, 0, 1, 0)
+	UI.wheelRingSurface.BackgroundTransparency = 1
+	UI.wheelRingSurface.Text = ""
+	UI.wheelRingSurface.ZIndex = 66
+	UI.wheelRingSurface.Parent = UI.wheelOuterCircle
 
-	local wheelShadeBox = Instance.new("Frame")
-	wheelShadeBox.Size = UDim2.new(0, 96, 0, 96)
-	wheelShadeBox.Position = UDim2.new(0.5, -48, 0.5, -48)
-	wheelShadeBox.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
-	wheelShadeBox.BorderSizePixel = 0
-	wheelShadeBox.ClipsDescendants = true
-	wheelShadeBox.ZIndex = 68
-	wheelShadeBox.Parent = wheelCircleArea
-	Instance.new("UICorner", wheelShadeBox).CornerRadius = UDim.new(0, 8)
-	addBorder(wheelShadeBox, Color3.fromRGB(235, 235, 245), 1.2, 0.1)
+	UI.wheelShadeBox = Instance.new("Frame")
+	UI.wheelShadeBox.Size = UDim2.new(0, 96, 0, 96)
+	UI.wheelShadeBox.Position = UDim2.new(0.5, -48, 0.5, -48)
+	UI.wheelShadeBox.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
+	UI.wheelShadeBox.BorderSizePixel = 0
+	UI.wheelShadeBox.ClipsDescendants = true
+	UI.wheelShadeBox.ZIndex = 68
+	UI.wheelShadeBox.Parent = UI.wheelCircleArea
+	Instance.new("UICorner", UI.wheelShadeBox).CornerRadius = UDim.new(0, 8)
+	addBorder(UI.wheelShadeBox, Color3.fromRGB(235, 235, 245), 1.2, 0.1)
 
-	local wheelSatOverlay = Instance.new("Frame")
-	wheelSatOverlay.Size = UDim2.new(1, 0, 1, 0)
-	wheelSatOverlay.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	wheelSatOverlay.BorderSizePixel = 0
-	wheelSatOverlay.ZIndex = 69
-	wheelSatOverlay.Parent = wheelShadeBox
-	Instance.new("UICorner", wheelSatOverlay).CornerRadius = UDim.new(0, 8)
+	UI.wheelSatOverlay = Instance.new("Frame")
+	UI.wheelSatOverlay.Size = UDim2.new(1, 0, 1, 0)
+	UI.wheelSatOverlay.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	UI.wheelSatOverlay.BorderSizePixel = 0
+	UI.wheelSatOverlay.ZIndex = 69
+	UI.wheelSatOverlay.Parent = UI.wheelShadeBox
+	Instance.new("UICorner", UI.wheelSatOverlay).CornerRadius = UDim.new(0, 8)
 
-	local wheelSatGrad = Instance.new("UIGradient")
-	wheelSatGrad.Transparency = NumberSequence.new({
+	UI.wheelSatGrad = Instance.new("UIGradient")
+	UI.wheelSatGrad.Transparency = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0.05),
 		NumberSequenceKeypoint.new(1, 1.0),
 	})
-	wheelSatGrad.Parent = wheelSatOverlay
+	UI.wheelSatGrad.Parent = UI.wheelSatOverlay
 
-	local wheelValOverlay = Instance.new("Frame")
-	wheelValOverlay.Size = UDim2.new(1, 0, 1, 0)
-	wheelValOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-	wheelValOverlay.BorderSizePixel = 0
-	wheelValOverlay.ZIndex = 70
-	wheelValOverlay.Parent = wheelShadeBox
-	Instance.new("UICorner", wheelValOverlay).CornerRadius = UDim.new(0, 8)
+	UI.wheelValOverlay = Instance.new("Frame")
+	UI.wheelValOverlay.Size = UDim2.new(1, 0, 1, 0)
+	UI.wheelValOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	UI.wheelValOverlay.BorderSizePixel = 0
+	UI.wheelValOverlay.ZIndex = 70
+	UI.wheelValOverlay.Parent = UI.wheelShadeBox
+	Instance.new("UICorner", UI.wheelValOverlay).CornerRadius = UDim.new(0, 8)
 
-	local wheelValGrad = Instance.new("UIGradient")
-	wheelValGrad.Rotation = 90
-	wheelValGrad.Transparency = NumberSequence.new({
+	UI.wheelValGrad = Instance.new("UIGradient")
+	UI.wheelValGrad.Rotation = 90
+	UI.wheelValGrad.Transparency = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 1.0),
 		NumberSequenceKeypoint.new(1, 0.12),
 	})
-	wheelValGrad.Parent = wheelValOverlay
+	UI.wheelValGrad.Parent = UI.wheelValOverlay
 
-	local wheelPickerDot = Instance.new("Frame")
-	wheelPickerDot.Size = UDim2.new(0, 14, 0, 14)
-	wheelPickerDot.Position = UDim2.new(0.94, -7, 0.35, -7)
-	wheelPickerDot.BackgroundColor3 = getPickedAuraColor()
-	wheelPickerDot.BorderSizePixel = 0
-	wheelPickerDot.ZIndex = 72
-	wheelPickerDot.Parent = wheelShadeBox
-	Instance.new("UICorner", wheelPickerDot).CornerRadius = UDim.new(1, 0)
-	addBorder(wheelPickerDot, Color3.fromRGB(255, 255, 255), 2.2, 0)
+	UI.wheelPickerDot = Instance.new("Frame")
+	UI.wheelPickerDot.Size = UDim2.new(0, 14, 0, 14)
+	UI.wheelPickerDot.Position = UDim2.new(0.94, -7, 0.35, -7)
+	UI.wheelPickerDot.BackgroundColor3 = getPickedAuraColor()
+	UI.wheelPickerDot.BorderSizePixel = 0
+	UI.wheelPickerDot.ZIndex = 72
+	UI.wheelPickerDot.Parent = UI.wheelShadeBox
+	Instance.new("UICorner", UI.wheelPickerDot).CornerRadius = UDim.new(1, 0)
+	addBorder(UI.wheelPickerDot, Color3.fromRGB(255, 255, 255), 2.2, 0)
 
-	local wheelShadeSurface = Instance.new("TextButton")
-	wheelShadeSurface.Size = UDim2.new(1, 0, 1, 0)
-	wheelShadeSurface.BackgroundTransparency = 1
-	wheelShadeSurface.Text = ""
-	wheelShadeSurface.ZIndex = 71
-	wheelShadeSurface.Parent = wheelShadeBox
+	UI.wheelShadeSurface = Instance.new("TextButton")
+	UI.wheelShadeSurface.Size = UDim2.new(1, 0, 1, 0)
+	UI.wheelShadeSurface.BackgroundTransparency = 1
+	UI.wheelShadeSurface.Text = ""
+	UI.wheelShadeSurface.ZIndex = 71
+	UI.wheelShadeSurface.Parent = UI.wheelShadeBox
 
 	refreshAuraUI = function()
 		local modeName = AURA_MODES[Cfg.AuraModeIdx] or "COLUMN"
@@ -2917,24 +2915,22 @@ do
 		if auraColorStatusLbl then
 			auraColorStatusLbl.Text = "AURA COLOR: " .. colorTag .. " | LV." .. tostring(lvl)
 		end
-		wheelPreviewBox.BackgroundColor3 = picked
-		wheelPickerDot.BackgroundColor3 = picked
-		wheelShadeBox.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
-		wheelPreviewInfo.Text = colorTag .. " | TAP OR DRAG"
+		UI.wheelPreviewBox.BackgroundColor3 = picked
+		UI.wheelPickerDot.BackgroundColor3 = picked
+		UI.wheelShadeBox.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
+		UI.wheelPreviewInfo.Text = colorTag .. " | TAP OR DRAG"
 		local dotX = math.clamp(Cfg.AuraSat, 0, 1)
 		local dotY = math.clamp((1 - Cfg.AuraVal) / 0.82, 0, 1)
-		wheelPickerDot.Position = UDim2.new(dotX, -7, dotY, -7)
+		UI.wheelPickerDot.Position = UDim2.new(dotX, -7, dotY, -7)
 		local angleRad = (Cfg.AuraHue * math.pi * 2) - (math.pi / 2)
-		local ringX = 0.5 + math.cos(angleRad) * 0.425
-		local ringY = 0.5 + math.sin(angleRad) * 0.425
-		wheelRingDot.Position = UDim2.new(ringX, -7, ringY, -7)
-		wheelRingDot.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
+		UI.wheelRingDot.Position = UDim2.new(0.5 + math.cos(angleRad) * 0.425, -7, 0.5 + math.sin(angleRad) * 0.425, -7)
+		UI.wheelRingDot.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
 	end
 
-	local wheelDragTarget = nil
+	UI.wheelDragTarget = nil
 	local function updateAuraHueFromPos(posX, posY)
-		local cPos = wheelOuterCircle.AbsolutePosition
-		local cSize = wheelOuterCircle.AbsoluteSize
+		local cPos = UI.wheelOuterCircle.AbsolutePosition
+		local cSize = UI.wheelOuterCircle.AbsoluteSize
 		if cSize.X <= 1 or cSize.Y <= 1 then return end
 		local dx = posX - (cPos.X + cSize.X * 0.5)
 		local dy = posY - (cPos.Y + cSize.Y * 0.5)
@@ -2948,8 +2944,8 @@ do
 	end
 
 	local function updateAuraShadeFromPos(posX, posY)
-		local bPos = wheelShadeBox.AbsolutePosition
-		local bSize = wheelShadeBox.AbsoluteSize
+		local bPos = UI.wheelShadeBox.AbsolutePosition
+		local bSize = UI.wheelShadeBox.AbsoluteSize
 		if bSize.X <= 1 or bSize.Y <= 1 then return end
 		local nx = math.clamp((posX - bPos.X) / bSize.X, 0, 1)
 		local ny = math.clamp((posY - bPos.Y) / bSize.Y, 0, 1)
@@ -2961,50 +2957,50 @@ do
 		scheduleAuraSave(0.18)
 	end
 
-	wheelRingSurface.InputBegan:Connect(function(inp)
+	UI.wheelRingSurface.InputBegan:Connect(function(inp)
 		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-			wheelDragTarget = "ring"
+			UI.wheelDragTarget = "ring"
 			updateAuraHueFromPos(inp.Position.X, inp.Position.Y)
 		end
 	end)
-	wheelShadeSurface.InputBegan:Connect(function(inp)
+	UI.wheelShadeSurface.InputBegan:Connect(function(inp)
 		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-			wheelDragTarget = "shade"
+			UI.wheelDragTarget = "shade"
 			updateAuraShadeFromPos(inp.Position.X, inp.Position.Y)
 		end
 	end)
 	UserInputService.InputChanged:Connect(function(inp)
-		if not wheelDragTarget then return end
+		if not UI.wheelDragTarget then return end
 		if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
-			if wheelDragTarget == "ring" then
+			if UI.wheelDragTarget == "ring" then
 				updateAuraHueFromPos(inp.Position.X, inp.Position.Y)
-			elseif wheelDragTarget == "shade" then
+			elseif UI.wheelDragTarget == "shade" then
 				updateAuraShadeFromPos(inp.Position.X, inp.Position.Y)
 			end
 		end
 	end)
 	UserInputService.InputEnded:Connect(function(inp)
 		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-			if wheelDragTarget then
-				wheelDragTarget = nil
+			if UI.wheelDragTarget then
+				UI.wheelDragTarget = nil
 				saveAuraConfigNow()
 			end
 		end
 	end)
 
-	local resetAuraPurpleBtn = Instance.new("TextButton")
-	resetAuraPurpleBtn.Size = UDim2.new(1, -24, 0, 24)
-	resetAuraPurpleBtn.Position = UDim2.new(0, 12, 0, 256)
-	resetAuraPurpleBtn.BackgroundColor3 = Color3.fromRGB(48, 10, 72)
-	resetAuraPurpleBtn.BorderSizePixel = 0
-	resetAuraPurpleBtn.Text = "RESET DEFAULT COLOR"
-	resetAuraPurpleBtn.TextColor3 = Color3.fromRGB(238, 212, 255)
-	resetAuraPurpleBtn.Font = Enum.Font.GothamBold
-	resetAuraPurpleBtn.TextSize = 10
-	resetAuraPurpleBtn.ZIndex = 64
-	resetAuraPurpleBtn.Parent = wheelFrame
-	Instance.new("UICorner", resetAuraPurpleBtn).CornerRadius = UDim.new(0, 6)
-	resetAuraPurpleBtn.MouseButton1Click:Connect(function()
+	UI.resetAuraPurpleBtn = Instance.new("TextButton")
+	UI.resetAuraPurpleBtn.Size = UDim2.new(1, -24, 0, 24)
+	UI.resetAuraPurpleBtn.Position = UDim2.new(0, 12, 0, 256)
+	UI.resetAuraPurpleBtn.BackgroundColor3 = Color3.fromRGB(48, 10, 72)
+	UI.resetAuraPurpleBtn.BorderSizePixel = 0
+	UI.resetAuraPurpleBtn.Text = "RESET DEFAULT COLOR"
+	UI.resetAuraPurpleBtn.TextColor3 = Color3.fromRGB(238, 212, 255)
+	UI.resetAuraPurpleBtn.Font = Enum.Font.GothamBold
+	UI.resetAuraPurpleBtn.TextSize = 10
+	UI.resetAuraPurpleBtn.ZIndex = 64
+	UI.resetAuraPurpleBtn.Parent = UI.wheelFrame
+	Instance.new("UICorner", UI.resetAuraPurpleBtn).CornerRadius = UDim.new(0, 6)
+	UI.resetAuraPurpleBtn.MouseButton1Click:Connect(function()
 		Cfg.AuraCustomColor = false
 		Cfg.AuraHue = 0.77
 		Cfg.AuraSat = 0.94
@@ -3015,12 +3011,12 @@ do
 		playClick(1.0)
 	end)
 
-	closeWheelBtn.MouseButton1Click:Connect(function()
+	UI.closeWheelBtn.MouseButton1Click:Connect(function()
 		wheelGui.Enabled = false
 		playClick(0.9)
 	end)
 
-	makeDraggable(wheelFrame, wheelTitle, false, nil)
+	makeDraggable(UI.wheelFrame, UI.wheelTitle, false, nil)
 end
 
 -- ============================================================================
@@ -3036,48 +3032,48 @@ airGui.Enabled = false
 airGui.Parent = PlayerGui
 
 do
-	local upBtn = Instance.new("TextButton")
-	upBtn.Size = UDim2.new(0, 44, 0, 44)
-	upBtn.Position = UDim2.new(1, -135, 1, -155)
-	upBtn.BackgroundColor3 = BTN_ON
-	upBtn.TextColor3 = TEXT_MAIN
-	upBtn.Text = "UP"
-	upBtn.Font = Enum.Font.GothamBlack
-	upBtn.TextSize = 11
-	upBtn.Active = true
-	upBtn.Parent = airGui
-	Instance.new("UICorner", upBtn).CornerRadius = UDim.new(1, 0)
-	addBorder(upBtn, NEON_RIFT, 1.5, 0.1)
+	UI.upBtn = Instance.new("TextButton")
+	UI.upBtn.Size = UDim2.new(0, 44, 0, 44)
+	UI.upBtn.Position = UDim2.new(1, -135, 1, -155)
+	UI.upBtn.BackgroundColor3 = BTN_ON
+	UI.upBtn.TextColor3 = TEXT_MAIN
+	UI.upBtn.Text = "UP"
+	UI.upBtn.Font = Enum.Font.GothamBlack
+	UI.upBtn.TextSize = 11
+	UI.upBtn.Active = true
+	UI.upBtn.Parent = airGui
+	Instance.new("UICorner", UI.upBtn).CornerRadius = UDim.new(1, 0)
+	addBorder(UI.upBtn, NEON_RIFT, 1.5, 0.1)
 
-	local downBtn = Instance.new("TextButton")
-	downBtn.Size = UDim2.new(0, 44, 0, 44)
-	downBtn.Position = UDim2.new(1, -135, 1, -102)
-	downBtn.BackgroundColor3 = BTN_OFF
-	downBtn.TextColor3 = TEXT_MAIN
-	downBtn.Text = "DOWN"
-	downBtn.Font = Enum.Font.GothamBlack
-	downBtn.TextSize = 9
-	downBtn.Active = true
-	downBtn.Parent = airGui
-	Instance.new("UICorner", downBtn).CornerRadius = UDim.new(1, 0)
-	addBorder(downBtn, NEON_RIFT, 1.5, 0.1)
+	UI.downBtn = Instance.new("TextButton")
+	UI.downBtn.Size = UDim2.new(0, 44, 0, 44)
+	UI.downBtn.Position = UDim2.new(1, -135, 1, -102)
+	UI.downBtn.BackgroundColor3 = BTN_OFF
+	UI.downBtn.TextColor3 = TEXT_MAIN
+	UI.downBtn.Text = "DOWN"
+	UI.downBtn.Font = Enum.Font.GothamBlack
+	UI.downBtn.TextSize = 9
+	UI.downBtn.Active = true
+	UI.downBtn.Parent = airGui
+	Instance.new("UICorner", UI.downBtn).CornerRadius = UDim.new(1, 0)
+	addBorder(UI.downBtn, NEON_RIFT, 1.5, 0.1)
 
-	upBtn.InputBegan:Connect(function(inp)
+	UI.upBtn.InputBegan:Connect(function(inp)
 		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
 			airMoveDir = 1
 		end
 	end)
-	upBtn.InputEnded:Connect(function(inp)
+	UI.upBtn.InputEnded:Connect(function(inp)
 		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
 			if airMoveDir == 1 then airMoveDir = 0 end
 		end
 	end)
-	downBtn.InputBegan:Connect(function(inp)
+	UI.downBtn.InputBegan:Connect(function(inp)
 		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
 			airMoveDir = -1
 		end
 	end)
-	downBtn.InputEnded:Connect(function(inp)
+	UI.downBtn.InputEnded:Connect(function(inp)
 		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
 			if airMoveDir == -1 then airMoveDir = 0 end
 		end
@@ -3186,18 +3182,18 @@ do
 		playClick(Cfg.AuraEnabled and 1.15 or 0.9)
 	end)
 
-	local topMinusBtn = Instance.new("TextButton")
-	topMinusBtn.Size = UDim2.new(0, 18, 0, 22)
-	topMinusBtn.Position = UDim2.new(0, 212, 0.5, -11)
-	topMinusBtn.BackgroundColor3 = BTN_OFF
-	topMinusBtn.Font = Enum.Font.GothamBlack
-	topMinusBtn.TextSize = 11
-	topMinusBtn.Text = "-"
-	topMinusBtn.TextColor3 = TEXT_MAIN
-	topMinusBtn.ZIndex = 21
-	topMinusBtn.Parent = topEyePanel
-	Instance.new("UICorner", topMinusBtn).CornerRadius = UDim.new(0, 6)
-	addBorder(topMinusBtn, NEON_RING, 1, 0.25)
+	UI.topMinusBtn = Instance.new("TextButton")
+	UI.topMinusBtn.Size = UDim2.new(0, 18, 0, 22)
+	UI.topMinusBtn.Position = UDim2.new(0, 212, 0.5, -11)
+	UI.topMinusBtn.BackgroundColor3 = BTN_OFF
+	UI.topMinusBtn.Font = Enum.Font.GothamBlack
+	UI.topMinusBtn.TextSize = 11
+	UI.topMinusBtn.Text = "-"
+	UI.topMinusBtn.TextColor3 = TEXT_MAIN
+	UI.topMinusBtn.ZIndex = 21
+	UI.topMinusBtn.Parent = topEyePanel
+	Instance.new("UICorner", UI.topMinusBtn).CornerRadius = UDim.new(0, 6)
+	addBorder(UI.topMinusBtn, NEON_RING, 1, 0.25)
 
 	topAuraLvlLbl = Instance.new("TextLabel")
 	topAuraLvlLbl.Size = UDim2.new(0, 34, 0, 22)
@@ -3212,27 +3208,27 @@ do
 	Instance.new("UICorner", topAuraLvlLbl).CornerRadius = UDim.new(0, 6)
 	addBorder(topAuraLvlLbl, NEON_RING, 1, 0.25)
 
-	local topPlusBtn = Instance.new("TextButton")
-	topPlusBtn.Size = UDim2.new(0, 18, 0, 22)
-	topPlusBtn.Position = UDim2.new(0, 268, 0.5, -11)
-	topPlusBtn.BackgroundColor3 = BTN_OFF
-	topPlusBtn.Font = Enum.Font.GothamBlack
-	topPlusBtn.TextSize = 11
-	topPlusBtn.Text = "+"
-	topPlusBtn.TextColor3 = TEXT_MAIN
-	topPlusBtn.ZIndex = 21
-	topPlusBtn.Parent = topEyePanel
-	Instance.new("UICorner", topPlusBtn).CornerRadius = UDim.new(0, 6)
-	addBorder(topPlusBtn, NEON_RING, 1, 0.25)
+	UI.topPlusBtn = Instance.new("TextButton")
+	UI.topPlusBtn.Size = UDim2.new(0, 18, 0, 22)
+	UI.topPlusBtn.Position = UDim2.new(0, 268, 0.5, -11)
+	UI.topPlusBtn.BackgroundColor3 = BTN_OFF
+	UI.topPlusBtn.Font = Enum.Font.GothamBlack
+	UI.topPlusBtn.TextSize = 11
+	UI.topPlusBtn.Text = "+"
+	UI.topPlusBtn.TextColor3 = TEXT_MAIN
+	UI.topPlusBtn.ZIndex = 21
+	UI.topPlusBtn.Parent = topEyePanel
+	Instance.new("UICorner", UI.topPlusBtn).CornerRadius = UDim.new(0, 6)
+	addBorder(UI.topPlusBtn, NEON_RING, 1, 0.25)
 
-	topMinusBtn.MouseButton1Click:Connect(function()
+	UI.topMinusBtn.MouseButton1Click:Connect(function()
 		Cfg.AuraLevel = math.max(1, Cfg.AuraLevel - 1)
 		builtAuraLevel = nil
 		refreshAuraUI()
 		saveAuraConfigNow()
 		playClick(0.95)
 	end)
-	topPlusBtn.MouseButton1Click:Connect(function()
+	UI.topPlusBtn.MouseButton1Click:Connect(function()
 		Cfg.AuraLevel = math.min(MAX_AURA_LEVEL, Cfg.AuraLevel + 1)
 		builtAuraLevel = nil
 		refreshAuraUI()
@@ -3257,67 +3253,67 @@ do
 	Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 14)
 	addBorder(mainFrame, NEON_RING, 2, 0.06)
 
-	local header = Instance.new("Frame")
-	header.Size = UDim2.new(1, 0, 0, 34)
-	header.BackgroundColor3 = CARD_BG
-	header.Active = true
-	header.ZIndex = 31
-	header.Parent = mainFrame
-	Instance.new("UICorner", header).CornerRadius = UDim.new(0, 14)
+	UI.header = Instance.new("Frame")
+	UI.header.Size = UDim2.new(1, 0, 0, 34)
+	UI.header.BackgroundColor3 = CARD_BG
+	UI.header.Active = true
+	UI.header.ZIndex = 31
+	UI.header.Parent = mainFrame
+	Instance.new("UICorner", UI.header).CornerRadius = UDim.new(0, 14)
 
-	local titleLbl = Instance.new("TextLabel")
-	titleLbl.Size = UDim2.new(1, -80, 1, 0)
-	titleLbl.Position = UDim2.new(0, 12, 0, 0)
-	titleLbl.BackgroundTransparency = 1
-	titleLbl.Font = Enum.Font.GothamBlack
-	titleLbl.TextSize = 13
-	titleLbl.Text = GANG_NAME .. " HUB | BY " .. CREATOR_NAME
-	titleLbl.TextColor3 = TEXT_MAIN
-	titleLbl.TextXAlignment = Enum.TextXAlignment.Left
-	titleLbl.ZIndex = 32
-	titleLbl.Parent = header
+	UI.titleLbl = Instance.new("TextLabel")
+	UI.titleLbl.Size = UDim2.new(1, -80, 1, 0)
+	UI.titleLbl.Position = UDim2.new(0, 12, 0, 0)
+	UI.titleLbl.BackgroundTransparency = 1
+	UI.titleLbl.Font = Enum.Font.GothamBlack
+	UI.titleLbl.TextSize = 13
+	UI.titleLbl.Text = GANG_NAME .. " HUB | BY " .. CREATOR_NAME
+	UI.titleLbl.TextColor3 = TEXT_MAIN
+	UI.titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+	UI.titleLbl.ZIndex = 32
+	UI.titleLbl.Parent = UI.header
 
-	local closeBtn = Instance.new("TextButton")
-	closeBtn.Size = UDim2.new(0, 26, 0, 26)
-	closeBtn.Position = UDim2.new(1, -32, 0, 4)
-	closeBtn.BackgroundColor3 = BTN_ON
-	closeBtn.Font = Enum.Font.GothamBlack
-	closeBtn.TextSize = 12
-	closeBtn.Text = "X"
-	closeBtn.TextColor3 = TEXT_MAIN
-	closeBtn.ZIndex = 33
-	closeBtn.Parent = header
-	Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 7)
-	closeBtn.MouseButton1Click:Connect(function()
+	UI.closeBtn = Instance.new("TextButton")
+	UI.closeBtn.Size = UDim2.new(0, 26, 0, 26)
+	UI.closeBtn.Position = UDim2.new(1, -32, 0, 4)
+	UI.closeBtn.BackgroundColor3 = BTN_ON
+	UI.closeBtn.Font = Enum.Font.GothamBlack
+	UI.closeBtn.TextSize = 12
+	UI.closeBtn.Text = "X"
+	UI.closeBtn.TextColor3 = TEXT_MAIN
+	UI.closeBtn.ZIndex = 33
+	UI.closeBtn.Parent = UI.header
+	Instance.new("UICorner", UI.closeBtn).CornerRadius = UDim.new(0, 7)
+	UI.closeBtn.MouseButton1Click:Connect(function()
 		mainFrame.Visible = false
 		playClick(0.9)
 	end)
 
-	local sideScroll = Instance.new("ScrollingFrame")
-	sideScroll.Size = UDim2.new(0, 114, 1, -42)
-	sideScroll.Position = UDim2.new(0, 6, 0, 38)
-	sideScroll.BackgroundColor3 = CARD_BG
-	sideScroll.ScrollBarThickness = 2
-	sideScroll.ZIndex = 31
-	sideScroll.Parent = mainFrame
-	Instance.new("UICorner", sideScroll).CornerRadius = UDim.new(0, 10)
-	addBorder(sideScroll, NEON_RING, 1.2, 0.25)
+	UI.sideScroll = Instance.new("ScrollingFrame")
+	UI.sideScroll.Size = UDim2.new(0, 114, 1, -42)
+	UI.sideScroll.Position = UDim2.new(0, 6, 0, 38)
+	UI.sideScroll.BackgroundColor3 = CARD_BG
+	UI.sideScroll.ScrollBarThickness = 2
+	UI.sideScroll.ZIndex = 31
+	UI.sideScroll.Parent = mainFrame
+	Instance.new("UICorner", UI.sideScroll).CornerRadius = UDim.new(0, 10)
+	addBorder(UI.sideScroll, NEON_RING, 1.2, 0.25)
 
-	local sideList = Instance.new("UIListLayout", sideScroll)
-	sideList.Padding = UDim.new(0, 4)
-	sideList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	sideList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		sideScroll.CanvasSize = UDim2.new(0, 0, 0, sideList.AbsoluteContentSize.Y + 8)
+	UI.sideList = Instance.new("UIListLayout", UI.sideScroll)
+	UI.sideList.Padding = UDim.new(0, 4)
+	UI.sideList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	UI.sideList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		UI.sideScroll.CanvasSize = UDim2.new(0, 0, 0, UI.sideList.AbsoluteContentSize.Y + 8)
 	end)
 
-	local contentHolder = Instance.new("Frame")
-	contentHolder.Size = UDim2.new(1, -130, 1, -42)
-	contentHolder.Position = UDim2.new(0, 124, 0, 38)
-	contentHolder.BackgroundColor3 = CARD_BG
-	contentHolder.ZIndex = 31
-	contentHolder.Parent = mainFrame
-	Instance.new("UICorner", contentHolder).CornerRadius = UDim.new(0, 10)
-	addBorder(contentHolder, NEON_RING, 1.2, 0.25)
+	UI.contentHolder = Instance.new("Frame")
+	UI.contentHolder.Size = UDim2.new(1, -130, 1, -42)
+	UI.contentHolder.Position = UDim2.new(0, 124, 0, 38)
+	UI.contentHolder.BackgroundColor3 = CARD_BG
+	UI.contentHolder.ZIndex = 31
+	UI.contentHolder.Parent = mainFrame
+	Instance.new("UICorner", UI.contentHolder).CornerRadius = UDim.new(0, 10)
+	addBorder(UI.contentHolder, NEON_RING, 1.2, 0.25)
 
 	local sectionNames = {
 		"Info",
@@ -3352,7 +3348,7 @@ do
 		page.ScrollBarThickness = 3
 		page.Visible = (idx == 1)
 		page.ZIndex = 32
-		page.Parent = contentHolder
+		page.Parent = UI.contentHolder
 
 		local lay = Instance.new("UIListLayout", page)
 		lay.Padding = UDim.new(0, 6)
@@ -3370,7 +3366,7 @@ do
 		tBtn.Text = tostring(idx) .. ". " .. secName
 		tBtn.TextColor3 = (idx == 1) and TEXT_MAIN or TEXT_DIM
 		tBtn.ZIndex = 32
-		tBtn.Parent = sideScroll
+		tBtn.Parent = UI.sideScroll
 		Instance.new("UICorner", tBtn).CornerRadius = UDim.new(0, 7)
 		tBtn.MouseButton1Click:Connect(function() switchSection(idx) end)
 		tabButtons[idx] = tBtn
@@ -3498,89 +3494,89 @@ end
 do
 	local p1 = pages[1]
 
-	local gangBox = Instance.new("Frame")
-	gangBox.Size = UDim2.new(0.96, 0, 0, 56)
-	gangBox.BackgroundColor3 = VOID_BG
-	gangBox.ZIndex = 33
-	gangBox.Parent = p1
-	Instance.new("UICorner", gangBox).CornerRadius = UDim.new(0, 8)
-	addBorder(gangBox, NEON_RING, 1.2, 0.25)
+	UI.gangBox = Instance.new("Frame")
+	UI.gangBox.Size = UDim2.new(0.96, 0, 0, 56)
+	UI.gangBox.BackgroundColor3 = VOID_BG
+	UI.gangBox.ZIndex = 33
+	UI.gangBox.Parent = p1
+	Instance.new("UICorner", UI.gangBox).CornerRadius = UDim.new(0, 8)
+	addBorder(UI.gangBox, NEON_RING, 1.2, 0.25)
 
-	local gangLbl = Instance.new("TextLabel")
-	gangLbl.Size = UDim2.new(1, -12, 1, -6)
-	gangLbl.Position = UDim2.new(0, 6, 0, 3)
-	gangLbl.BackgroundTransparency = 1
-	gangLbl.Font = Enum.Font.GothamBold
-	gangLbl.TextSize = 11
-	gangLbl.TextColor3 = TAG_NEON_PURPLE
-	gangLbl.TextWrapped = true
-	gangLbl.ZIndex = 34
-	gangLbl.Text = "Creator: " .. CREATOR_NAME .. "\n" .. GANG_NAME .. " — Loyalty, brotherhood, and shadow dominance.\nMembers stand united across every server."
-	gangLbl.Parent = gangBox
+	UI.gangLbl = Instance.new("TextLabel")
+	UI.gangLbl.Size = UDim2.new(1, -12, 1, -6)
+	UI.gangLbl.Position = UDim2.new(0, 6, 0, 3)
+	UI.gangLbl.BackgroundTransparency = 1
+	UI.gangLbl.Font = Enum.Font.GothamBold
+	UI.gangLbl.TextSize = 11
+	UI.gangLbl.TextColor3 = TAG_NEON_PURPLE
+	UI.gangLbl.TextWrapped = true
+	UI.gangLbl.ZIndex = 34
+	UI.gangLbl.Text = "Creator: " .. CREATOR_NAME .. "\n" .. GANG_NAME .. " — Loyalty, brotherhood, and shadow dominance.\nMembers stand united across every server."
+	UI.gangLbl.Parent = UI.gangBox
 
-	local card = Instance.new("Frame")
-	card.Size = UDim2.new(0.96, 0, 0, 62)
-	card.BackgroundColor3 = VOID_BG
-	card.ZIndex = 33
-	card.Parent = p1
-	Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
-	addBorder(card, NEON_RING, 1.2, 0.25)
+	UI.infoCard = Instance.new("Frame")
+	UI.infoCard.Size = UDim2.new(0.96, 0, 0, 62)
+	UI.infoCard.BackgroundColor3 = VOID_BG
+	UI.infoCard.ZIndex = 33
+	UI.infoCard.Parent = p1
+	Instance.new("UICorner", UI.infoCard).CornerRadius = UDim.new(0, 8)
+	addBorder(UI.infoCard, NEON_RING, 1.2, 0.25)
 
-	local avImg = Instance.new("ImageLabel")
-	avImg.Size = UDim2.new(0, 48, 0, 48)
-	avImg.Position = UDim2.new(0, 8, 0, 7)
-	avImg.BackgroundColor3 = BTN_OFF
-	avImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LocalPlayer.UserId) .. "&w=150&h=150"
-	avImg.ZIndex = 34
-	avImg.Parent = card
-	Instance.new("UICorner", avImg).CornerRadius = UDim.new(1, 0)
-	addBorder(avImg, NEON_RIFT, 1.4, 0.1)
+	UI.avImg = Instance.new("ImageLabel")
+	UI.avImg.Size = UDim2.new(0, 48, 0, 48)
+	UI.avImg.Position = UDim2.new(0, 8, 0, 7)
+	UI.avImg.BackgroundColor3 = BTN_OFF
+	UI.avImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LocalPlayer.UserId) .. "&w=150&h=150"
+	UI.avImg.ZIndex = 34
+	UI.avImg.Parent = UI.infoCard
+	Instance.new("UICorner", UI.avImg).CornerRadius = UDim.new(1, 0)
+	addBorder(UI.avImg, NEON_RIFT, 1.4, 0.1)
 
-	local infoTxt = Instance.new("TextLabel")
-	infoTxt.Size = UDim2.new(1, -66, 1, -6)
-	infoTxt.Position = UDim2.new(0, 62, 0, 3)
-	infoTxt.BackgroundTransparency = 1
-	infoTxt.Font = Enum.Font.GothamBold
-	infoTxt.TextSize = 11
-	infoTxt.TextXAlignment = Enum.TextXAlignment.Left
-	infoTxt.TextYAlignment = Enum.TextYAlignment.Center
-	infoTxt.TextColor3 = TEXT_MAIN
-	infoTxt.ZIndex = 34
-	infoTxt.Text = "User ID: " .. tostring(LocalPlayer.UserId) .. "\nUser: @" .. LocalPlayer.Name
-	infoTxt.Parent = card
+	UI.infoTxt = Instance.new("TextLabel")
+	UI.infoTxt.Size = UDim2.new(1, -66, 1, -6)
+	UI.infoTxt.Position = UDim2.new(0, 62, 0, 3)
+	UI.infoTxt.BackgroundTransparency = 1
+	UI.infoTxt.Font = Enum.Font.GothamBold
+	UI.infoTxt.TextSize = 11
+	UI.infoTxt.TextXAlignment = Enum.TextXAlignment.Left
+	UI.infoTxt.TextYAlignment = Enum.TextYAlignment.Center
+	UI.infoTxt.TextColor3 = TEXT_MAIN
+	UI.infoTxt.ZIndex = 34
+	UI.infoTxt.Text = "User ID: " .. tostring(LocalPlayer.UserId) .. "\nUser: @" .. LocalPlayer.Name
+	UI.infoTxt.Parent = UI.infoCard
 
-	local btnRow = Instance.new("Frame")
-	btnRow.Size = UDim2.new(0.96, 0, 0, 28)
-	btnRow.BackgroundTransparency = 1
-	btnRow.ZIndex = 33
-	btnRow.Parent = p1
+	UI.infoBtnRow = Instance.new("Frame")
+	UI.infoBtnRow.Size = UDim2.new(0.96, 0, 0, 28)
+	UI.infoBtnRow.BackgroundTransparency = 1
+	UI.infoBtnRow.ZIndex = 33
+	UI.infoBtnRow.Parent = p1
 
-	local rejBtn = Instance.new("TextButton")
-	rejBtn.Size = UDim2.new(0.5, -3, 1, 0)
-	rejBtn.BackgroundColor3 = BTN_OFF
-	rejBtn.Font = Enum.Font.GothamBold
-	rejBtn.TextSize = 11
-	rejBtn.Text = "REJOIN"
-	rejBtn.TextColor3 = TEXT_MAIN
-	rejBtn.ZIndex = 33
-	rejBtn.Parent = btnRow
-	Instance.new("UICorner", rejBtn).CornerRadius = UDim.new(0, 7)
-	addBorder(rejBtn, NEON_RING, 1, 0.3)
-	rejBtn.MouseButton1Click:Connect(function() playClick(1.0); rejoinServer() end)
+	UI.rejBtn = Instance.new("TextButton")
+	UI.rejBtn.Size = UDim2.new(0.5, -3, 1, 0)
+	UI.rejBtn.BackgroundColor3 = BTN_OFF
+	UI.rejBtn.Font = Enum.Font.GothamBold
+	UI.rejBtn.TextSize = 11
+	UI.rejBtn.Text = "REJOIN"
+	UI.rejBtn.TextColor3 = TEXT_MAIN
+	UI.rejBtn.ZIndex = 33
+	UI.rejBtn.Parent = UI.infoBtnRow
+	Instance.new("UICorner", UI.rejBtn).CornerRadius = UDim.new(0, 7)
+	addBorder(UI.rejBtn, NEON_RING, 1, 0.3)
+	UI.rejBtn.MouseButton1Click:Connect(function() playClick(1.0); rejoinServer() end)
 
-	local hopBtn = Instance.new("TextButton")
-	hopBtn.Size = UDim2.new(0.5, -3, 1, 0)
-	hopBtn.Position = UDim2.new(0.5, 3, 0, 0)
-	hopBtn.BackgroundColor3 = BTN_OFF
-	hopBtn.Font = Enum.Font.GothamBold
-	hopBtn.TextSize = 11
-	hopBtn.Text = "SERVER HOP"
-	hopBtn.TextColor3 = TEXT_MAIN
-	hopBtn.ZIndex = 33
-	hopBtn.Parent = btnRow
-	Instance.new("UICorner", hopBtn).CornerRadius = UDim.new(0, 7)
-	addBorder(hopBtn, NEON_RING, 1, 0.3)
-	hopBtn.MouseButton1Click:Connect(function() playClick(1.0); hopServer() end)
+	UI.hopBtn = Instance.new("TextButton")
+	UI.hopBtn.Size = UDim2.new(0.5, -3, 1, 0)
+	UI.hopBtn.Position = UDim2.new(0.5, 3, 0, 0)
+	UI.hopBtn.BackgroundColor3 = BTN_OFF
+	UI.hopBtn.Font = Enum.Font.GothamBold
+	UI.hopBtn.TextSize = 11
+	UI.hopBtn.Text = "SERVER HOP"
+	UI.hopBtn.TextColor3 = TEXT_MAIN
+	UI.hopBtn.ZIndex = 33
+	UI.hopBtn.Parent = UI.infoBtnRow
+	Instance.new("UICorner", UI.hopBtn).CornerRadius = UDim.new(0, 7)
+	addBorder(UI.hopBtn, NEON_RING, 1, 0.3)
+	UI.hopBtn.MouseButton1Click:Connect(function() playClick(1.0); hopServer() end)
 
 	makeToggle(p1, "LOCK 1ST EYE", function() return Cfg.EyeLocked end, function(v) Cfg.EyeLocked = v end)
 end
@@ -3711,51 +3707,51 @@ do
 		end
 	end
 
-	local joinBanner = Instance.new("Frame")
-	joinBanner.Name = "MortalFriendJoinBanner"
-	joinBanner.Size = UDim2.new(0, 272, 0, 48)
-	joinBanner.Position = UDim2.new(0.5, -136, 0, 14)
-	joinBanner.BackgroundColor3 = TAG_DARK_BAR
-	joinBanner.Active = true
-	joinBanner.Visible = false
-	joinBanner.ZIndex = 65
-	joinBanner.Parent = sg
-	Instance.new("UICorner", joinBanner).CornerRadius = UDim.new(0, 10)
-	addBorder(joinBanner, NEON_RIFT, 1.6, 0.08)
+	UI.joinBanner = Instance.new("Frame")
+	UI.joinBanner.Name = "MortalFriendJoinBanner"
+	UI.joinBanner.Size = UDim2.new(0, 272, 0, 48)
+	UI.joinBanner.Position = UDim2.new(0.5, -136, 0, 14)
+	UI.joinBanner.BackgroundColor3 = TAG_DARK_BAR
+	UI.joinBanner.Active = true
+	UI.joinBanner.Visible = false
+	UI.joinBanner.ZIndex = 65
+	UI.joinBanner.Parent = sg
+	Instance.new("UICorner", UI.joinBanner).CornerRadius = UDim.new(0, 10)
+	addBorder(UI.joinBanner, NEON_RIFT, 1.6, 0.08)
 
-	local joinBannerLbl = Instance.new("TextLabel")
-	joinBannerLbl.Size = UDim2.new(1, -16, 1, -6)
-	joinBannerLbl.Position = UDim2.new(0, 8, 0, 3)
-	joinBannerLbl.BackgroundTransparency = 1
-	joinBannerLbl.Font = Enum.Font.GothamBlack
-	joinBannerLbl.TextSize = 10
-	joinBannerLbl.TextColor3 = TAG_NEON_PURPLE
-	joinBannerLbl.TextWrapped = true
-	joinBannerLbl.ZIndex = 66
-	joinBannerLbl.Parent = joinBanner
+	UI.joinBannerLbl = Instance.new("TextLabel")
+	UI.joinBannerLbl.Size = UDim2.new(1, -16, 1, -6)
+	UI.joinBannerLbl.Position = UDim2.new(0, 8, 0, 3)
+	UI.joinBannerLbl.BackgroundTransparency = 1
+	UI.joinBannerLbl.Font = Enum.Font.GothamBlack
+	UI.joinBannerLbl.TextSize = 10
+	UI.joinBannerLbl.TextColor3 = TAG_NEON_PURPLE
+	UI.joinBannerLbl.TextWrapped = true
+	UI.joinBannerLbl.ZIndex = 66
+	UI.joinBannerLbl.Parent = UI.joinBanner
 
-	local bannerToken = 0
-	local swipeStartY = nil
-	local bannerBaseY = 14
+	UI.bannerToken = 0
+	UI.swipeStartY = nil
+	UI.bannerBaseY = 14
 
 	local function dismissBannerUp()
-		bannerToken = bannerToken + 1
-		swipeStartY = nil
-		joinBanner.Position = UDim2.new(0.5, -136, 0, -64)
-		joinBanner.Visible = false
+		UI.bannerToken = UI.bannerToken + 1
+		UI.swipeStartY = nil
+		UI.joinBanner.Position = UDim2.new(0.5, -136, 0, -64)
+		UI.joinBanner.Visible = false
 	end
 
-	joinBanner.InputBegan:Connect(function(inp)
+	UI.joinBanner.InputBegan:Connect(function(inp)
 		if inp.UserInputType == Enum.UserInputType.Touch or inp.UserInputType == Enum.UserInputType.MouseButton1 then
-			swipeStartY = inp.Position.Y
+			UI.swipeStartY = inp.Position.Y
 		end
 	end)
 	UserInputService.InputChanged:Connect(function(inp)
-		if not joinBanner.Visible or swipeStartY == nil then return end
+		if not UI.joinBanner.Visible or UI.swipeStartY == nil then return end
 		if inp.UserInputType == Enum.UserInputType.Touch or inp.UserInputType == Enum.UserInputType.MouseMovement then
-			local dy = inp.Position.Y - swipeStartY
+			local dy = inp.Position.Y - UI.swipeStartY
 			if dy < 0 then
-				joinBanner.Position = UDim2.new(0.5, -136, 0, bannerBaseY + dy)
+				UI.joinBanner.Position = UDim2.new(0.5, -136, 0, UI.bannerBaseY + dy)
 				if dy <= -24 then
 					dismissBannerUp()
 				end
@@ -3764,10 +3760,10 @@ do
 	end)
 	UserInputService.InputEnded:Connect(function(inp)
 		if inp.UserInputType == Enum.UserInputType.Touch or inp.UserInputType == Enum.UserInputType.MouseButton1 then
-			if joinBanner.Visible and swipeStartY ~= nil then
-				joinBanner.Position = UDim2.new(0.5, -136, 0, bannerBaseY)
+			if UI.joinBanner.Visible and UI.swipeStartY ~= nil then
+				UI.joinBanner.Position = UDim2.new(0.5, -136, 0, UI.bannerBaseY)
 			end
-			swipeStartY = nil
+			UI.swipeStartY = nil
 		end
 	end)
 
@@ -3775,15 +3771,15 @@ do
 		if not plr or notifiedFriends[plr.UserId] then return end
 		if not isFriend(plr) then return end
 		notifiedFriends[plr.UserId] = true
-		bannerToken = bannerToken + 1
-		local myToken = bannerToken
-		swipeStartY = nil
-		joinBannerLbl.Text = "FRIEND JOINED: " .. plr.DisplayName .. " (@" .. plr.Name .. ")\nSwipe UP to dismiss"
-		joinBanner.Position = UDim2.new(0.5, -136, 0, bannerBaseY)
-		joinBanner.Visible = true
+		UI.bannerToken = UI.bannerToken + 1
+		local myToken = UI.bannerToken
+		UI.swipeStartY = nil
+		UI.joinBannerLbl.Text = "FRIEND JOINED: " .. plr.DisplayName .. " (@" .. plr.Name .. ")\nSwipe UP to dismiss"
+		UI.joinBanner.Position = UDim2.new(0.5, -136, 0, UI.bannerBaseY)
+		UI.joinBanner.Visible = true
 		playClick(1.25)
 		task.delay(5.0, function()
-			if bannerToken == myToken and joinBanner and joinBanner.Parent then
+			if UI.bannerToken == myToken and UI.joinBanner and UI.joinBanner.Parent then
 				dismissBannerUp()
 			end
 		end)
@@ -3945,11 +3941,11 @@ end
 do
 	local p5 = pages[5]
 
-	local targetRow = Instance.new("Frame")
-	targetRow.Size = UDim2.new(0.96, 0, 0, 28)
-	targetRow.BackgroundTransparency = 1
-	targetRow.ZIndex = 33
-	targetRow.Parent = p5
+	UI.targetRow = Instance.new("Frame")
+	UI.targetRow.Size = UDim2.new(0.96, 0, 0, 28)
+	UI.targetRow.BackgroundTransparency = 1
+	UI.targetRow.ZIndex = 33
+	UI.targetRow.Parent = p5
 
 	targetInputBox = Instance.new("TextBox")
 	targetInputBox.Size = UDim2.new(0.70, -3, 1, 0)
@@ -3961,7 +3957,7 @@ do
 	targetInputBox.TextColor3 = TEXT_MAIN
 	targetInputBox.ClearTextOnFocus = true
 	targetInputBox.ZIndex = 33
-	targetInputBox.Parent = targetRow
+	targetInputBox.Parent = UI.targetRow
 	Instance.new("UICorner", targetInputBox).CornerRadius = UDim.new(0, 7)
 	addBorder(targetInputBox, NEON_RING, 1, 0.35)
 
@@ -3983,7 +3979,7 @@ do
 	listToggleBtn.Text = "PLAYERS"
 	listToggleBtn.TextColor3 = TEXT_MAIN
 	listToggleBtn.ZIndex = 33
-	listToggleBtn.Parent = targetRow
+	listToggleBtn.Parent = UI.targetRow
 	Instance.new("UICorner", listToggleBtn).CornerRadius = UDim.new(0, 7)
 	addBorder(listToggleBtn, NEON_RING, 1, 0.35)
 
@@ -4090,17 +4086,17 @@ end
 do
 	local p6 = pages[6]
 
-	local secHeader = Instance.new("TextLabel")
-	secHeader.Size = UDim2.new(0.96, 0, 0, 24)
-	secHeader.BackgroundColor3 = VOID_BG
-	secHeader.Font = Enum.Font.GothamBlack
-	secHeader.TextSize = 11
-	secHeader.TextColor3 = TAG_NEON_PURPLE
-	secHeader.Text = "PLAYERS TIME"
-	secHeader.ZIndex = 33
-	secHeader.Parent = p6
-	Instance.new("UICorner", secHeader).CornerRadius = UDim.new(0, 7)
-	addBorder(secHeader, NEON_RING, 1, 0.3)
+	UI.sec6Header = Instance.new("TextLabel")
+	UI.sec6Header.Size = UDim2.new(0.96, 0, 0, 24)
+	UI.sec6Header.BackgroundColor3 = VOID_BG
+	UI.sec6Header.Font = Enum.Font.GothamBlack
+	UI.sec6Header.TextSize = 11
+	UI.sec6Header.TextColor3 = TAG_NEON_PURPLE
+	UI.sec6Header.Text = "PLAYERS TIME"
+	UI.sec6Header.ZIndex = 33
+	UI.sec6Header.Parent = p6
+	Instance.new("UICorner", UI.sec6Header).CornerRadius = UDim.new(0, 7)
+	addBorder(UI.sec6Header, NEON_RING, 1, 0.3)
 
 	playersTimeContainer = Instance.new("Frame")
 	playersTimeContainer.Size = UDim2.new(0.96, 0, 0, 120)
@@ -4172,21 +4168,21 @@ end
 do
 	local p8 = pages[8]
 
-	local spamBox = Instance.new("TextBox")
-	spamBox.Size = UDim2.new(0.96, 0, 0, 28)
-	spamBox.BackgroundColor3 = VOID_BG
-	spamBox.Font = Enum.Font.GothamBold
-	spamBox.TextSize = 11
-	spamBox.PlaceholderText = "Spam message..."
-	spamBox.Text = Cfg.SpamText
-	spamBox.TextColor3 = TEXT_MAIN
-	spamBox.ClearTextOnFocus = true
-	spamBox.ZIndex = 33
-	spamBox.Parent = p8
-	Instance.new("UICorner", spamBox).CornerRadius = UDim.new(0, 7)
-	addBorder(spamBox, NEON_RING, 1, 0.35)
-	spamBox.FocusLost:Connect(function()
-		if spamBox.Text ~= "" then Cfg.SpamText = spamBox.Text end
+	UI.spamBox = Instance.new("TextBox")
+	UI.spamBox.Size = UDim2.new(0.96, 0, 0, 28)
+	UI.spamBox.BackgroundColor3 = VOID_BG
+	UI.spamBox.Font = Enum.Font.GothamBold
+	UI.spamBox.TextSize = 11
+	UI.spamBox.PlaceholderText = "Spam message..."
+	UI.spamBox.Text = Cfg.SpamText
+	UI.spamBox.TextColor3 = TEXT_MAIN
+	UI.spamBox.ClearTextOnFocus = true
+	UI.spamBox.ZIndex = 33
+	UI.spamBox.Parent = p8
+	Instance.new("UICorner", UI.spamBox).CornerRadius = UDim.new(0, 7)
+	addBorder(UI.spamBox, NEON_RING, 1, 0.35)
+	UI.spamBox.FocusLost:Connect(function()
+		if UI.spamBox.Text ~= "" then Cfg.SpamText = UI.spamBox.Text end
 	end)
 
 	makeToggle(p8, "CHAT SPAM", function() return Cfg.ChatSpam end, function(v)
@@ -4437,7 +4433,7 @@ do
 				hrp.AssemblyLinearVelocity = Vector3.zero
 			end
 			local pos = hrp.Position
-			hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, 0, hrp.AssemblyLinearVelocity.Z)
+			hrp.AssemblyLinearVelocity = Vector3.zero
 			hrp.CFrame = CFrame.new(pos.X, airY, pos.Z) * (hrp.CFrame - hrp.Position)
 		else
 			airWalkWasMoving = false
