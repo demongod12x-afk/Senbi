@@ -15,57 +15,45 @@ if not LocalPlayer then
 	LocalPlayer = Players.LocalPlayer
 end
 
-local PlayerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 10)
+local PlayerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 15)
 if not PlayerGui then return end
 
-local function getRootParent()
-	if type(gethui) == "function" then
-		local ok, res = pcall(gethui)
-		if ok and typeof(res) == "Instance" then return res end
-	end
-	return PlayerGui
-end
-
-local RootGuiParent = getRootParent()
 local CREATOR_NAME = "MORTAL"
 local GANG_NAME = "MORTALS"
 local SFX_ID = "rbxassetid://12221967"
 local STAR_TEXTURE = "rbxassetid://243098098"
 local MAX_AURA_LEVEL = 5
 
-task.defer(function()
-	local oldGuiNames = {
-		"MortalDeltaRecodeV4", "MortalDeltaRecodeV3", "MortalDeltaRecodeV2",
-		"MortalDeltaRecodeV1", "MortalNewCompleteHub", "MortalFreshRecodeV4",
-		"MortalFreshRecodeV3", "MortalHyperCoolHubV5", "MortalGodTierHubV6",
-		"MortalCyberDeckV7", "MortalApexCoreV8", "MortalVioletNexusV9",
-		"MortalDarkNeonV10", "MortalDarkNeonV11", "MortalDarkNeonV12",
-		"MortalCosmicRiftV13", "MortalCosmicRiftV14", "MortalCosmicRiftV15",
-		"MortalCosmicRiftV16", "MortalCosmicRiftV17", "MortalCosmicRiftV18",
-		"MortalCosmicRiftV19", "MortalCosmicRiftCombinedV19", "MortalDualEyeV19",
-		"MortalVoidSigilV19", "MortalV19FixedDual", "MortalV19VideoSync",
-		"MortalV20CosmicRift", "MortalV21CosmicRift", "MortalV22CosmicRift",
-		"MortalV23CosmicRift", "MortalV24CosmicRift", "MortalV25CosmicRift",
-		"MortalV26CosmicRift", "MortalV27CosmicRift", "MortalV28CosmicRift",
-		"MortalV29CosmicRift", "MortalV30CosmicRift", "MortalV31CosmicRift",
-		"MortalV32CosmicRift", "MortalV33CosmicRift", "MortalV34CosmicRift",
-		"MortalV35CosmicRift", "MortalV36CosmicRift", "MortalV37CosmicRift",
-		"MortalV38CosmicRift", "MortalV39CosmicRift", "MortalV40CosmicRift",
-		"MortalV41CosmicRift", "MortalV42CosmicRift", "MortalV43CosmicRift",
-		"MortalV44CosmicRift", "MortalV45CosmicRift", "MortalV46CosmicRift",
-		"MortalV47CosmicRift", "MortalV48CosmicRift", "MortalV48CosmicRiftFixed",
-		"MortalV48CosmicRiftRecoded", "MortalCompactHub", "MortalEightHub",
-		"MortalAuraColorWheelGUI", "MortalAirWalkPad"
-	}
-	for _, guiName in ipairs(oldGuiNames) do
-		for _, parentObj in ipairs({ PlayerGui, RootGuiParent }) do
-			pcall(function()
-				local existing = parentObj and parentObj:FindFirstChild(guiName)
-				if existing then existing:Destroy() end
-			end)
-		end
-	end
-end)
+local oldGuiNames = {
+	"MortalDeltaRecodeV4", "MortalDeltaRecodeV3", "MortalDeltaRecodeV2",
+	"MortalDeltaRecodeV1", "MortalNewCompleteHub", "MortalFreshRecodeV4",
+	"MortalFreshRecodeV3", "MortalHyperCoolHubV5", "MortalGodTierHubV6",
+	"MortalCyberDeckV7", "MortalApexCoreV8", "MortalVioletNexusV9",
+	"MortalDarkNeonV10", "MortalDarkNeonV11", "MortalDarkNeonV12",
+	"MortalCosmicRiftV13", "MortalCosmicRiftV14", "MortalCosmicRiftV15",
+	"MortalCosmicRiftV16", "MortalCosmicRiftV17", "MortalCosmicRiftV18",
+	"MortalCosmicRiftV19", "MortalCosmicRiftCombinedV19", "MortalDualEyeV19",
+	"MortalVoidSigilV19", "MortalV19FixedDual", "MortalV19VideoSync",
+	"MortalV20CosmicRift", "MortalV21CosmicRift", "MortalV22CosmicRift",
+	"MortalV23CosmicRift", "MortalV24CosmicRift", "MortalV25CosmicRift",
+	"MortalV26CosmicRift", "MortalV27CosmicRift", "MortalV28CosmicRift",
+	"MortalV29CosmicRift", "MortalV30CosmicRift", "MortalV31CosmicRift",
+	"MortalV32CosmicRift", "MortalV33CosmicRift", "MortalV34CosmicRift",
+	"MortalV35CosmicRift", "MortalV36CosmicRift", "MortalV37CosmicRift",
+	"MortalV38CosmicRift", "MortalV39CosmicRift", "MortalV40CosmicRift",
+	"MortalV41CosmicRift", "MortalV42CosmicRift", "MortalV43CosmicRift",
+	"MortalV44CosmicRift", "MortalV45CosmicRift", "MortalV46CosmicRift",
+	"MortalV47CosmicRift", "MortalV48CosmicRift", "MortalV48CosmicRiftFixed",
+	"MortalV48CosmicRiftRecoded", "MortalCompactHub", "MortalEightHub",
+	"MortalAuraColorWheelGUI", "MortalAirWalkPad"
+}
+
+for _, guiName in ipairs(oldGuiNames) do
+	pcall(function()
+		local existing = PlayerGui:FindFirstChild(guiName)
+		if existing then existing:Destroy() end
+	end)
+end
 
 local VOID_BG = Color3.fromRGB(5, 1, 13)
 local CARD_BG = Color3.fromRGB(12, 2, 29)
@@ -1176,11 +1164,12 @@ local function sanitizeAirWalkAnim(hum)
 	end)
 end
 
+local airGui
+
 local function setAirWalkState(on)
 	Cfg.AirWalk = (on == true)
 	airMoveDir = 0
 	airWalkWasMoving = false
-	local airGui = RootGuiParent:FindFirstChild("MortalAirWalkPad")
 	if airGui then airGui.Enabled = Cfg.AirWalk end
 	local _, hum, hrp = getRig()
 	if Cfg.AirWalk and hrp then
@@ -2715,15 +2704,24 @@ local function stepAura(now, char, hum, hrp)
 end
 
 -- ============================================================================
--- SEPARATE COLOR CIRCLE PICKER GUI (AURA COLOR ONLY)
+-- MAIN SCREENGUI & COLOR CIRCLE PICKER
 -- ============================================================================
+local sg = Instance.new("ScreenGui")
+sg.Name = "MortalEightHub"
+sg.ResetOnSpawn = false
+sg.IgnoreGuiInset = true
+sg.DisplayOrder = 999999
+sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+sg.Parent = PlayerGui
+
 local wheelGui = Instance.new("ScreenGui")
 wheelGui.Name = "MortalAuraColorWheelGUI"
 wheelGui.ResetOnSpawn = false
 wheelGui.IgnoreGuiInset = true
-wheelGui.DisplayOrder = 60
+wheelGui.DisplayOrder = 1000000
+wheelGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 wheelGui.Enabled = false
-wheelGui.Parent = RootGuiParent
+wheelGui.Parent = PlayerGui
 
 local refreshAuraUI
 
@@ -3028,12 +3026,14 @@ end
 -- ============================================================================
 -- AIR WALK PAD GUI
 -- ============================================================================
-local airGui = Instance.new("ScreenGui")
+airGui = Instance.new("ScreenGui")
 airGui.Name = "MortalAirWalkPad"
 airGui.ResetOnSpawn = false
 airGui.IgnoreGuiInset = true
+airGui.DisplayOrder = 999998
+airGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 airGui.Enabled = false
-airGui.Parent = RootGuiParent
+airGui.Parent = PlayerGui
 
 do
 	local upBtn = Instance.new("TextButton")
@@ -3085,15 +3085,8 @@ do
 end
 
 -- ============================================================================
--- GUI ROOT, 1ST EYE (MAIN HUB), TOP-RIGHT EYE
+-- 1ST EYE (MAIN HUB), TOP-RIGHT EYE & MAIN WINDOW
 -- ============================================================================
-local sg = Instance.new("ScreenGui")
-sg.Name = "MortalEightHub"
-sg.ResetOnSpawn = false
-sg.IgnoreGuiInset = true
-sg.DisplayOrder = 50
-sg.Parent = RootGuiParent
-
 local pages = {}
 local tabButtons = {}
 local switchSection
@@ -4308,14 +4301,12 @@ LocalPlayer.CharacterAdded:Connect(function(char)
 	end)
 end)
 
-task.defer(function()
-	if LocalPlayer.Character then
-		markSelfScriptPresence(LocalPlayer.Character)
-	end
-	for _, plr in ipairs(Players:GetPlayers()) do
-		registerPlayer(plr)
-	end
-end)
+if LocalPlayer.Character then
+	markSelfScriptPresence(LocalPlayer.Character)
+end
+for _, plr in ipairs(Players:GetPlayers()) do
+	registerPlayer(plr)
+end
 
 do
 	local lastStatsRefresh = 0
