@@ -116,12 +116,13 @@ local COLUMN_TEXTURES = {
 	"rbxassetid://6101261905",
 }
 
+-- Lag-safe tuned configs (still scales up to Level 5)
 local COLUMN_CONFIG = {
-	[1] = { rate = 340, sizeStart = 1.5, sizeEnd = 4.2, speedMin = 3.8, speedMax = 7.4, spread = 58, accelY = 9.5, lightBright = 2.4, lightRange = 14 },
-	[2] = { rate = 540, sizeStart = 1.9, sizeEnd = 5.4, speedMin = 4.8, speedMax = 9.0, spread = 68, accelY = 12.0, lightBright = 3.5, lightRange = 17 },
-	[3] = { rate = 780, sizeStart = 2.4, sizeEnd = 6.8, speedMin = 5.8, speedMax = 10.8, spread = 78, accelY = 14.5, lightBright = 4.8, lightRange = 20 },
-	[4] = { rate = 1060, sizeStart = 2.9, sizeEnd = 8.4, speedMin = 6.8, speedMax = 12.8, spread = 88, accelY = 17.5, lightBright = 6.3, lightRange = 24 },
-	[5] = { rate = 1400, sizeStart = 3.5, sizeEnd = 10.2, speedMin = 8.0, speedMax = 15.0, spread = 98, accelY = 21.0, lightBright = 8.0, lightRange = 29 },
+	[1] = { rate = 180, sizeStart = 1.4, sizeEnd = 3.8, speedMin = 3.8, speedMax = 7.4, spread = 58, accelY = 9.5, lightBright = 2.0, lightRange = 12 },
+	[2] = { rate = 260, sizeStart = 1.8, sizeEnd = 5.0, speedMin = 4.8, speedMax = 9.0, spread = 68, accelY = 12.0, lightBright = 2.8, lightRange = 15 },
+	[3] = { rate = 360, sizeStart = 2.2, sizeEnd = 6.2, speedMin = 5.8, speedMax = 10.8, spread = 78, accelY = 14.5, lightBright = 3.6, lightRange = 18 },
+	[4] = { rate = 480, sizeStart = 2.7, sizeEnd = 7.6, speedMin = 6.8, speedMax = 12.8, spread = 88, accelY = 17.5, lightBright = 4.5, lightRange = 21 },
+	[5] = { rate = 620, sizeStart = 3.2, sizeEnd = 9.2, speedMin = 8.0, speedMax = 15.0, spread = 98, accelY = 21.0, lightBright = 5.5, lightRange = 25 },
 }
 
 local SURGE_TEXTURES = {
@@ -131,33 +132,34 @@ local SURGE_TEXTURES = {
 }
 
 local SURGE_CONFIG = {
-	[1] = { rate = 65, sizeStart = 1.6, sizeEnd = 4.2, speedMin = 1.3, speedMax = 3.2, spread = 115, wispRate = 28, idleMult = 2.0, lightBright = 2.0, lightRange = 12 },
-	[2] = { rate = 110, sizeStart = 2.1, sizeEnd = 5.6, speedMin = 1.7, speedMax = 4.0, spread = 135, wispRate = 48, idleMult = 3.0, lightBright = 3.0, lightRange = 16 },
-	[3] = { rate = 170, sizeStart = 2.7, sizeEnd = 7.2, speedMin = 2.2, speedMax = 5.0, spread = 155, wispRate = 75, idleMult = 5.0, lightBright = 4.2, lightRange = 20 },
-	[4] = { rate = 245, sizeStart = 3.3, sizeEnd = 9.0, speedMin = 2.8, speedMax = 6.2, spread = 175, wispRate = 110, idleMult = 7.0, lightBright = 5.6, lightRange = 24 },
-	[5] = { rate = 340, sizeStart = 4.0, sizeEnd = 11.2, speedMin = 3.4, speedMax = 7.5, spread = 195, wispRate = 155, idleMult = 9.0, lightBright = 7.2, lightRange = 30 },
+	[1] = { rate = 45, sizeStart = 1.5, sizeEnd = 4.0, speedMin = 1.3, speedMax = 3.2, spread = 115, wispRate = 20, idleMult = 1.8, lightBright = 1.8, lightRange = 11 },
+	[2] = { rate = 75, sizeStart = 2.0, sizeEnd = 5.2, speedMin = 1.7, speedMax = 4.0, spread = 135, wispRate = 32, idleMult = 2.4, lightBright = 2.5, lightRange = 14 },
+	[3] = { rate = 115, sizeStart = 2.5, sizeEnd = 6.6, speedMin = 2.2, speedMax = 5.0, spread = 155, wispRate = 48, idleMult = 3.2, lightBright = 3.2, lightRange = 17 },
+	[4] = { rate = 160, sizeStart = 3.0, sizeEnd = 8.0, speedMin = 2.8, speedMax = 6.2, spread = 175, wispRate = 68, idleMult = 4.0, lightBright = 4.0, lightRange = 20 },
+	[5] = { rate = 220, sizeStart = 3.6, sizeEnd = 9.8, speedMin = 3.4, speedMax = 7.5, spread = 195, wispRate = 95, idleMult = 5.0, lightBright = 5.0, lightRange = 24 },
 }
 
 local SMOKE_PRESETS = {
-	[1] = { label = "1 (Soft)", rateMult = 1.25, sizeMult = 0.85, speedMult = 0.95, shards = true, surge = false },
-	[2] = { label = "2 (Medium)", rateMult = 3.2, sizeMult = 1.35, speedMult = 1.2, shards = true, surge = false },
-	[3] = { label = "3 (High-)", rateMult = 6.2, sizeMult = 2.0, speedMult = 1.5, shards = true, surge = true },
-	[4] = { label = "4 (High)", rateMult = 8.0, sizeMult = 2.35, speedMult = 1.7, shards = true, surge = true },
-	[5] = { label = "5 (Max)", rateMult = 10.5, sizeMult = 2.8, speedMult = 1.95, shards = true, surge = true },
+	[1] = { label = "1 (Soft)", rateMult = 1.0, sizeMult = 0.85, speedMult = 0.95, shards = true, surge = false },
+	[2] = { label = "2 (Medium)", rateMult = 2.0, sizeMult = 1.25, speedMult = 1.15, shards = true, surge = false },
+	[3] = { label = "3 (High-)", rateMult = 3.2, sizeMult = 1.7, speedMult = 1.4, shards = true, surge = true },
+	[4] = { label = "4 (High)", rateMult = 4.2, sizeMult = 2.0, speedMult = 1.55, shards = true, surge = true },
+	[5] = { label = "5 (Max)", rateMult = 5.5, sizeMult = 2.35, speedMult = 1.75, shards = true, surge = true },
 }
 
 local STAR_RADIANCE_TIERS = {
-	[1] = { rateMult = 3.5, speedMult = 0.95, burst = 24, sizeMult = 0.85, spreadMult = 0.85, lightBright = 1.6, lightRange = 12, reachMult = 0.90 },
-	[2] = { rateMult = 6.5, speedMult = 1.10, burst = 40, sizeMult = 1.02, spreadMult = 1.02, lightBright = 2.3, lightRange = 15, reachMult = 1.08 },
-	[3] = { rateMult = 11.0, speedMult = 1.25, burst = 60, sizeMult = 1.20, spreadMult = 1.20, lightBright = 3.1, lightRange = 18, reachMult = 1.26 },
-	[4] = { rateMult = 17.5, speedMult = 1.42, burst = 85, sizeMult = 1.40, spreadMult = 1.40, lightBright = 4.0, lightRange = 22, reachMult = 1.44 },
-	[5] = { rateMult = 26.0, speedMult = 1.62, burst = 120, sizeMult = 1.62, spreadMult = 1.62, lightBright = 5.2, lightRange = 26, reachMult = 1.65 },
+	[1] = { rateMult = 2.0, speedMult = 0.95, burst = 14, sizeMult = 0.85, spreadMult = 0.85, lightBright = 1.5, lightRange = 11, reachMult = 0.90 },
+	[2] = { rateMult = 3.2, speedMult = 1.10, burst = 22, sizeMult = 1.02, spreadMult = 1.02, lightBright = 2.0, lightRange = 14, reachMult = 1.08 },
+	[3] = { rateMult = 4.8, speedMult = 1.25, burst = 32, sizeMult = 1.20, spreadMult = 1.20, lightBright = 2.6, lightRange = 16, reachMult = 1.26 },
+	[4] = { rateMult = 6.8, speedMult = 1.42, burst = 44, sizeMult = 1.40, spreadMult = 1.40, lightBright = 3.3, lightRange = 19, reachMult = 1.44 },
+	[5] = { rateMult = 9.5, speedMult = 1.62, burst = 60, sizeMult = 1.62, spreadMult = 1.62, lightBright = 4.2, lightRange = 22, reachMult = 1.65 },
 }
 
+-- Capped so it looks huge without freezing client
 local ULTIMATE_SPREAD_PRESET = {
-	rateMult = 145.0,
-	sizeMult = 42.0,
-	speedMult = 36.0,
+	rateMult = 18.0,
+	sizeMult = 8.5,
+	speedMult = 7.5,
 	shards = true,
 	surge = true,
 }
@@ -642,7 +644,7 @@ local function makeDraggable(frame, handle, holdMode, lockedFn)
 				activeDrag = true
 			end
 			if activeDrag then
-				if delta.Magnitude > 6 then moved = true end
+				if delta.Magnitude > 8 then moved = true end
 				frame.Position = UDim2.new(
 					frameStart.X.Scale,
 					frameStart.X.Offset + delta.X,
@@ -773,12 +775,6 @@ local function startFly()
 		local camera = workspace.CurrentCamera
 		local move = hum.MoveDirection
 		local spd = normalizeFlySpeed(Cfg.FlyVal)
-		pcall(function()
-			local animator = hum:FindFirstChildOfClass("Animator")
-			if animator then
-				for _, tr in ipairs(animator:GetPlayingAnimationTracks()) do tr:Stop(0) end
-			end
-		end)
 		local desiredVel = Vector3.zero
 		if move.Magnitude > 0.05 and camera then
 			local camCF = camera.CFrame
@@ -1003,21 +999,16 @@ local function runMimic(myChar, myHum, targetPlr)
 				if ok and loaded then
 					pcall(function() loaded.Priority = src.Priority end)
 					loaded.Looped = src.Looped
-					loaded:Play(0.02, 1, normalizeEmoteSpeed(src.Speed))
+					loaded:Play(0.05, 1, normalizeEmoteSpeed(src.Speed))
 					mimicTracks[key] = loaded
 					tr = loaded
 				end
 			end
 			if tr then
 				pcall(function()
-					if not tr.IsPlaying then tr:Play(0.02) end
+					if not tr.IsPlaying then tr:Play(0.05) end
 					tr.Looped = src.Looped
 					tr:AdjustSpeed(normalizeEmoteSpeed(src.Speed))
-					if src.Length and src.Length > 0 and src.TimePosition >= 0 then
-						if math.abs(tr.TimePosition - src.TimePosition) > 0.08 then
-							tr.TimePosition = math.clamp(src.TimePosition, 0, math.max(0, src.Length - 0.01))
-						end
-					end
 				end)
 			end
 		end
@@ -1025,7 +1016,7 @@ local function runMimic(myChar, myHum, targetPlr)
 
 	for key, tr in pairs(mimicTracks) do
 		if not activeKeys[key] then
-			pcall(function() tr:Stop(0.02); tr:Destroy() end)
+			pcall(function() tr:Stop(0.05); tr:Destroy() end)
 			mimicTracks[key] = nil
 		end
 	end
@@ -1046,27 +1037,6 @@ end
 local function sanitizeAirWalkAnim(hum)
 	if not hum then return end
 	pcall(function()
-		local animateScript = hum.Parent and hum.Parent:FindFirstChild("Animate")
-		local idleAnim = animateScript and animateScript:FindFirstChild("idle") and animateScript.idle:FindFirstChildOfClass("Animation")
-		local idleId = idleAnim and idleAnim.AnimationId
-		local animator = hum:FindFirstChildOfClass("Animator")
-		if idleId and idleId ~= "" and animator then
-			local hasIdle = false
-			for _, tr in ipairs(hum:GetPlayingAnimationTracks()) do
-				if tr.Animation and tr.Animation.AnimationId == idleId then
-					hasIdle = true
-					if not tr.IsPlaying then tr:Play(0.05) end
-					break
-				end
-			end
-			if not hasIdle and hum.MoveDirection.Magnitude <= 0.05 then
-				local animInst = Instance.new("Animation")
-				animInst.AnimationId = idleId
-				local loaded = animator:LoadAnimation(animInst)
-				loaded.Looped = true
-				loaded:Play(0.05)
-			end
-		end
 		for _, tr in ipairs(hum:GetPlayingAnimationTracks()) do
 			local animName = string.lower((tr.Animation and tr.Animation.Name) or "")
 			if string.find(animName, "fall", 1, true) or string.find(animName, "jump", 1, true) or string.find(animName, "climb", 1, true) then
@@ -1436,19 +1406,6 @@ local function clearAuraEffects()
 	if auraWorldFolder then pcall(function() auraWorldFolder:Destroy() end); auraWorldFolder = nil end
 	if crackRootFolder then pcall(function() crackRootFolder:Destroy() end); crackRootFolder = nil end
 
-	for _, root in ipairs({ LocalPlayer.Character, workspace }) do
-		if root then
-			local ok, descList = pcall(function() return root:GetDescendants() end)
-			if ok and descList then
-				for _, desc in ipairs(descList) do
-					if desc:GetAttribute(AURA_OWNER_ATTR) or desc:GetAttribute("MortalAuraFX") then
-						pcall(function() desc:Destroy() end)
-					end
-				end
-			end
-		end
-	end
-
 	builtAuraMode = nil
 	builtAuraLevel = nil
 	builtAuraUltimate = nil
@@ -1537,33 +1494,19 @@ local function applyAuraUltimateGlow(char, modeName, extrasOut)
 	hl.Parent = char
 	table.insert(extrasOut, hl)
 	table.insert(activeAuraExtras, hl)
-
-	local hrp = char:FindFirstChild("HumanoidRootPart")
-	if hrp then
-		local pt = Instance.new("PointLight")
-		pt.Name = "MortalUltimateGlowLight"
-		pt.Color = set.Light
-		pt.Range = 14
-		pt.Brightness = 1.1
-		pt.Shadows = false
-		markAuraOwned(pt, "MortalUltimateGlow")
-		pt.Parent = hrp
-		table.insert(extrasOut, pt)
-		table.insert(activeAuraExtras, pt)
-	end
 end
 
 local function attachAuraUltimateSpread(char, modeName, texList, spreadOut)
 	local parts = getAuraTargetParts(char)
 	local offsets = {
-		Vector3.new(-0.55, 0.35, 0), Vector3.new(0.55, -0.25, 0),
-		Vector3.new(0, 0.25, 0.55), Vector3.new(0, -0.35, -0.55),
+		Vector3.new(-0.45, 0.25, 0),
+		Vector3.new(0.45, -0.25, 0),
 	}
 	local seq = makeAuraSequence(modeName)
 	local isColumn = (modeName == "COLUMN")
 	for _, part in ipairs(parts) do
-		local legBoost = isAuraLegOrFoot(part) and 1.35 or 1.0
-		for i = 1, 4 do
+		local legBoost = isAuraLegOrFoot(part) and 1.25 or 1.0
+		for i = 1, 2 do
 			local att = Instance.new("Attachment")
 			att.Name = "MortalAuraAtt_" .. tostring(i)
 			att.Position = offsets[i] or Vector3.zero
@@ -1579,44 +1522,44 @@ local function attachAuraUltimateSpread(char, modeName, texList, spreadOut)
 			if isColumn then
 				pe.EmissionDirection = Enum.NormalId.Top
 				pe.Size = NumberSequence.new({
-					NumberSequenceKeypoint.new(0, math.clamp(0.70 * ULTIMATE_SPREAD_PRESET.sizeMult * legBoost, 0.1, 36)),
-					NumberSequenceKeypoint.new(0.55, math.clamp(2.10 * ULTIMATE_SPREAD_PRESET.sizeMult * legBoost, 0.2, 85)),
+					NumberSequenceKeypoint.new(0, math.clamp(0.70 * ULTIMATE_SPREAD_PRESET.sizeMult * legBoost, 0.1, 22)),
+					NumberSequenceKeypoint.new(0.55, math.clamp(2.10 * ULTIMATE_SPREAD_PRESET.sizeMult * legBoost, 0.2, 42)),
 					NumberSequenceKeypoint.new(1, 0),
 				})
 				pe.Transparency = NumberSequence.new({
 					NumberSequenceKeypoint.new(0, 0.24), NumberSequenceKeypoint.new(0.55, 0.40), NumberSequenceKeypoint.new(1, 1),
 				})
-				pe.Lifetime = NumberRange.new(0.65, 1.2)
-				pe.Rate = math.clamp(38 * ULTIMATE_SPREAD_PRESET.rateMult * legBoost, 50, 16000)
-				pe.Speed = NumberRange.new(math.clamp(4.2 * ULTIMATE_SPREAD_PRESET.speedMult, 1.5, 280), math.clamp(9.8 * ULTIMATE_SPREAD_PRESET.speedMult, 3, 400))
-				pe.SpreadAngle = Vector2.new(195, 195)
+				pe.Lifetime = NumberRange.new(0.6, 1.05)
+				pe.Rate = math.clamp(24 * ULTIMATE_SPREAD_PRESET.rateMult * legBoost, 25, 900)
+				pe.Speed = NumberRange.new(math.clamp(4.2 * ULTIMATE_SPREAD_PRESET.speedMult, 1.5, 95), math.clamp(9.8 * ULTIMATE_SPREAD_PRESET.speedMult, 3, 140))
+				pe.SpreadAngle = Vector2.new(180, 180)
 				pe.Drag = 2.4
-				pe.Acceleration = Vector3.new(0, 65, 0)
+				pe.Acceleration = Vector3.new(0, 28, 0)
 				pe.Rotation = NumberRange.new(-35, 35)
-				pe.RotSpeed = NumberRange.new(-140, 140)
+				pe.RotSpeed = NumberRange.new(-120, 120)
 				pe.LightEmission = 0
 				pe.LightInfluence = 0.25
 			else
 				pe.EmissionDirection = Enum.NormalId.Front
 				pe.Size = NumberSequence.new({
-					NumberSequenceKeypoint.new(0, math.clamp(0.95 * ULTIMATE_SPREAD_PRESET.sizeMult * legBoost, 0.2, 48)),
-					NumberSequenceKeypoint.new(0.55, math.clamp(1.75 * ULTIMATE_SPREAD_PRESET.sizeMult * legBoost, 0.3, 78)),
-					NumberSequenceKeypoint.new(1, math.clamp(0.15 * 18, 0.1, 18)),
+					NumberSequenceKeypoint.new(0, math.clamp(0.95 * ULTIMATE_SPREAD_PRESET.sizeMult * legBoost, 0.2, 24)),
+					NumberSequenceKeypoint.new(0.55, math.clamp(1.75 * ULTIMATE_SPREAD_PRESET.sizeMult * legBoost, 0.3, 38)),
+					NumberSequenceKeypoint.new(1, 0),
 				})
 				pe.Transparency = NumberSequence.new({
 					NumberSequenceKeypoint.new(0, modeName == "SMOKE" and 0.48 or 0.28),
 					NumberSequenceKeypoint.new(0.55, modeName == "SMOKE" and 0.64 or 0.46),
 					NumberSequenceKeypoint.new(1, 1),
 				})
-				pe.Lifetime = NumberRange.new(0.95, 1.75)
-				pe.Rate = math.clamp(28 * ULTIMATE_SPREAD_PRESET.rateMult * legBoost, 40, 16000)
-				pe.Speed = NumberRange.new(math.clamp((modeName == "SMOKE" and 2.4 or 3.0) * ULTIMATE_SPREAD_PRESET.speedMult, 0.8, 240), math.clamp((modeName == "SMOKE" and 6.4 or 7.5) * ULTIMATE_SPREAD_PRESET.speedMult, 1.5, 350))
+				pe.Lifetime = NumberRange.new(0.8, 1.4)
+				pe.Rate = math.clamp(20 * ULTIMATE_SPREAD_PRESET.rateMult * legBoost, 25, 850)
+				pe.Speed = NumberRange.new(math.clamp(3.0 * ULTIMATE_SPREAD_PRESET.speedMult, 0.8, 80), math.clamp(7.5 * ULTIMATE_SPREAD_PRESET.speedMult, 1.5, 120))
 				pe.SpreadAngle = Vector2.new(360, 360)
-				pe.Drag = modeName == "SMOKE" and 1.1 or 1.0
-				pe.Acceleration = Vector3.new(0, 14, 0)
+				pe.Drag = 1.1
+				pe.Acceleration = Vector3.new(0, 10, 0)
 				pe.Rotation = NumberRange.new(-180, 180)
-				pe.RotSpeed = NumberRange.new(-360, 360)
-				pe.LightEmission = (modeName == "STAR_RADIANCE") and 0.95 or 0
+				pe.RotSpeed = NumberRange.new(-240, 240)
+				pe.LightEmission = (modeName == "STAR_RADIANCE") and 0.85 or 0
 				pe.LightInfluence = (modeName == "STAR_RADIANCE") and 0 or 0.35
 			end
 			pe.Enabled = true
@@ -1642,10 +1585,10 @@ local function createColumnEmitterEntry(part, cfg, partCount, isCoreDark, texIdx
 		NumberSequenceKeypoint.new(0, 0.30), NumberSequenceKeypoint.new(0.25, isCoreDark and 0.08 or 0.14),
 		NumberSequenceKeypoint.new(0.72, isCoreDark and 0.28 or 0.36), NumberSequenceKeypoint.new(1, 1),
 	})
-	local legBoost = isAuraLegOrFoot(part) and 2.2 or 1.0
+	local legBoost = isAuraLegOrFoot(part) and 1.8 or 1.0
 	pe.EmissionDirection = Enum.NormalId.Top
-	pe.Lifetime = NumberRange.new(0.55, 1.05)
-	local rate = math.max(24, math.floor((cfg.rate / math.max(1, partCount)) * legBoost))
+	pe.Lifetime = NumberRange.new(0.55, 1.0)
+	local rate = math.max(12, math.floor((cfg.rate / math.max(1, partCount)) * legBoost))
 	pe.Rate = rate
 	pe.Speed = NumberRange.new(cfg.speedMin, cfg.speedMax)
 	pe.SpreadAngle = Vector2.new(cfg.spread, cfg.spread)
@@ -1658,7 +1601,7 @@ local function createColumnEmitterEntry(part, cfg, partCount, isCoreDark, texIdx
 	pe.Enabled = true
 	pe.Parent = part
 	return {
-		emitter = pe, kind = "column", baseRate = rate, minRate = 24, baseSize = baseSize,
+		emitter = pe, kind = "column", baseRate = rate, minRate = 12, baseSize = baseSize,
 		baseSpeedMin = cfg.speedMin, baseSpeedMax = cfg.speedMax, baseSpread = cfg.spread,
 		baseRotSpeed = 45, baseAccel = Vector3.new(0, cfg.accelY, 0),
 	}
@@ -1676,10 +1619,10 @@ local function createColumnSparkEntry(part, cfg, partCount)
 	pe.Transparency = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0.14), NumberSequenceKeypoint.new(0.7, 0.42), NumberSequenceKeypoint.new(1, 1),
 	})
-	local legBoost = isAuraLegOrFoot(part) and 2.0 or 1.0
+	local legBoost = isAuraLegOrFoot(part) and 1.6 or 1.0
 	pe.EmissionDirection = Enum.NormalId.Top
-	pe.Lifetime = NumberRange.new(0.65, 1.25)
-	local rate = math.max(18, math.floor(((cfg.rate * 0.65) / math.max(1, partCount)) * legBoost))
+	pe.Lifetime = NumberRange.new(0.6, 1.15)
+	local rate = math.max(10, math.floor(((cfg.rate * 0.55) / math.max(1, partCount)) * legBoost))
 	pe.Rate = rate
 	pe.Speed = NumberRange.new(cfg.speedMin * 0.9, cfg.speedMax * 1.15)
 	pe.SpreadAngle = Vector2.new(cfg.spread * 1.25, cfg.spread * 1.25)
@@ -1690,7 +1633,7 @@ local function createColumnSparkEntry(part, cfg, partCount)
 	pe.Enabled = true
 	pe.Parent = part
 	return {
-		emitter = pe, kind = "spark", baseRate = rate, minRate = 18, baseSize = baseSize,
+		emitter = pe, kind = "spark", baseRate = rate, minRate = 10, baseSize = baseSize,
 		baseSpeedMin = cfg.speedMin * 0.9, baseSpeedMax = cfg.speedMax * 1.15, baseSpread = cfg.spread * 1.25,
 		baseRotSpeed = 45, baseAccel = Vector3.new(0, cfg.accelY * 0.85, 0),
 	}
@@ -1706,14 +1649,14 @@ local function createSurgeCloudEntry(part, cfg, partCount, isDeepVoid, texIdx)
 		NumberSequenceKeypoint.new(0.45, (cfg.sizeStart + cfg.sizeEnd) * 0.54),
 		NumberSequenceKeypoint.new(1, cfg.sizeEnd),
 	})
-	local baseRate = math.max(16, math.floor(cfg.rate / math.max(1, partCount)))
+	local baseRate = math.max(10, math.floor(cfg.rate / math.max(1, partCount)))
 	local baseAccel = Vector3.new(0, 1.6 + (Cfg.AuraLevel * 0.35), 0)
 	pe.Size = baseSize
 	pe.Transparency = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0.72), NumberSequenceKeypoint.new(0.22, isDeepVoid and 0.36 or 0.44),
 		NumberSequenceKeypoint.new(0.68, isDeepVoid and 0.58 or 0.66), NumberSequenceKeypoint.new(1, 1),
 	})
-	pe.Lifetime = NumberRange.new(1.15, 2.15)
+	pe.Lifetime = NumberRange.new(1.0, 1.8)
 	pe.Rate = baseRate
 	pe.Speed = NumberRange.new(cfg.speedMin, cfg.speedMax)
 	pe.SpreadAngle = Vector2.new(cfg.spread, cfg.spread)
@@ -1726,7 +1669,7 @@ local function createSurgeCloudEntry(part, cfg, partCount, isDeepVoid, texIdx)
 	pe.Enabled = true
 	pe.Parent = part
 	return {
-		emitter = pe, kind = "cloud", baseRate = baseRate, minRate = 16, baseSize = baseSize,
+		emitter = pe, kind = "cloud", baseRate = baseRate, minRate = 10, baseSize = baseSize,
 		baseSpeedMin = cfg.speedMin, baseSpeedMax = cfg.speedMax, baseSpread = cfg.spread,
 		baseRotSpeed = 38, baseAccel = baseAccel,
 	}
@@ -1740,13 +1683,13 @@ local function createSurgeWispEntry(part, cfg, partCount, texIdx)
 	local baseSize = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, cfg.sizeStart * 0.48), NumberSequenceKeypoint.new(0.5, cfg.sizeEnd * 0.45), NumberSequenceKeypoint.new(1, 0),
 	})
-	local baseRate = math.max(10, math.floor(cfg.wispRate / math.max(1, partCount)))
+	local baseRate = math.max(8, math.floor(cfg.wispRate / math.max(1, partCount)))
 	local baseAccel = Vector3.new(0, 3.0 + (Cfg.AuraLevel * 0.45), 0)
 	pe.Size = baseSize
 	pe.Transparency = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0.36), NumberSequenceKeypoint.new(0.6, 0.56), NumberSequenceKeypoint.new(1, 1),
 	})
-	pe.Lifetime = NumberRange.new(0.9, 1.7)
+	pe.Lifetime = NumberRange.new(0.85, 1.5)
 	pe.Rate = baseRate
 	pe.Speed = NumberRange.new(cfg.speedMin * 1.25, cfg.speedMax * 1.35)
 	pe.SpreadAngle = Vector2.new(cfg.spread * 0.8, cfg.spread * 0.8)
@@ -1759,7 +1702,7 @@ local function createSurgeWispEntry(part, cfg, partCount, texIdx)
 	pe.Enabled = true
 	pe.Parent = part
 	return {
-		emitter = pe, kind = "wisp", baseRate = baseRate, minRate = 10, baseSize = baseSize,
+		emitter = pe, kind = "wisp", baseRate = baseRate, minRate = 8, baseSize = baseSize,
 		baseSpeedMin = cfg.speedMin * 1.25, baseSpeedMax = cfg.speedMax * 1.35, baseSpread = cfg.spread * 0.8,
 		baseRotSpeed = 58, baseAccel = baseAccel,
 	}
@@ -1865,11 +1808,11 @@ local function spawnWalkCrack(item, groundPos, moveDir, scale)
 	markAuraOwned(node, "MortalCrackNode")
 	node.Parent = item.crackFolder
 	local segs = {}
-	for b = 1, 5 do
-		local ang = math.atan2(moveDir.Z, moveDir.X) + (((b - 3) / 2.5) * 1.45)
+	for b = 1, 4 do
+		local ang = math.atan2(moveDir.Z, moveDir.X) + (((b - 2.5) / 2) * 1.35)
 		local cur = groundPos
 		local segLen = 0.72 * scale
-		for s = 1, 3 do
+		for s = 1, 2 do
 			ang = ang + (((s % 2 == 0) and 1 or -1) * 0.52)
 			local nxt = cur + Vector3.new(math.cos(ang), 0, math.sin(ang)) * segLen
 			table.insert(segs, createCrackSeg(node, cur, nxt, 0.25 * scale, false, set.Outline))
@@ -1878,9 +1821,9 @@ local function spawnWalkCrack(item, groundPos, moveDir, scale)
 	end
 	table.insert(item.walkCracks, {
 		folder = node, segs = segs, popup = createRiftPopup(node, scale, set.Start),
-		originPos = groundPos, spawnTime = os.clock(), duration = 2.2
+		originPos = groundPos, spawnTime = os.clock(), duration = 1.8
 	})
-	if #item.walkCracks > 14 then
+	if #item.walkCracks > 8 then
 		local old = table.remove(item.walkCracks, 1)
 		pcall(function() old.folder:Destroy() end)
 	end
@@ -1894,24 +1837,24 @@ local function spawnLandingMegaCrack(item, groundPos, scale)
 	markAuraOwned(node, "MortalCrackNode")
 	node.Parent = item.crackFolder
 	local segs = {}
-	local armCount = 14
-	local reach = 9.5 * scale
+	local armCount = 10
+	local reach = 9.0 * scale
 	for i = 1, armCount do
 		local baseAng = ((i - 1) / armCount) * math.pi * 2
 		local cur = groundPos
 		local ang = baseAng
-		for s = 1, 4 do
-			ang = ang + (((s % 2 == 0) and 1 or -1) * 0.40)
-			local nxt = cur + Vector3.new(math.cos(ang), 0, math.sin(ang)) * (reach / 4)
-			table.insert(segs, createCrackSeg(node, cur, nxt, 0.38 * scale, true, set.Outline))
+		for s = 1, 3 do
+			ang = ang + (((s % 2 == 0) and 1 or -1) * 0.42)
+			local nxt = cur + Vector3.new(math.cos(ang), 0, math.sin(ang)) * (reach / 3)
+			table.insert(segs, createCrackSeg(node, cur, nxt, 0.36 * scale, true, set.Outline))
 			cur = nxt
 		end
 	end
 	table.insert(item.landingCracks, {
-		folder = node, segs = segs, popup = createRiftPopup(node, scale * 1.25, set.Start),
-		originPos = groundPos, spawnTime = os.clock(), duration = 3.0
+		folder = node, segs = segs, popup = createRiftPopup(node, scale * 1.2, set.Start),
+		originPos = groundPos, spawnTime = os.clock(), duration = 2.4
 	})
-	if #item.landingCracks > 6 then
+	if #item.landingCracks > 4 then
 		local old = table.remove(item.landingCracks, 1)
 		pcall(function() old.folder:Destroy() end)
 	end
@@ -1926,14 +1869,14 @@ local function attachStarEmitterEntry(parentPart, opts)
 	pe.Transparency = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0.05), NumberSequenceKeypoint.new(0.60, 0.25), NumberSequenceKeypoint.new(1, 1),
 	})
-	pe.Lifetime = NumberRange.new(0.45, 0.85)
-	pe.Rate = math.max(120, math.floor(opts.rate or 260))
+	pe.Lifetime = NumberRange.new(0.45, 0.8)
+	pe.Rate = math.max(45, math.floor(opts.rate or 110))
 	pe.Speed = opts.speed
 	pe.SpreadAngle = opts.spread
 	pe.RotSpeed = opts.rotSpeed
 	pe.Rotation = NumberRange.new(-180, 180)
 	pe.Drag = 1.15
-	pe.LightEmission = 0.95
+	pe.LightEmission = 0.85
 	pe.Acceleration = opts.accel
 	pe.Enabled = true
 	pe.Parent = parentPart
@@ -1973,21 +1916,15 @@ local function buildAura(char, hrp)
 			applyAuraUltimateGlow(char, "SMOKE", extras)
 			attachAuraUltimateSpread(char, "SMOKE", SURGE_TEXTURES, spreadEmitters)
 		end
-		local offsets = isUltimate and {
-			Vector3.new(-0.55, 0.35, 0), Vector3.new(0.55, -0.25, 0),
-			Vector3.new(0, 0.25, 0.55), Vector3.new(0, -0.35, -0.55),
-		} or {
-			Vector3.new(-0.32, 0.25, 0), Vector3.new(0.32, -0.25, 0),
-			Vector3.new(0, 0, 0.32), Vector3.new(0, -0.35, 0),
-		}
-		local minAuraRate = isUltimate and 40 or ((lvl == 1) and 10 or ((lvl == 2) and 28 or 42))
-		local maxAuraRate = isUltimate and 16000 or 1200
-		local maxShardRate = isUltimate and 11000 or 900
-		local maxSurgeRate = isUltimate and 13000 or 1000
+		local offsets = { Vector3.new(-0.32, 0.22, 0), Vector3.new(0.32, -0.22, 0) }
+		local minAuraRate = isUltimate and 25 or ((lvl == 1) and 8 or ((lvl == 2) and 16 or 24))
+		local maxAuraRate = isUltimate and 650 or 320
+		local maxShardRate = isUltimate and 450 or 220
+		local maxSurgeRate = isUltimate and 550 or 260
 
 		for _, part in ipairs(parts) do
-			local legBoost = (isAuraLegOrFoot(part) and (isUltimate or lvl >= 3)) and 1.35 or ((isAuraLegOrFoot(part) and lvl == 2) and 1.15 or 1.0)
-			for i = 1, 4 do
+			local legBoost = (isAuraLegOrFoot(part) and (isUltimate or lvl >= 3)) and 1.25 or ((isAuraLegOrFoot(part) and lvl == 2) and 1.1 or 1.0)
+			for i = 1, 2 do
 				local att = Instance.new("Attachment")
 				att.Name = "MortalAuraAtt_" .. tostring(i)
 				att.Position = offsets[i] or Vector3.zero
@@ -2001,21 +1938,21 @@ local function buildAura(char, hrp)
 				aura.Parent = att
 				aura.Color = smokeSeq
 				aura.Size = NumberSequence.new({
-					NumberSequenceKeypoint.new(0, math.clamp(0.80 * preset.sizeMult * legBoost, 0.1, 40)),
-					NumberSequenceKeypoint.new(0.55, math.clamp(1.85 * preset.sizeMult * legBoost, 0.2, 78)),
-					NumberSequenceKeypoint.new(1, math.clamp(0.15 * (isUltimate and 18 or 1), 0.1, 18)),
+					NumberSequenceKeypoint.new(0, math.clamp(0.80 * preset.sizeMult * legBoost, 0.1, 18)),
+					NumberSequenceKeypoint.new(0.55, math.clamp(1.85 * preset.sizeMult * legBoost, 0.2, 32)),
+					NumberSequenceKeypoint.new(1, 0),
 				})
 				aura.Transparency = NumberSequence.new({
-					NumberSequenceKeypoint.new(0, isUltimate and 0.50 or ((lvl == 1) and 0.35 or ((lvl == 2) and 0.24 or 0.14))),
-					NumberSequenceKeypoint.new(0.55, isUltimate and 0.66 or ((lvl == 1) and 0.65 or ((lvl == 2) and 0.52 or 0.38))),
+					NumberSequenceKeypoint.new(0, isUltimate and 0.50 or 0.28),
+					NumberSequenceKeypoint.new(0.55, isUltimate and 0.66 or 0.52),
 					NumberSequenceKeypoint.new(1, 1),
 				})
-				aura.Lifetime = NumberRange.new((not isUltimate and lvl == 1) and 0.45 or 0.75, (not isUltimate and lvl == 1) and 0.75 or (isUltimate and 1.5 or 1.25))
-				aura.Rate = math.clamp(34 * preset.rateMult * legBoost, minAuraRate, maxAuraRate)
-				aura.Speed = NumberRange.new(math.clamp(2.8 * preset.speedMult, 0.5, 220), math.clamp(7.2 * preset.speedMult, 1.0, 320))
+				aura.Lifetime = NumberRange.new(0.5, 0.95)
+				aura.Rate = math.clamp(20 * preset.rateMult * legBoost, minAuraRate, maxAuraRate)
+				aura.Speed = NumberRange.new(math.clamp(2.8 * preset.speedMult, 0.5, 70), math.clamp(7.2 * preset.speedMult, 1.0, 110))
 				aura.SpreadAngle = Vector2.new(360, 360)
 				aura.Rotation = NumberRange.new(-180, 180)
-				aura.RotSpeed = NumberRange.new(-180 * (isUltimate and 4 or 1), 180 * (isUltimate and 4 or 1))
+				aura.RotSpeed = NumberRange.new(-140, 140)
 				aura.LightEmission = 0
 				aura.LightInfluence = 0.25
 				aura.Enabled = true
@@ -2029,16 +1966,15 @@ local function buildAura(char, hrp)
 					shards.Parent = att
 					shards.Color = smokeSeq
 					shards.Size = NumberSequence.new({
-						NumberSequenceKeypoint.new(0, math.clamp(0.34 * preset.sizeMult * legBoost, 0.05, 28)),
+						NumberSequenceKeypoint.new(0, math.clamp(0.34 * preset.sizeMult * legBoost, 0.05, 10)),
 						NumberSequenceKeypoint.new(1, 0),
 					})
 					shards.Transparency = NumberSequence.new({
-						NumberSequenceKeypoint.new(0, isUltimate and 0.42 or ((lvl == 1) and 0.25 or 0.08)),
-						NumberSequenceKeypoint.new(1, 1),
+						NumberSequenceKeypoint.new(0, 0.22), NumberSequenceKeypoint.new(1, 1),
 					})
-					shards.Lifetime = NumberRange.new((not isUltimate and lvl == 1) and 0.3 or 0.5, (not isUltimate and lvl == 1) and 0.55 or 0.95)
-					shards.Rate = math.clamp(22 * preset.rateMult * legBoost, (not isUltimate and lvl == 1) and 8 or ((not isUltimate and lvl == 2) and 22 or 35), maxShardRate)
-					shards.Speed = NumberRange.new(math.clamp(5.0 * preset.speedMult, 1.0, 260), math.clamp(12.0 * preset.speedMult, 2.0, 400))
+					shards.Lifetime = NumberRange.new(0.35, 0.7)
+					shards.Rate = math.clamp(14 * preset.rateMult * legBoost, 8, maxShardRate)
+					shards.Speed = NumberRange.new(math.clamp(5.0 * preset.speedMult, 1.0, 90), math.clamp(12.0 * preset.speedMult, 2.0, 140))
 					shards.SpreadAngle = Vector2.new(360, 360)
 					shards.LightEmission = 0
 					shards.LightInfluence = 0.25
@@ -2054,18 +1990,18 @@ local function buildAura(char, hrp)
 					surge.Parent = att
 					surge.Color = smokeSeq
 					surge.Size = NumberSequence.new({
-						NumberSequenceKeypoint.new(0, math.clamp(1.2 * preset.sizeMult * legBoost, 0.2, 58)),
-						NumberSequenceKeypoint.new(0.7, math.clamp(2.65 * preset.sizeMult * legBoost, 0.4, 92)),
-						NumberSequenceKeypoint.new(1, math.clamp(0.15 * (isUltimate and 18 or 1), 0.1, 22)),
+						NumberSequenceKeypoint.new(0, math.clamp(1.1 * preset.sizeMult * legBoost, 0.2, 22)),
+						NumberSequenceKeypoint.new(0.7, math.clamp(2.4 * preset.sizeMult * legBoost, 0.4, 36)),
+						NumberSequenceKeypoint.new(1, 0),
 					})
 					surge.Transparency = NumberSequence.new({
-						NumberSequenceKeypoint.new(0, isUltimate and 0.50 or 0.2), NumberSequenceKeypoint.new(1, 1),
+						NumberSequenceKeypoint.new(0, 0.25), NumberSequenceKeypoint.new(1, 1),
 					})
-					surge.Lifetime = NumberRange.new(0.6, isUltimate and 1.35 or 1.05)
-					surge.Rate = math.clamp(28 * preset.rateMult * legBoost, 45, maxSurgeRate)
-					surge.Speed = NumberRange.new(math.clamp(3.5 * preset.speedMult, 1.0, 240), math.clamp(9.0 * preset.speedMult, 2.0, 360))
+					surge.Lifetime = NumberRange.new(0.55, 1.0)
+					surge.Rate = math.clamp(16 * preset.rateMult * legBoost, 14, maxSurgeRate)
+					surge.Speed = NumberRange.new(math.clamp(3.5 * preset.speedMult, 1.0, 80), math.clamp(9.0 * preset.speedMult, 2.0, 120))
 					surge.SpreadAngle = Vector2.new(360, 360)
-					surge.RotSpeed = NumberRange.new(-240 * (isUltimate and 4 or 1), 240 * (isUltimate and 4 or 1))
+					surge.RotSpeed = NumberRange.new(-180, 180)
 					surge.LightEmission = 0
 					surge.LightInfluence = 0.25
 					surge.Enabled = true
@@ -2081,7 +2017,6 @@ local function buildAura(char, hrp)
 			local texIdx = ((idx - 1) % 2) + 1
 			for _, entry in ipairs({
 				createColumnEmitterEntry(bp, cfg, #bodyParts, true, texIdx),
-				createColumnEmitterEntry(bp, cfg, #bodyParts, false, texIdx),
 				createColumnSparkEntry(bp, cfg, #bodyParts),
 			}) do
 				table.insert(emitters, entry)
@@ -2105,7 +2040,6 @@ local function buildAura(char, hrp)
 			local texIdx = ((idx - 1) % #SURGE_TEXTURES) + 1
 			for _, entry in ipairs({
 				createSurgeCloudEntry(bp, cfg, #bodyParts, false, texIdx),
-				createSurgeCloudEntry(bp, cfg, #bodyParts, true, texIdx),
 				createSurgeWispEntry(bp, cfg, #bodyParts, texIdx),
 			}) do
 				table.insert(emitters, entry)
@@ -2127,7 +2061,7 @@ local function buildAura(char, hrp)
 		local avatarScale = getAvatarHeightRatio(char, char:FindFirstChild("Head"))
 		local fixedScale = math.clamp(avatarScale, 0.85, 1.40)
 		local bodyParts = collectAuraBodyParts(char, hrp)
-		local baseRate = math.max(120, math.floor((260 * tier.rateMult) / #bodyParts))
+		local baseRate = math.max(45, math.floor((110 * tier.rateMult) / #bodyParts))
 		local sMult = tier.sizeMult * fixedScale
 		local seq = makeAuraSequence("STAR_RADIANCE")
 
@@ -2141,17 +2075,8 @@ local function buildAura(char, hrp)
 				spread = Vector2.new(math.clamp(135 * tier.spreadMult, 50, 180), math.clamp(135 * tier.spreadMult, 50, 180)),
 				rotSpeed = NumberRange.new(-120, 120), accel = Vector3.new(0, 6.0, 0),
 			})
-			local s2 = attachStarEmitterEntry(bp, {
-				color = seq,
-				size = NumberSequence.new({
-					NumberSequenceKeypoint.new(0, 0.60 * sMult), NumberSequenceKeypoint.new(0.60, 1.45 * sMult), NumberSequenceKeypoint.new(1, 0),
-				}),
-				rate = baseRate, speed = NumberRange.new(4.5 * tier.speedMult, 11.5 * tier.speedMult),
-				spread = Vector2.new(math.clamp(170 * tier.spreadMult, 50, 180), math.clamp(170 * tier.spreadMult, 50, 180)),
-				rotSpeed = NumberRange.new(-155, 155), accel = Vector3.new(0, 4.0, 0),
-			})
-			table.insert(emitters, s1); table.insert(emitters, s2)
-			table.insert(activeAuraEmitters, s1); table.insert(activeAuraEmitters, s2)
+			table.insert(emitters, s1)
+			table.insert(activeAuraEmitters, s1)
 		end
 
 		ptLight = Instance.new("PointLight")
@@ -2232,9 +2157,9 @@ local function stepAura(now, char, hum, hrp)
 		if modeName == "SURGE" then
 			local cfg = SURGE_CONFIG[lvl] or SURGE_CONFIG[1]
 			local moveFactor = math.clamp(horizVel.Magnitude / 16, 0, 2.5)
-			local rateBoost = isIdle and cfg.idleMult or (1 + (moveFactor * 1.35))
-			local sizeBoost = isIdle and 1.12 or (1 + (moveFactor * 0.22))
-			local burstTick = math.floor(now * 14)
+			local rateBoost = isIdle and cfg.idleMult or (1 + (moveFactor * 1.2))
+			local sizeBoost = isIdle and 1.1 or (1 + (moveFactor * 0.2))
+			local burstTick = math.floor(now * 8)
 			local shouldBurst = (not isUltimate) and (not isIdle) and (moveFactor > 0.15) and (burstTick ~= lastSurgeBurstTick)
 			if shouldBurst then lastSurgeBurstTick = burstTick end
 
@@ -2243,111 +2168,56 @@ local function stepAura(now, char, hum, hrp)
 				if pe and pe.Parent and entry.baseRate then
 					pe.Enabled = true
 					pe.Color = activeSeq
-					pe.LightEmission = 0
-					pe.LightInfluence = 0.35
-					if isUltimate then
-						pe.Rate = math.clamp(entry.baseRate * ULTIMATE_SPREAD_PRESET.rateMult, 40, 16000)
-						pe.Size = scaleAuraNumberSeq(entry.baseSize, ULTIMATE_SPREAD_PRESET.sizeMult, 0.2, 78)
-						pe.Speed = NumberRange.new(math.clamp(entry.baseSpeedMin * ULTIMATE_SPREAD_PRESET.speedMult, 1.2, 240), math.clamp(entry.baseSpeedMax * ULTIMATE_SPREAD_PRESET.speedMult, 2.5, 350))
-						pe.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.28), NumberSequenceKeypoint.new(0.55, 0.46), NumberSequenceKeypoint.new(1, 1) })
-						pe.SpreadAngle = Vector2.new(360, 360)
-						pe.Drag = 1.0
-						pe.RotSpeed = NumberRange.new(-360, 360)
-						pe.Acceleration = Vector3.new(0, 14, 0)
-					else
-						pe.Rate = math.max(entry.minRate or 10, math.floor(entry.baseRate * rateBoost))
-						pe.Size = scaleAuraNumberSeq(entry.baseSize, sizeBoost)
-						pe.Speed = NumberRange.new(entry.baseSpeedMin, entry.baseSpeedMax)
-						pe.SpreadAngle = Vector2.new(entry.baseSpread, entry.baseSpread)
-						pe.RotSpeed = NumberRange.new(-entry.baseRotSpeed, entry.baseRotSpeed)
-						if shouldBurst then
-							local counterDrag = -horizVel * 0.45
-							pe.Acceleration = Vector3.new(entry.baseAccel.X + counterDrag.X, entry.baseAccel.Y, entry.baseAccel.Z + counterDrag.Z)
-							pe:Emit(entry.kind == "cloud" and 2 or 1)
-						else
-							pe.Acceleration = entry.baseAccel
-						end
+					pe.Rate = math.max(entry.minRate or 8, math.floor(entry.baseRate * rateBoost))
+					pe.Size = scaleAuraNumberSeq(entry.baseSize, sizeBoost)
+					if shouldBurst then
+						pe:Emit(1)
 					end
 				end
 			end
 			if item.light and item.light.Parent then
 				item.light.Range = cfg.lightRange
-				item.light.Brightness = cfg.lightBright + math.sin(now * 4.5) * 0.25
+				item.light.Brightness = cfg.lightBright + math.sin(now * 4.5) * 0.2
 			end
 		elseif modeName == "COLUMN" then
 			local cfg = COLUMN_CONFIG[lvl] or COLUMN_CONFIG[1]
 			for _, entry in ipairs(item.emitters or {}) do
 				local pe = entry.emitter
-				if pe and pe.Parent and entry.baseRate then
+				if pe and pe.Parent then
 					pe.Enabled = true
 					pe.Color = activeSeq
-					if isUltimate then
-						pe.LightEmission = 0
-						pe.LightInfluence = 0.25
-						pe.Rate = math.clamp(entry.baseRate * ULTIMATE_SPREAD_PRESET.rateMult, 50, 16000)
-						pe.Size = scaleAuraNumberSeq(entry.baseSize, ULTIMATE_SPREAD_PRESET.sizeMult, 0.2, 85)
-						pe.Speed = NumberRange.new(math.clamp(entry.baseSpeedMin * ULTIMATE_SPREAD_PRESET.speedMult, 1.5, 280), math.clamp(entry.baseSpeedMax * ULTIMATE_SPREAD_PRESET.speedMult, 3, 400))
-						pe.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.24), NumberSequenceKeypoint.new(0.55, 0.40), NumberSequenceKeypoint.new(1, 1) })
-						pe.SpreadAngle = Vector2.new(195, 195)
-						pe.Drag = 2.4
-						pe.RotSpeed = NumberRange.new(-140, 140)
-						pe.Acceleration = Vector3.new(0, 65, 0)
-					else
-						pe.LightInfluence = 0.25
-						pe.Rate = math.max(entry.minRate or 24, entry.baseRate)
-						pe.Size = entry.baseSize
-						pe.Speed = NumberRange.new(entry.baseSpeedMin, entry.baseSpeedMax)
-						pe.SpreadAngle = Vector2.new(entry.baseSpread, entry.baseSpread)
-						pe.RotSpeed = NumberRange.new(-entry.baseRotSpeed, entry.baseRotSpeed)
-					end
 				end
 			end
 			if item.light and item.light.Parent then
 				item.light.Range = cfg.lightRange
-				item.light.Brightness = cfg.lightBright + math.sin(now * 4.5) * 0.25
+				item.light.Brightness = cfg.lightBright + math.sin(now * 4.5) * 0.2
 			end
 		elseif modeName == "STAR_RADIANCE" then
 			local tier = STAR_RADIANCE_TIERS[lvl] or STAR_RADIANCE_TIERS[1]
-			local wakeOffset = (horizVel.Magnitude > 0.6)
-				and (-horizVel.Unit * math.clamp(horizVel.Magnitude / 16, 0, 1) * (4.5 * (item.avatarScale or 1) * tier.reachMult))
-				or Vector3.zero
-			local burstTick = math.floor(now * (4.2 * tier.speedMult))
+			local burstTick = math.floor(now * (3.0 * tier.speedMult))
 			local emitNow = (burstTick ~= (item.lastBurstTick or -1))
 			if emitNow then item.lastBurstTick = burstTick end
 
-			local sMult = tier.sizeMult * (item.fixedScale or 1) * (isUltimate and 8.5 or 1)
-			for idx, entry in ipairs(item.emitters or {}) do
+			for _, entry in ipairs(item.emitters or {}) do
 				local pe = entry.emitter
 				if pe and pe.Parent then
 					pe.Enabled = true
 					pe.Color = activeSeq
-					local baseMin = (idx % 2 == 1) and 0.65 or 0.60
-					local baseMid = (idx % 2 == 1) and 1.55 or 1.45
-					pe.Size = NumberSequence.new({
-						NumberSequenceKeypoint.new(0, math.clamp(baseMin * sMult, 0.1, 60)),
-						NumberSequenceKeypoint.new(0.55, math.clamp(baseMid * sMult, 0.2, 85)),
-						NumberSequenceKeypoint.new(1, 0),
-					})
-					pe.Speed = NumberRange.new(math.clamp(4.5 * tier.speedMult * (isUltimate and 6 or 1), 1, 240), math.clamp(11.5 * tier.speedMult * (isUltimate and 6 or 1), 2, 320))
-					local baseSpread = (idx % 2 == 1) and 135 or 170
-					local clampedSpread = isUltimate and 360 or math.clamp(baseSpread * tier.spreadMult, 50, 180)
-					pe.SpreadAngle = Vector2.new(clampedSpread, clampedSpread)
-					pe.Acceleration = Vector3.new(wakeOffset.X * 5.0, (idx % 2 == 1) and 6.0 or 4.0, wakeOffset.Z * 5.0)
 					if emitNow then
-						pe:Emit(math.max(2, math.floor((tier.burst * (isUltimate and 3 or 1)) / math.max(1, #item.emitters))))
+						pe:Emit(math.max(2, math.floor((tier.burst * (isUltimate and 2 or 1)) / math.max(1, #item.emitters))))
 					end
 				end
 			end
 			if item.light and item.light.Parent then
 				item.light.Range = tier.lightRange
-				item.light.Brightness = tier.lightBright + math.sin(now * 6) * 0.25
+				item.light.Brightness = tier.lightBright + math.sin(now * 6) * 0.2
 			end
 		elseif modeName == "MORTALS_NEVERDIE" then
 			local tier = STAR_RADIANCE_TIERS[lvl] or STAR_RADIANCE_TIERS[1]
 			local airborne = (hum.FloorMaterial == Enum.Material.Air) and (hrp.AssemblyLinearVelocity.Y < -2)
 			local gY, grounded = raycastAuraGroundY(hrp.Position, hrp.Position.Y - 3)
 			local groundPos = Vector3.new(hrp.Position.X, gY, hrp.Position.Z)
-			local crackScale = (item.fixedScale or 1) * tier.sizeMult * (isUltimate and 1.85 or 1.0)
+			local crackScale = (item.fixedScale or 1) * tier.sizeMult * (isUltimate and 1.6 or 1.0)
 
 			if airborne then wasAirborne = true
 			elseif wasAirborne and grounded then
@@ -2356,7 +2226,7 @@ local function stepAura(now, char, hum, hrp)
 			end
 
 			if not airborne and grounded and horizVel.Magnitude > 2.5 then
-				if not lastWalkCrackPos or (groundPos - lastWalkCrackPos).Magnitude >= (2.8 / tier.speedMult) then
+				if not lastWalkCrackPos or (groundPos - lastWalkCrackPos).Magnitude >= (3.2 / tier.speedMult) then
 					lastWalkCrackPos = groundPos
 					local mDir = (hum.MoveDirection.Magnitude > 0.1) and hum.MoveDirection.Unit or horizVel.Unit
 					spawnWalkCrack(item, groundPos, mDir, crackScale)
@@ -2383,10 +2253,6 @@ local function stepAura(now, char, hum, hrp)
 			end
 			updateList(item.walkCracks or {})
 			updateList(item.landingCracks or {})
-			if item.light and item.light.Parent then
-				item.light.Range = tier.lightRange
-				item.light.Brightness = tier.lightBright + math.sin(now * 5) * 0.2
-			end
 		end
 	end
 end
@@ -2398,7 +2264,7 @@ local sg = Instance.new("ScreenGui")
 sg.Name = "MortalEightHub"
 sg.ResetOnSpawn = false
 sg.IgnoreGuiInset = true
-sg.DisplayOrder = 999999
+sg.DisplayOrder = 100
 sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 sg.Parent = PlayerGui
 
@@ -2406,7 +2272,7 @@ local wheelGui = Instance.new("ScreenGui")
 wheelGui.Name = "MortalAuraColorWheelGUI"
 wheelGui.ResetOnSpawn = false
 wheelGui.IgnoreGuiInset = true
-wheelGui.DisplayOrder = 1000000
+wheelGui.DisplayOrder = 105
 wheelGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 wheelGui.Enabled = false
 wheelGui.Parent = PlayerGui
@@ -2485,8 +2351,8 @@ do
 	UI.wheelOuterCircle.Parent = UI.wheelCircleArea
 	Instance.new("UICorner", UI.wheelOuterCircle).CornerRadius = UDim.new(1, 0)
 
-	for i = 0, 47 do
-		local h = i / 48
+	for i = 0, 35 do
+		local h = i / 36
 		local angleRad = (h * math.pi * 2) - (math.pi / 2)
 		local seg = Instance.new("Frame")
 		seg.Size = UDim2.new(0, 16, 0, 16)
@@ -2698,7 +2564,7 @@ airGui = Instance.new("ScreenGui")
 airGui.Name = "MortalAirWalkPad"
 airGui.ResetOnSpawn = false
 airGui.IgnoreGuiInset = true
-airGui.DisplayOrder = 999998
+airGui.DisplayOrder = 99
 airGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 airGui.Enabled = false
 airGui.Parent = PlayerGui
@@ -2751,6 +2617,19 @@ local pages = {}
 local tabButtons = {}
 local switchSection
 
+local function toggleAuraFromTop()
+	Cfg.AuraEnabled = not Cfg.AuraEnabled
+	if Cfg.AuraEnabled then
+		local c, _, r = getRig()
+		if c and r then buildAura(c, r) end
+	else
+		clearAuraEffects()
+	end
+	refreshAuraUI()
+	saveAuraConfigNow()
+	playClick(Cfg.AuraEnabled and 1.15 or 0.9)
+end
+
 do
 	eye1Holder = Instance.new("Frame")
 	eye1Holder.Name = "MortalFirstEyeHolder"
@@ -2793,12 +2672,12 @@ do
 	topEyeBtn.BackgroundColor3 = CARD_BG
 	topEyeBtn.Text = ""
 	topEyeBtn.Active = true
-	topEyeBtn.ZIndex = 22
+	topEyeBtn.ZIndex = 25
 	topEyeBtn.Parent = sg
 	Instance.new("UICorner", topEyeBtn).CornerRadius = UDim.new(0, 10)
 	addBorder(topEyeBtn, NEON_RIFT, 1.5, 0.1)
 
-	topEyePupil = createEyeGraphic(topEyeBtn, 26, 15, 10, 4, 24)
+	topEyePupil = createEyeGraphic(topEyeBtn, 26, 15, 10, 4, 26)
 
 	topEyePanel = Instance.new("Frame")
 	topEyePanel.Name = "MortalThirdEyePanel"
@@ -2806,8 +2685,9 @@ do
 	topEyePanel.Position = UDim2.new(1, -352, 0, 10)
 	topEyePanel.BackgroundColor3 = TAG_DARK_BAR
 	topEyePanel.BackgroundTransparency = 0.06
+	topEyePanel.Active = true
 	topEyePanel.Visible = Cfg.TopEyeOpen
-	topEyePanel.ZIndex = 20
+	topEyePanel.ZIndex = 22
 	topEyePanel.Parent = sg
 	Instance.new("UICorner", topEyePanel).CornerRadius = UDim.new(0, 10)
 	addBorder(topEyePanel, TAG_NEON_OUTLINE, 1.6, 0.08)
@@ -2821,7 +2701,7 @@ do
 	topStatsLbl.Text = "PLAYERS: 1 | PING: 0ms"
 	topStatsLbl.TextColor3 = TEXT_MAIN
 	topStatsLbl.TextXAlignment = Enum.TextXAlignment.Left
-	topStatsLbl.ZIndex = 21
+	topStatsLbl.ZIndex = 23
 	topStatsLbl.Parent = topEyePanel
 
 	topAuraOnOffBtn = Instance.new("TextButton")
@@ -2832,17 +2712,12 @@ do
 	topAuraOnOffBtn.TextSize = 9
 	topAuraOnOffBtn.Text = "AURA: OFF"
 	topAuraOnOffBtn.TextColor3 = TEXT_MAIN
-	topAuraOnOffBtn.ZIndex = 21
+	topAuraOnOffBtn.Active = true
+	topAuraOnOffBtn.ZIndex = 26
 	topAuraOnOffBtn.Parent = topEyePanel
 	Instance.new("UICorner", topAuraOnOffBtn).CornerRadius = UDim.new(0, 6)
 	addBorder(topAuraOnOffBtn, NEON_RING, 1, 0.25)
-	topAuraOnOffBtn.MouseButton1Click:Connect(function()
-		Cfg.AuraEnabled = not Cfg.AuraEnabled
-		if not Cfg.AuraEnabled then clearAuraEffects() end
-		refreshAuraUI()
-		saveAuraConfigNow()
-		playClick(Cfg.AuraEnabled and 1.15 or 0.9)
-	end)
+	topAuraOnOffBtn.Activated:Connect(toggleAuraFromTop)
 
 	UI.topMinusBtn = Instance.new("TextButton")
 	UI.topMinusBtn.Size = UDim2.new(0, 18, 0, 22)
@@ -2852,7 +2727,8 @@ do
 	UI.topMinusBtn.TextSize = 11
 	UI.topMinusBtn.Text = "-"
 	UI.topMinusBtn.TextColor3 = TEXT_MAIN
-	UI.topMinusBtn.ZIndex = 21
+	UI.topMinusBtn.Active = true
+	UI.topMinusBtn.ZIndex = 26
 	UI.topMinusBtn.Parent = topEyePanel
 	Instance.new("UICorner", UI.topMinusBtn).CornerRadius = UDim.new(0, 6)
 	addBorder(UI.topMinusBtn, NEON_RING, 1, 0.25)
@@ -2865,7 +2741,7 @@ do
 	topAuraLvlLbl.TextSize = 10
 	topAuraLvlLbl.Text = "LV.1"
 	topAuraLvlLbl.TextColor3 = TAG_NEON_PURPLE
-	topAuraLvlLbl.ZIndex = 21
+	topAuraLvlLbl.ZIndex = 23
 	topAuraLvlLbl.Parent = topEyePanel
 	Instance.new("UICorner", topAuraLvlLbl).CornerRadius = UDim.new(0, 6)
 	addBorder(topAuraLvlLbl, NEON_RING, 1, 0.25)
@@ -2878,26 +2754,27 @@ do
 	UI.topPlusBtn.TextSize = 11
 	UI.topPlusBtn.Text = "+"
 	UI.topPlusBtn.TextColor3 = TEXT_MAIN
-	UI.topPlusBtn.ZIndex = 21
+	UI.topPlusBtn.Active = true
+	UI.topPlusBtn.ZIndex = 26
 	UI.topPlusBtn.Parent = topEyePanel
 	Instance.new("UICorner", UI.topPlusBtn).CornerRadius = UDim.new(0, 6)
 	addBorder(UI.topPlusBtn, NEON_RING, 1, 0.25)
 
-	UI.topMinusBtn.MouseButton1Click:Connect(function()
+	UI.topMinusBtn.Activated:Connect(function()
 		Cfg.AuraLevel = math.max(1, Cfg.AuraLevel - 1)
 		builtAuraLevel = nil
 		refreshAuraUI()
 		saveAuraConfigNow()
 		playClick(0.95)
 	end)
-	UI.topPlusBtn.MouseButton1Click:Connect(function()
+	UI.topPlusBtn.Activated:Connect(function()
 		Cfg.AuraLevel = math.min(MAX_AURA_LEVEL, Cfg.AuraLevel + 1)
 		builtAuraLevel = nil
 		refreshAuraUI()
 		saveAuraConfigNow()
 		playClick(1.1)
 	end)
-	topEyeBtn.MouseButton1Click:Connect(function()
+	topEyeBtn.Activated:Connect(function()
 		Cfg.TopEyeOpen = not Cfg.TopEyeOpen
 		topEyePanel.Visible = Cfg.TopEyeOpen
 		playClick(Cfg.TopEyeOpen and 1.15 or 0.9)
@@ -3676,26 +3553,46 @@ do
 	end)
 end
 
+-- Lag-free Players Time list (reuses existing labels, only updates text)
 local playersTimeContainer = nil
-local function rebuildPlayersTimeList()
+local playerTimeLabels = {}
+
+local function syncPlayersTimeStructure()
 	if not playersTimeContainer then return end
-	for _, ch in ipairs(playersTimeContainer:GetChildren()) do
-		if not ch:IsA("UIListLayout") then ch:Destroy() end
-	end
-	local now = os.clock()
+	local activeSet = {}
 	for _, plr in ipairs(Players:GetPlayers()) do
-		local joinedAt = joinTimestamps[plr] or now
-		local lbl = Instance.new("TextLabel")
-		lbl.Size = UDim2.new(0.98, 0, 0, 24)
-		lbl.BackgroundColor3 = VOID_BG
-		lbl.Font = Enum.Font.GothamBold
-		lbl.TextSize = 10
-		lbl.TextColor3 = TEXT_MAIN
-		lbl.ZIndex = 33
-		lbl.Text = plr.DisplayName .. " (@" .. plr.Name .. ") : " .. formatDuration(now - joinedAt)
-		lbl.Parent = playersTimeContainer
-		Instance.new("UICorner", lbl).CornerRadius = UDim.new(0, 6)
-		addBorder(lbl, NEON_RING, 1, 0.35)
+		activeSet[plr] = true
+		if not playerTimeLabels[plr] or not playerTimeLabels[plr].Parent then
+			local lbl = Instance.new("TextLabel")
+			lbl.Size = UDim2.new(0.98, 0, 0, 24)
+			lbl.BackgroundColor3 = VOID_BG
+			lbl.Font = Enum.Font.GothamBold
+			lbl.TextSize = 10
+			lbl.TextColor3 = TEXT_MAIN
+			lbl.ZIndex = 33
+			lbl.Parent = playersTimeContainer
+			Instance.new("UICorner", lbl).CornerRadius = UDim.new(0, 6)
+			addBorder(lbl, NEON_RING, 1, 0.35)
+			playerTimeLabels[plr] = lbl
+		end
+	end
+	for plr, lbl in pairs(playerTimeLabels) do
+		if not activeSet[plr] then
+			pcall(function() lbl:Destroy() end)
+			playerTimeLabels[plr] = nil
+		end
+	end
+end
+
+local function updatePlayersTimeTexts()
+	if not playersTimeContainer then return end
+	syncPlayersTimeStructure()
+	local now = os.clock()
+	for plr, lbl in pairs(playerTimeLabels) do
+		if lbl and lbl.Parent and plr and plr.Parent == Players then
+			local joinedAt = joinTimestamps[plr] or now
+			lbl.Text = plr.DisplayName .. " (@" .. plr.Name .. ") : " .. formatDuration(now - joinedAt)
+		end
 	end
 end
 
@@ -3725,7 +3622,7 @@ do
 	sLay:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 		playersTimeContainer.Size = UDim2.new(0.96, 0, 0, math.max(30, sLay.AbsoluteContentSize.Y + 6))
 	end)
-	refreshCallbacks[6] = rebuildPlayersTimeList
+	refreshCallbacks[6] = updatePlayersTimeTexts
 end
 
 do
@@ -3858,13 +3755,14 @@ local function registerPlayer(plr)
 	end
 	updateThirdEyeTag(plr)
 	syncAllESP()
+	syncPlayersTimeStructure()
 end
 
 Players.PlayerAdded:Connect(function(plr)
 	registerPlayer(plr)
 	if pages[2] and pages[2].Visible then rebuildFriendsList() end
 	if pages[5] and pages[5].Visible and Cfg.PlayerListOpen then rebuildTrollPlayerList() end
-	if pages[6] and pages[6].Visible then rebuildPlayersTimeList() end
+	if pages[6] and pages[6].Visible then updatePlayersTimeTexts() end
 end)
 
 Players.PlayerRemoving:Connect(function(plr)
@@ -3873,6 +3771,10 @@ Players.PlayerRemoving:Connect(function(plr)
 	targetEspSet[plr] = nil
 	clearESP(plr)
 	clearThirdEyeTag(plr)
+	if playerTimeLabels[plr] then
+		pcall(function() playerTimeLabels[plr]:Destroy() end)
+		playerTimeLabels[plr] = nil
+	end
 	if spectatedFriend == plr then spectatedFriend = nil end
 	if lastMimicTarget == plr then lastMimicTarget = nil; clearMimic() end
 end)
@@ -3903,7 +3805,10 @@ for _, plr in ipairs(Players:GetPlayers()) do registerPlayer(plr) end
 
 do
 	local lastStatsRefresh = 0
-	local lastTimeListRefresh = 0
+	local lastTimeTextRefresh = 0
+	local lastVisualSyncRefresh = 0
+	local fpsAccumTime = 0
+	local fpsAccumFrames = 0
 
 	RunService.Stepped:Connect(function()
 		local char, hum, hrp = getRig()
@@ -3937,8 +3842,13 @@ do
 		local now = os.clock()
 		local safeDt = math.clamp(dt, 0.001, 0.05)
 
-		if eye1FpsLbl and dt > 0 then
-			eye1FpsLbl.Text = tostring(math.clamp(math.floor((1 / dt) + 0.5), 1, 240)) .. " FPS"
+		fpsAccumTime = fpsAccumTime + dt
+		fpsAccumFrames = fpsAccumFrames + 1
+		if eye1FpsLbl and fpsAccumTime >= 0.35 then
+			local avgFps = math.clamp(math.floor((fpsAccumFrames / fpsAccumTime) + 0.5), 1, 240)
+			eye1FpsLbl.Text = tostring(avgFps) .. " FPS"
+			fpsAccumTime = 0
+			fpsAccumFrames = 0
 		end
 
 		if eye1Pupil then
@@ -3948,19 +3858,22 @@ do
 			topEyePupil.Position = UDim2.new(0.5 + math.cos(now * 2.2) * 0.12, -2, 0.5 + math.sin(now * 1.8) * 0.1, -2)
 		end
 
-		if now - lastStatsRefresh >= 0.5 then
+		if now - lastStatsRefresh >= 0.6 then
 			lastStatsRefresh = now
 			if topStatsLbl then
 				topStatsLbl.Text = "PLAYERS: " .. tostring(#Players:GetPlayers()) .. " | PING: " .. tostring(getPing()) .. "ms"
 			end
 		end
 
-		for _, plr in ipairs(Players:GetPlayers()) do updateThirdEyeTag(plr) end
-		syncAllESP()
+		if now - lastVisualSyncRefresh >= 0.25 then
+			lastVisualSyncRefresh = now
+			for _, plr in ipairs(Players:GetPlayers()) do updateThirdEyeTag(plr) end
+			syncAllESP()
+		end
 
-		if pages[6] and pages[6].Visible and (now - lastTimeListRefresh >= 1) then
-			lastTimeListRefresh = now
-			rebuildPlayersTimeList()
+		if pages[6] and pages[6].Visible and (now - lastTimeTextRefresh >= 1) then
+			lastTimeTextRefresh = now
+			updatePlayersTimeTexts()
 		end
 
 		if Cfg.ChatSpam and (now - lastSpamTick >= 1.4) then
@@ -3994,7 +3907,13 @@ do
 
 		if Cfg.EmoteSpeed then
 			local safeSpd = normalizeEmoteSpeed(Cfg.EmoteVal)
-			for _, tr in ipairs(getAllActiveAnimTracks(hum)) do pcall(function() tr:AdjustSpeed(safeSpd) end) end
+			for _, tr in ipairs(getAllActiveAnimTracks(hum)) do
+				pcall(function()
+					if math.abs(tr.Speed - safeSpd) > 0.01 then
+						tr:AdjustSpeed(safeSpd)
+					end
+				end)
+			end
 		end
 
 		if Cfg.AirWalk then
@@ -4120,7 +4039,7 @@ do
 			local angDelta = math.rad(normalizeSpinSpeed(Cfg.SpinVal) * 6 * safeDt)
 			local pos = hrp.Position
 			local rotOnly = (hrp.CFrame - pos) * CFrame.Angles(0, angDelta, 0)
-			hrp.AssemblyAngularVelocity = Vector3.zero
+			hrp.AssemblyLinearVelocity = Vector3.zero
 			hrp.CFrame = CFrame.new(pos) * rotOnly
 		end
 	end)
