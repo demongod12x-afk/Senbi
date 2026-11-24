@@ -18,13 +18,16 @@ end
 local PlayerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 15)
 if not PlayerGui then return end
 
+-- ============================================================================
+-- CONSTANTS & CLEANUP
+-- ============================================================================
 local CREATOR_NAME = "MORTAL"
 local GANG_NAME = "MORTALS"
 local SFX_ID = "rbxassetid://12221967"
 local STAR_TEXTURE = "rbxassetid://243098098"
 local MAX_AURA_LEVEL = 5
 
-local oldGuiNames = {
+local LEGACY_GUI_NAMES = {
 	"MortalDeltaRecodeV4", "MortalDeltaRecodeV3", "MortalDeltaRecodeV2",
 	"MortalDeltaRecodeV1", "MortalNewCompleteHub", "MortalFreshRecodeV4",
 	"MortalFreshRecodeV3", "MortalHyperCoolHubV5", "MortalGodTierHubV6",
@@ -48,13 +51,16 @@ local oldGuiNames = {
 	"MortalAuraColorWheelGUI", "MortalAirWalkPad"
 }
 
-for _, guiName in ipairs(oldGuiNames) do
+for _, guiName in ipairs(LEGACY_GUI_NAMES) do
 	pcall(function()
 		local existing = PlayerGui:FindFirstChild(guiName)
 		if existing then existing:Destroy() end
 	end)
 end
 
+-- ============================================================================
+-- THEME PALETTE & AURA PRESETS
+-- ============================================================================
 local VOID_BG = Color3.fromRGB(5, 1, 13)
 local CARD_BG = Color3.fromRGB(12, 2, 29)
 local BTN_OFF = Color3.fromRGB(16, 3, 38)
@@ -156,6 +162,9 @@ local ULTIMATE_SPREAD_PRESET = {
 	surge = true,
 }
 
+-- ============================================================================
+-- STATE & SHARED REFERENCES
+-- ============================================================================
 local Cfg = {
 	EyeLocked = false,
 	TopEyeOpen = true,
@@ -195,7 +204,74 @@ local Cfg = {
 }
 
 local UI = {}
+local activeAuraItems = {}
+local activeAuraAttachments = {}
+local activeAuraEmitters = {}
+local activeAuraExtras = {}
+local auraWorldFolder = nil
+local crackRootFolder = nil
+local lastWalkCrackPos = nil
+local wasAirborne = false
+local builtAuraMode = nil
+local builtAuraLevel = nil
+local builtAuraUltimate = nil
+local builtAuraChar = nil
+local builtAuraColorSig = nil
+local lastSurgeBurstTick = -1
 
+local friendEspSet = {}
+local targetEspSet = {}
+local espStore = {}
+local thirdEyeTagStore = {}
+local verifiedScriptUsers = { [LocalPlayer.UserId] = true }
+local ncStore = {}
+local noclipAnchorY = nil
+local noclipJumpEndTick = 0
+local mimicTracks = {}
+local lastMimicTarget = nil
+local airY = nil
+local airMoveDir = 0
+local airWalkWasMoving = false
+local orbitAngle = 0
+local lastSpamTick = 0
+local multiBangIndex = 1
+local lastMultiSwitchTick = 0
+local joinTimestamps = {}
+local notifiedFriends = {}
+local spectatedFriend = nil
+local lastSpectatedTargetHum = nil
+local headSitActiveLastFrame = false
+local flyConnection = nil
+local flyVelocity = nil
+local flyGyro = nil
+local flyAnimateDisabled = false
+local syncFlyUI = nil
+
+local mainFrame = nil
+local eye1Holder = nil
+local eye1TapBtn = nil
+local eye1FpsLbl = nil
+local eye1Pupil = nil
+local topEyePanel = nil
+local topEyeBtn = nil
+local topEyePupil = nil
+local topAuraLvlLbl = nil
+local topAuraOnOffBtn = nil
+local topStatsLbl = nil
+local auraModeBtn = nil
+local auraUltimateBtn = nil
+local auraWheelOpenBtn = nil
+local auraColorStatusLbl = nil
+local targetInputBox = nil
+local listToggleBtn = nil
+local trollPlayerList = nil
+local refreshCallbacks = {}
+local refreshAuraUI = nil
+local airGui = nil
+
+-- ============================================================================
+-- NUMERIC & CONFIG HELPERS
+-- ============================================================================
 local function parseHugeNum(raw, defaultVal, minVal)
 	local str = tostring(raw or ""):gsub("[%s_,]", "")
 	if str == "" then return defaultVal end
@@ -214,56 +290,44 @@ local function parseHugeNum(raw, defaultVal, minVal)
 			end
 		end
 	end
-	if n == nil or n ~= n then
-		return defaultVal
-	end
-	if n == math.huge then
-		n = 1e308
-	elseif n == -math.huge then
-		n = -1e308
-	end
+	if n == nil or n ~= n then return defaultVal end
+	if n == math.huge then n = 1e308 elseif n == -math.huge then n = -1e308 end
 	if minVal and n < minVal then n = minVal end
 	return n
 end
 
 local function normalizeMovementSpeed(v)
 	local n = tonumber(v) or 16
-	if n ~= n then return 16 end
-	if n < 0 then return 0 end
+	if n ~= n or n < 0 then return n ~= n and 16 or 0 end
 	return n
 end
 
 local function normalizeJumpPower(v)
 	local n = tonumber(v) or 50
-	if n ~= n then return 50 end
-	if n < 0 then return 0 end
+	if n ~= n or n < 0 then return n ~= n and 50 or 0 end
 	return n
 end
 
 local function normalizeFlySpeed(v)
 	local n = tonumber(v) or 50
-	if n ~= n then return 50 end
-	if n < 0 then return 0 end
+	if n ~= n or n < 0 then return n ~= n and 50 or 0 end
 	return n
 end
 
 local function normalizeSpinSpeed(v)
 	local n = tonumber(v) or 50
-	if n ~= n then return 50 end
-	return n
+	return (n == n) and n or 50
 end
 
 local function normalizeEmoteSpeed(v)
 	local n = tonumber(v) or 1
-	if n ~= n then return 1 end
-	return n
+	return (n == n) and n or 1
 end
 
 local function normalizeMultiBangSpeed(v)
 	local n = tonumber(v) or 2.2
 	if n ~= n then return 2.2 end
-	if n < 0.1 then return 0.1 end
-	return n
+	return math.max(0.1, n)
 end
 
 local auraSaveVer = 0
@@ -334,69 +398,9 @@ local function loadAuraConfig()
 end
 loadAuraConfig()
 
-local friendEspSet = {}
-local targetEspSet = {}
-local espStore = {}
-local thirdEyeTagStore = {}
-local verifiedScriptUsers = { [LocalPlayer.UserId] = true }
-local ncStore = {}
-local noclipAnchorY = nil
-local noclipJumpEndTick = 0
-local mimicTracks = {}
-local lastMimicTarget = nil
-local airY = nil
-local airMoveDir = 0
-local airWalkWasMoving = false
-local orbitAngle = 0
-local lastSpamTick = 0
-local multiBangIndex = 1
-local lastMultiSwitchTick = 0
-local joinTimestamps = {}
-local notifiedFriends = {}
-local spectatedFriend = nil
-local lastSpectatedTargetHum = nil
-local headSitActiveLastFrame = false
-local flyConnection = nil
-local flyVelocity = nil
-local flyGyro = nil
-local flyAnimateDisabled = false
-local syncFlyUI = nil
-
-local activeAuraItems = {}
-local activeAuraAttachments = {}
-local activeAuraEmitters = {}
-local activeAuraExtras = {}
-local auraWorldFolder = nil
-local crackRootFolder = nil
-local lastWalkCrackPos = nil
-local wasAirborne = false
-local builtAuraMode = nil
-local builtAuraLevel = nil
-local builtAuraUltimate = nil
-local builtAuraChar = nil
-local builtAuraColorSig = nil
-local lastSurgeBurstTick = -1
-
-local mainFrame = nil
-local eye1Holder = nil
-local eye1TapBtn = nil
-local eye1FpsLbl = nil
-local eye1Pupil = nil
-local topEyePanel = nil
-local topEyeBtn = nil
-local topEyePupil = nil
-local topAuraLvlLbl = nil
-local topAuraOnOffBtn = nil
-local topStatsLbl = nil
-local auraModeBtn = nil
-local auraUltimateBtn = nil
-local auraWheelOpenBtn = nil
-local auraColorStatusLbl = nil
-local targetInputBox = nil
-local listToggleBtn = nil
-local trollPlayerList = nil
-local refreshCallbacks = {}
-
+-- ============================================================================
+-- GENERAL UTILITIES & SERVER ACTIONS
+-- ============================================================================
 pcall(function()
 	LocalPlayer.Idled:Connect(function()
 		pcall(function()
@@ -423,10 +427,7 @@ end
 local function getRig()
 	local char = LocalPlayer.Character
 	if not char or not char.Parent then return nil, nil, nil, nil end
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	local hrp = char:FindFirstChild("HumanoidRootPart")
-	local head = char:FindFirstChild("Head")
-	return char, hum, hrp, head
+	return char, char:FindFirstChildOfClass("Humanoid"), char:FindFirstChild("HumanoidRootPart"), char:FindFirstChild("Head")
 end
 
 local function getTargetQuery()
@@ -445,9 +446,7 @@ local function findPlayer(query)
 		if plr ~= LocalPlayer then
 			local u = string.lower(plr.Name)
 			local d = string.lower(plr.DisplayName or "")
-			if u == q or d == q then
-				return plr
-			end
+			if u == q or d == q then return plr end
 			table.insert(partialList, { plr = plr, u = u, d = d })
 		end
 	end
@@ -482,13 +481,9 @@ local function formatDuration(sec)
 	local h = math.floor(s / 3600)
 	local m = math.floor((s % 3600) / 60)
 	local r = s % 60
-	if h > 0 then
-		return string.format("%dh %dm %ds", h, m, r)
-	elseif m > 0 then
-		return string.format("%dm %ds", m, r)
-	else
-		return string.format("%ds", r)
-	end
+	if h > 0 then return string.format("%dh %dm %ds", h, m, r)
+	elseif m > 0 then return string.format("%dm %ds", m, r)
+	else return string.format("%ds", r) end
 end
 
 local function getPing()
@@ -512,20 +507,14 @@ end
 
 local function isFriend(plr)
 	if not plr or plr == LocalPlayer then return false end
-	local ok, res = pcall(function()
-		return LocalPlayer:IsFriendsWith(plr.UserId)
-	end)
+	local ok, res = pcall(function() return LocalPlayer:IsFriendsWith(plr.UserId) end)
 	return ok and res == true
 end
 
 local function rejoinServer()
-	pcall(function()
-		TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
-	end)
+	pcall(function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end)
 	task.delay(1.5, function()
-		pcall(function()
-			TeleportService:Teleport(game.PlaceId, LocalPlayer)
-		end)
+		pcall(function() TeleportService:Teleport(game.PlaceId, LocalPlayer) end)
 	end)
 end
 
@@ -535,16 +524,10 @@ local function hopServer()
 		local servers = {}
 		for _ = 1, 5 do
 			local url = "https://games.roblox.com/v1/games/" .. tostring(game.PlaceId) .. "/servers/Public?sortOrder=Asc&limit=100"
-			if cursor ~= "" then
-				url = url .. "&cursor=" .. HttpService:UrlEncode(cursor)
-			end
-			local ok, raw = pcall(function()
-				return game:HttpGet(url)
-			end)
+			if cursor ~= "" then url = url .. "&cursor=" .. HttpService:UrlEncode(cursor) end
+			local ok, raw = pcall(function() return game:HttpGet(url) end)
 			if not ok or not raw then break end
-			local decOk, data = pcall(function()
-				return HttpService:JSONDecode(raw)
-			end)
+			local decOk, data = pcall(function() return HttpService:JSONDecode(raw) end)
 			if not decOk or type(data) ~= "table" or type(data.data) ~= "table" then break end
 			for _, srv in ipairs(data.data) do
 				if type(srv) == "table" and srv.id and srv.id ~= game.JobId then
@@ -555,24 +538,43 @@ local function hopServer()
 					end
 				end
 			end
-			if #servers > 0 or not data.nextPageCursor or data.nextPageCursor == "" then
-				break
-			end
+			if #servers > 0 or not data.nextPageCursor or data.nextPageCursor == "" then break end
 			cursor = data.nextPageCursor
 		end
 		if #servers > 0 then
 			local chosen = servers[math.random(1, #servers)]
-			pcall(function()
-				TeleportService:TeleportToPlaceInstance(game.PlaceId, chosen, LocalPlayer)
-			end)
+			pcall(function() TeleportService:TeleportToPlaceInstance(game.PlaceId, chosen, LocalPlayer) end)
 		else
-			pcall(function()
-				TeleportService:Teleport(game.PlaceId, LocalPlayer)
-			end)
+			pcall(function() TeleportService:Teleport(game.PlaceId, LocalPlayer) end)
 		end
 	end)
 end
 
+local function sendChatMessage(msg)
+	local text = tostring(msg or "")
+	if text == "" then return end
+	pcall(function()
+		if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+			local channels = TextChatService:FindFirstChild("TextChannels")
+			local general = channels and (channels:FindFirstChild("RBXGeneral") or channels:GetChildren()[1])
+			if general and type(general.SendAsync) == "function" then
+				general:SendAsync(text)
+				return
+			end
+		end
+	end)
+	pcall(function()
+		local ev = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
+		local sayReq = ev and ev:FindFirstChild("SayMessageRequest")
+		if sayReq and type(sayReq.FireServer) == "function" then
+			sayReq:FireServer(text, "All")
+		end
+	end)
+end
+
+-- ============================================================================
+-- UI BUILD HELPERS
+-- ============================================================================
 local function addBorder(inst, col, thick, trans)
 	local st = Instance.new("UIStroke")
 	st.Color = col
@@ -583,6 +585,8 @@ local function addBorder(inst, col, thick, trans)
 	return st
 end
 
+local activeDragResetters = {}
+
 local function makeDraggable(frame, handle, holdMode, lockedFn)
 	local dragHandle = handle or frame
 	local pressed = false
@@ -591,11 +595,14 @@ local function makeDraggable(frame, handle, holdMode, lockedFn)
 	local startPos = nil
 	local frameStart = nil
 	local token = 0
+
 	local function resetDrag()
 		pressed = false
 		activeDrag = false
 		token = token + 1
 	end
+	table.insert(activeDragResetters, resetDrag)
+
 	dragHandle.InputBegan:Connect(function(inp)
 		if lockedFn and lockedFn() then
 			resetDrag()
@@ -622,7 +629,8 @@ local function makeDraggable(frame, handle, holdMode, lockedFn)
 			end
 		end
 	end)
-	UserInputService.InputChanged:Connect(function(inp)
+
+	dragHandle.InputChanged:Connect(function(inp)
 		if lockedFn and lockedFn() then
 			resetDrag()
 			return
@@ -634,9 +642,7 @@ local function makeDraggable(frame, handle, holdMode, lockedFn)
 				activeDrag = true
 			end
 			if activeDrag then
-				if delta.Magnitude > 6 then
-					moved = true
-				end
+				if delta.Magnitude > 6 then moved = true end
 				frame.Position = UDim2.new(
 					frameStart.X.Scale,
 					frameStart.X.Offset + delta.X,
@@ -646,16 +652,13 @@ local function makeDraggable(frame, handle, holdMode, lockedFn)
 			end
 		end
 	end)
+
 	dragHandle.InputEnded:Connect(function(inp)
 		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
 			resetDrag()
 		end
 	end)
-	UserInputService.InputEnded:Connect(function(inp)
-		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-			resetDrag()
-		end
-	end)
+
 	return function()
 		local wasMove = moved
 		moved = false
@@ -694,43 +697,17 @@ local function createEyeGraphic(parentFrame, eyeW, eyeH, irisSize, pupilSize, zB
 	return ePupil
 end
 
-local function sendChatMessage(msg)
-	local text = tostring(msg or "")
-	if text == "" then return end
-	pcall(function()
-		if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-			local channels = TextChatService:FindFirstChild("TextChannels")
-			local general = channels and (channels:FindFirstChild("RBXGeneral") or channels:GetChildren()[1])
-			if general and type(general.SendAsync) == "function" then
-				general:SendAsync(text)
-				return
-			end
-		end
-	end)
-	pcall(function()
-		local ev = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
-		local sayReq = ev and ev:FindFirstChild("SayMessageRequest")
-		if sayReq and type(sayReq.FireServer) == "function" then
-			sayReq:FireServer(text, "All")
-		end
-	end)
-end
-
 -- ============================================================================
--- FLY
+-- FLY MODULE
 -- ============================================================================
 local function clearAllCharacterAnims(char, hum)
 	if hum then
 		pcall(function()
 			local animator = hum:FindFirstChildOfClass("Animator")
 			if animator then
-				for _, tr in ipairs(animator:GetPlayingAnimationTracks()) do
-					tr:Stop(0)
-				end
+				for _, tr in ipairs(animator:GetPlayingAnimationTracks()) do tr:Stop(0) end
 			end
-			for _, tr in ipairs(hum:GetPlayingAnimationTracks()) do
-				tr:Stop(0)
-			end
+			for _, tr in ipairs(hum:GetPlayingAnimationTracks()) do tr:Stop(0) end
 		end)
 	end
 	if char then
@@ -748,9 +725,7 @@ local function restoreCharacterAnims(char)
 	if char and flyAnimateDisabled then
 		pcall(function()
 			local animScript = char:FindFirstChild("Animate")
-			if animScript and animScript:IsA("BaseScript") then
-				animScript.Enabled = true
-			end
+			if animScript and animScript:IsA("BaseScript") then animScript.Enabled = true end
 		end)
 	end
 	flyAnimateDisabled = false
@@ -758,26 +733,13 @@ end
 
 local function stopFly()
 	Cfg.Fly = false
-	if flyConnection then
-		flyConnection:Disconnect()
-		flyConnection = nil
-	end
-	if flyVelocity then
-		pcall(function() flyVelocity:Destroy() end)
-		flyVelocity = nil
-	end
-	if flyGyro then
-		pcall(function() flyGyro:Destroy() end)
-		flyGyro = nil
-	end
+	if flyConnection then flyConnection:Disconnect(); flyConnection = nil end
+	if flyVelocity then pcall(function() flyVelocity:Destroy() end); flyVelocity = nil end
+	if flyGyro then pcall(function() flyGyro:Destroy() end); flyGyro = nil end
 	local char, hum = getRig()
 	restoreCharacterAnims(char)
-	if hum then
-		pcall(function() hum.PlatformStand = false end)
-	end
-	if syncFlyUI then
-		pcall(syncFlyUI)
-	end
+	if hum then pcall(function() hum.PlatformStand = false end) end
+	if syncFlyUI then pcall(syncFlyUI) end
 end
 
 local function startFly()
@@ -787,9 +749,8 @@ local function startFly()
 	Cfg.Fly = true
 	clearAllCharacterAnims(char, hum)
 	pcall(function() hum.PlatformStand = true end)
-	pcall(function()
-		root.CFrame = root.CFrame + Vector3.new(0, 3.5, 0)
-	end)
+	pcall(function() root.CFrame = root.CFrame + Vector3.new(0, 3.5, 0) end)
+
 	local vel = Instance.new("BodyVelocity")
 	vel.MaxForce = Vector3.new(1e7, 1e7, 1e7)
 	vel.Velocity = Vector3.zero
@@ -802,9 +763,7 @@ local function startFly()
 	gyro.Parent = root
 	flyGyro = gyro
 
-	if syncFlyUI then
-		pcall(syncFlyUI)
-	end
+	if syncFlyUI then pcall(syncFlyUI) end
 
 	flyConnection = RunService.RenderStepped:Connect(function(dt)
 		if not Cfg.Fly or not root or not root.Parent then
@@ -814,39 +773,24 @@ local function startFly()
 		local camera = workspace.CurrentCamera
 		local move = hum.MoveDirection
 		local spd = normalizeFlySpeed(Cfg.FlyVal)
-		if hum then
-			pcall(function()
-				local animator = hum:FindFirstChildOfClass("Animator")
-				if animator then
-					for _, tr in ipairs(animator:GetPlayingAnimationTracks()) do
-						tr:Stop(0)
-					end
-				end
-			end)
-		end
+		pcall(function()
+			local animator = hum:FindFirstChildOfClass("Animator")
+			if animator then
+				for _, tr in ipairs(animator:GetPlayingAnimationTracks()) do tr:Stop(0) end
+			end
+		end)
 		local desiredVel = Vector3.zero
 		if move.Magnitude > 0.05 and camera then
 			local camCF = camera.CFrame
 			local camLook = camCF.LookVector
 			local camRight = camCF.RightVector
 			local horizRight = Vector3.new(camRight.X, 0, camRight.Z)
-			if horizRight.Magnitude > 1e-4 then
-				horizRight = horizRight.Unit
-			end
+			if horizRight.Magnitude > 1e-4 then horizRight = horizRight.Unit end
 			local flatLook = Vector3.new(camLook.X, 0, camLook.Z)
-			local forwardAmt = 0
-			if flatLook.Magnitude > 1e-4 then
-				forwardAmt = move:Dot(flatLook.Unit)
-			else
-				forwardAmt = move.Magnitude
-			end
+			local forwardAmt = (flatLook.Magnitude > 1e-4) and move:Dot(flatLook.Unit) or move.Magnitude
 			local rightAmt = move:Dot(horizRight)
 			local aimDir = (camLook * forwardAmt) + (horizRight * rightAmt)
-			if aimDir.Magnitude > 1e-4 then
-				desiredVel = aimDir.Unit * math.clamp(move.Magnitude, 0, 1) * spd
-			else
-				desiredVel = move.Unit * spd
-			end
+			desiredVel = (aimDir.Magnitude > 1e-4) and (aimDir.Unit * math.clamp(move.Magnitude, 0, 1) * spd) or (move.Unit * spd)
 		elseif move.Magnitude > 0.05 then
 			desiredVel = move.Unit * spd
 		end
@@ -855,29 +799,22 @@ local function startFly()
 		if desiredVel.Magnitude > 0.05 then
 			root.CFrame = root.CFrame + (desiredVel * math.min(dt, 0.05))
 		end
-		if camera then
-			gyro.CFrame = camera.CFrame
-		end
+		if camera then gyro.CFrame = camera.CFrame end
 	end)
 end
 
 local function setFlyState(on)
-	if on then
-		startFly()
-	else
-		stopFly()
-	end
+	if on then startFly() else stopFly() end
 end
 
 -- ============================================================================
--- CHARACTER MOVEMENT, ANTI-SIT, NOCLIP, HEAD-SIT, MIMIC
+-- MOVEMENT, ANTI-SIT, NOCLIP, HEAD-SIT, MIMIC & AIR WALK
 -- ============================================================================
 local function forceUnseatSeatParts(char)
 	if not char then return end
 	for _, desc in ipairs(char:GetDescendants()) do
 		if desc:IsA("Weld") or desc:IsA("WeldConstraint") or desc:IsA("ManualWeld") then
-			local p0 = desc.Part0
-			local p1 = desc.Part1
+			local p0, p1 = desc.Part0, desc.Part1
 			if (p0 and (p0:IsA("Seat") or p0:IsA("VehicleSeat"))) or (p1 and (p1:IsA("Seat") or p1:IsA("VehicleSeat"))) then
 				pcall(function() desc:Destroy() end)
 			end
@@ -893,14 +830,12 @@ local function setAntiSit(hum, enabled)
 	end
 	pcall(function()
 		hum:SetStateEnabled(Enum.HumanoidStateType.Seated, not enabled)
-		if enabled then
-			if hum.Sit or hum.SeatPart then
-				hum.Sit = false
-				hum.SeatPart = nil
-				forceUnseatSeatParts(hum.Parent)
-				if hum:GetState() == Enum.HumanoidStateType.Seated then
-					hum:ChangeState(Enum.HumanoidStateType.Running)
-				end
+		if enabled and (hum.Sit or hum.SeatPart) then
+			hum.Sit = false
+			hum.SeatPart = nil
+			forceUnseatSeatParts(hum.Parent)
+			if hum:GetState() == Enum.HumanoidStateType.Seated then
+				hum:ChangeState(Enum.HumanoidStateType.Running)
 			end
 		end
 	end)
@@ -923,18 +858,14 @@ local function setNoclip(char, hum, enabled)
 	if enabled then
 		for _, p in ipairs(char:GetDescendants()) do
 			if p:IsA("BasePart") then
-				if ncStore[p] == nil then
-					ncStore[p] = p.CanCollide
-				end
+				if ncStore[p] == nil then ncStore[p] = p.CanCollide end
 				pcall(function() p.CanCollide = false end)
 			end
 		end
 	else
 		noclipAnchorY = nil
 		for p, oldCol in pairs(ncStore) do
-			if p and p.Parent then
-				pcall(function() p.CanCollide = oldCol end)
-			end
+			if p and p.Parent then pcall(function() p.CanCollide = oldCol end) end
 			ncStore[p] = nil
 		end
 	end
@@ -953,9 +884,7 @@ local function applyNoclipHorizontalLock(char, hum, hrp)
 		noclipAnchorY = nil
 		return
 	end
-	if now < noclipJumpEndTick then
-		return
-	end
+	if now < noclipJumpEndTick then return end
 	local moving = hum.MoveDirection.Magnitude > 0.05
 	local vel = hrp.AssemblyLinearVelocity
 	if moving then
@@ -998,11 +927,7 @@ local function applyHeadSitLock(char, hum, hrp, tgtChar, tgtRoot, tgtHead)
 	local myRatio = getAvatarHeightRatio(char, char:FindFirstChild("Head"))
 	local lookDir = tgtRoot.CFrame.LookVector
 	local flatLook = Vector3.new(lookDir.X, 0, lookDir.Z)
-	if flatLook.Magnitude < 1e-4 then
-		flatLook = Vector3.new(0, 0, -1)
-	else
-		flatLook = flatLook.Unit
-	end
+	flatLook = (flatLook.Magnitude < 1e-4) and Vector3.new(0, 0, -1) or flatLook.Unit
 	pcall(function()
 		hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
 		hum.Sit = true
@@ -1012,8 +937,7 @@ local function applyHeadSitLock(char, hum, hrp, tgtChar, tgtRoot, tgtHead)
 	end)
 	local headPos = tgtHead and tgtHead.Position or (tgtRoot.Position + Vector3.new(0, 1.5 * hRatio, 0))
 	local headTopY = headPos.Y + ((tgtHead and tgtHead.Size.Y or (1.2 * hRatio)) * 0.5)
-	local sitY = headTopY + (1.05 * myRatio)
-	local sitPos = Vector3.new(headPos.X, sitY, headPos.Z)
+	local sitPos = Vector3.new(headPos.X, headTopY + (1.05 * myRatio), headPos.Z)
 	hrp.AssemblyLinearVelocity = Vector3.zero
 	hrp.AssemblyAngularVelocity = Vector3.zero
 	hrp.CFrame = CFrame.lookAt(sitPos, sitPos + flatLook)
@@ -1023,10 +947,7 @@ end
 local function clearMimic()
 	for id, tr in pairs(mimicTracks) do
 		pcall(function()
-			if tr then
-				tr:Stop(0)
-				tr:Destroy()
-			end
+			if tr then tr:Stop(0); tr:Destroy() end
 		end)
 		mimicTracks[id] = nil
 	end
@@ -1038,9 +959,7 @@ local function getAllActiveAnimTracks(hum)
 	pcall(function()
 		local animator = hum:FindFirstChildOfClass("Animator")
 		if animator then
-			for _, tr in ipairs(animator:GetPlayingAnimationTracks()) do
-				table.insert(list, tr)
-			end
+			for _, tr in ipairs(animator:GetPlayingAnimationTracks()) do table.insert(list, tr) end
 		end
 		for _, tr in ipairs(hum:GetPlayingAnimationTracks()) do
 			local dup = false
@@ -1093,8 +1012,7 @@ local function runMimic(myChar, myHum, targetPlr)
 				pcall(function()
 					if not tr.IsPlaying then tr:Play(0.02) end
 					tr.Looped = src.Looped
-					local spd = normalizeEmoteSpeed(src.Speed)
-					tr:AdjustSpeed(spd)
+					tr:AdjustSpeed(normalizeEmoteSpeed(src.Speed))
 					if src.Length and src.Length > 0 and src.TimePosition >= 0 then
 						if math.abs(tr.TimePosition - src.TimePosition) > 0.08 then
 							tr.TimePosition = math.clamp(src.TimePosition, 0, math.max(0, src.Length - 0.01))
@@ -1107,10 +1025,7 @@ local function runMimic(myChar, myHum, targetPlr)
 
 	for key, tr in pairs(mimicTracks) do
 		if not activeKeys[key] then
-			pcall(function()
-				tr:Stop(0.02)
-				tr:Destroy()
-			end)
+			pcall(function() tr:Stop(0.02); tr:Destroy() end)
 			mimicTracks[key] = nil
 		end
 	end
@@ -1123,11 +1038,8 @@ local function enforceAirWalkStates(hum)
 		hum:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
 		hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
 		hum:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
-		local moving = hum.MoveDirection.Magnitude > 0.05
-		local st = moving and Enum.HumanoidStateType.Running or Enum.HumanoidStateType.Landed
-		if hum:GetState() ~= st then
-			hum:ChangeState(st)
-		end
+		local st = (hum.MoveDirection.Magnitude > 0.05) and Enum.HumanoidStateType.Running or Enum.HumanoidStateType.Landed
+		if hum:GetState() ~= st then hum:ChangeState(st) end
 	end)
 end
 
@@ -1135,7 +1047,8 @@ local function sanitizeAirWalkAnim(hum)
 	if not hum then return end
 	pcall(function()
 		local animateScript = hum.Parent and hum.Parent:FindFirstChild("Animate")
-		local idleId = animateScript and animateScript:FindFirstChild("idle") and animateScript.idle:FindFirstChildOfClass("Animation") and animateScript.idle:FindFirstChildOfClass("Animation").AnimationId
+		local idleAnim = animateScript and animateScript:FindFirstChild("idle") and animateScript.idle:FindFirstChildOfClass("Animation")
+		local idleId = idleAnim and idleAnim.AnimationId
 		local animator = hum:FindFirstChildOfClass("Animator")
 		if idleId and idleId ~= "" and animator then
 			local hasIdle = false
@@ -1156,17 +1069,12 @@ local function sanitizeAirWalkAnim(hum)
 		end
 		for _, tr in ipairs(hum:GetPlayingAnimationTracks()) do
 			local animName = string.lower((tr.Animation and tr.Animation.Name) or "")
-			local isBlocked = string.find(animName, "fall", 1, true)
-				or string.find(animName, "jump", 1, true)
-				or string.find(animName, "climb", 1, true)
-			if isBlocked then
+			if string.find(animName, "fall", 1, true) or string.find(animName, "jump", 1, true) or string.find(animName, "climb", 1, true) then
 				tr:Stop(0.05)
 			end
 		end
 	end)
 end
-
-local airGui
 
 local function setAirWalkState(on)
 	Cfg.AirWalk = (on == true)
@@ -1177,9 +1085,7 @@ local function setAirWalkState(on)
 	if Cfg.AirWalk and hrp then
 		airY = hrp.Position.Y
 		if hum then
-			if Cfg.Speed then
-				hum.WalkSpeed = normalizeMovementSpeed(Cfg.SpeedVal)
-			end
+			if Cfg.Speed then hum.WalkSpeed = normalizeMovementSpeed(Cfg.SpeedVal) end
 			enforceAirWalkStates(hum)
 			sanitizeAirWalkAnim(hum)
 		end
@@ -1191,11 +1097,7 @@ local function setAirWalkState(on)
 				hum:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
 				hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
 				hum:SetStateEnabled(Enum.HumanoidStateType.Climbing, not Cfg.Noclip)
-				if Cfg.Speed then
-					hum.WalkSpeed = normalizeMovementSpeed(Cfg.SpeedVal)
-				else
-					hum.WalkSpeed = 16
-				end
+				hum.WalkSpeed = Cfg.Speed and normalizeMovementSpeed(Cfg.SpeedVal) or 16
 				hum:ChangeState(Enum.HumanoidStateType.GettingUp)
 			end)
 		end
@@ -1203,7 +1105,7 @@ local function setAirWalkState(on)
 end
 
 -- ============================================================================
--- OVERHEAD MEMBER TAG
+-- OVERHEAD TAG & ESP
 -- ============================================================================
 local function clearThirdEyeTag(plr)
 	if thirdEyeTagStore[plr] then
@@ -1216,8 +1118,7 @@ end
 
 local function isVerifiedMortalUser(plr)
 	if not plr then return false end
-	if plr == LocalPlayer then return true end
-	if verifiedScriptUsers[plr.UserId] == true then return true end
+	if plr == LocalPlayer or verifiedScriptUsers[plr.UserId] == true then return true end
 	local pChar = plr.Character
 	if pChar and (pChar:FindFirstChild("MortalHubMarker") or pChar:FindFirstChild("MortalsAuraFX", true)) then
 		verifiedScriptUsers[plr.UserId] = true
@@ -1304,9 +1205,6 @@ local function updateThirdEyeTag(plr)
 	end
 end
 
--- ============================================================================
--- ESP SYSTEM
--- ============================================================================
 local function clearESP(plr)
 	if espStore[plr] then
 		pcall(function()
@@ -1389,8 +1287,7 @@ local function drawESP(plr, bodyCol, nameCol, mode)
 				nameLbl.Parent = bb
 			end
 
-			entry = { Char = pChar, Mode = mode, Highlight = hl, Billboard = bb }
-			espStore[plr] = entry
+			espStore[plr] = { Char = pChar, Mode = mode, Highlight = hl, Billboard = bb }
 		end)
 	end
 end
@@ -1399,9 +1296,7 @@ local function getActiveTargetPlayer()
 	local direct = findPlayer(getTargetQuery())
 	if direct then return direct end
 	for plr, active in pairs(targetEspSet) do
-		if active and plr and plr.Parent == Players then
-			return plr
-		end
+		if active and plr and plr.Parent == Players then return plr end
 	end
 	return nil
 end
@@ -1427,7 +1322,7 @@ local function syncAllESP()
 end
 
 -- ============================================================================
--- AURA SYSTEM (COLUMN / SURGE / SMOKE / SERAPHIC & STARDUST / MORTALS NEVERDIE)
+-- AURA ENGINE
 -- ============================================================================
 local function getAuraColorSignature()
 	return string.format("%s:%.3f:%.3f:%.3f", tostring(Cfg.AuraCustomColor), Cfg.AuraHue, Cfg.AuraSat, Cfg.AuraVal)
@@ -1442,9 +1337,7 @@ local function scaleAuraColor3(col, factor)
 end
 
 local function getPickedAuraColor()
-	if not Cfg.AuraCustomColor then
-		return DEFAULT_AURA_PURPLE.Start
-	end
+	if not Cfg.AuraCustomColor then return DEFAULT_AURA_PURPLE.Start end
 	return Color3.fromHSV(
 		math.clamp(Cfg.AuraHue, 0, 1),
 		math.clamp(Cfg.AuraSat, 0, 1),
@@ -1456,30 +1349,21 @@ local function buildAuraColorSet(modeName)
 	if not Cfg.AuraCustomColor then
 		if modeName == "SURGE" then
 			return {
-				Start = DEFAULT_SURGE_PURPLE.Start,
-				Mid = DEFAULT_SURGE_PURPLE.Mid,
-				Deep = DEFAULT_SURGE_PURPLE.Deep,
-				End = DEFAULT_SURGE_PURPLE.End,
-				Outline = DEFAULT_SURGE_PURPLE.Outline,
-				Light = DEFAULT_SURGE_PURPLE.Light,
+				Start = DEFAULT_SURGE_PURPLE.Start, Mid = DEFAULT_SURGE_PURPLE.Mid,
+				Deep = DEFAULT_SURGE_PURPLE.Deep, End = DEFAULT_SURGE_PURPLE.End,
+				Outline = DEFAULT_SURGE_PURPLE.Outline, Light = DEFAULT_SURGE_PURPLE.Light,
 			}
 		elseif modeName == "STAR_RADIANCE" then
 			return {
-				Start = Color3.fromRGB(165, 235, 255),
-				Mid = Color3.fromRGB(45, 165, 255),
-				Deep = Color3.fromRGB(25, 95, 225),
-				End = Color3.fromRGB(10, 55, 195),
-				Outline = Color3.fromRGB(115, 215, 255),
-				Light = Color3.fromRGB(55, 175, 255),
+				Start = Color3.fromRGB(165, 235, 255), Mid = Color3.fromRGB(45, 165, 255),
+				Deep = Color3.fromRGB(25, 95, 225), End = Color3.fromRGB(10, 55, 195),
+				Outline = Color3.fromRGB(115, 215, 255), Light = Color3.fromRGB(55, 175, 255),
 			}
 		elseif modeName == "MORTALS_NEVERDIE" then
 			return {
-				Start = Color3.fromRGB(175, 65, 255),
-				Mid = Color3.fromRGB(125, 20, 245),
-				Deep = Color3.fromRGB(75, 8, 175),
-				End = Color3.fromRGB(35, 2, 95),
-				Outline = Color3.fromRGB(155, 45, 255),
-				Light = Color3.fromRGB(155, 35, 255),
+				Start = Color3.fromRGB(175, 65, 255), Mid = Color3.fromRGB(125, 20, 245),
+				Deep = Color3.fromRGB(75, 8, 175), End = Color3.fromRGB(35, 2, 95),
+				Outline = Color3.fromRGB(155, 45, 255), Light = Color3.fromRGB(155, 35, 255),
 			}
 		end
 		return DEFAULT_AURA_PURPLE
@@ -1509,96 +1393,57 @@ end
 local function markAuraOwned(inst, tagName)
 	inst:SetAttribute(AURA_OWNER_ATTR, true)
 	inst:SetAttribute("MortalAuraFX", true)
-	if tagName then
-		inst:SetAttribute(tagName, true)
-	end
+	if tagName then inst:SetAttribute(tagName, true) end
 end
 
 local function clearAuraEffects()
 	for _, item in ipairs(activeAuraItems) do
-		if item.emitters then
-			for _, pe in ipairs(item.emitters) do
-				local emitter = pe.emitter or pe
-				pcall(function()
-					emitter.Enabled = false
-					emitter:Clear()
-					emitter:Destroy()
-				end)
+		for _, listKey in ipairs({ "emitters", "spreadEmitters" }) do
+			if item[listKey] then
+				for _, pe in ipairs(item[listKey]) do
+					local emitter = pe.emitter or pe
+					pcall(function() emitter.Enabled = false; emitter:Clear(); emitter:Destroy() end)
+				end
 			end
 		end
-		if item.spreadEmitters then
-			for _, spe in ipairs(item.spreadEmitters) do
-				pcall(function()
-					spe.Enabled = false
-					spe:Clear()
-					spe:Destroy()
-				end)
-			end
-		end
-		if item.light then
-			pcall(function()
-				item.light.Enabled = false
-				item.light:Destroy()
-			end)
-		end
+		if item.light then pcall(function() item.light.Enabled = false; item.light:Destroy() end) end
 		if item.extras then
-			for _, ex in ipairs(item.extras) do
-				pcall(function() ex:Destroy() end)
-			end
+			for _, ex in ipairs(item.extras) do pcall(function() ex:Destroy() end) end
 		end
-		if item.walkCracks then
-			for _, c in ipairs(item.walkCracks) do
-				pcall(function() if c.folder then c.folder:Destroy() end end)
+		for _, crackListKey in ipairs({ "walkCracks", "landingCracks" }) do
+			if item[crackListKey] then
+				for _, c in ipairs(item[crackListKey]) do
+					pcall(function() if c.folder then c.folder:Destroy() end end)
+				end
+				table.clear(item[crackListKey])
 			end
-			table.clear(item.walkCracks)
-		end
-		if item.landingCracks then
-			for _, c in ipairs(item.landingCracks) do
-				pcall(function() if c.folder then c.folder:Destroy() end end)
-			end
-			table.clear(item.landingCracks)
 		end
 	end
 	table.clear(activeAuraItems)
 
 	for _, pe in ipairs(activeAuraEmitters) do
 		local emitter = pe.emitter or pe
-		pcall(function()
-			emitter.Enabled = false
-			emitter:Clear()
-			emitter:Destroy()
-		end)
+		pcall(function() emitter.Enabled = false; emitter:Clear(); emitter:Destroy() end)
 	end
 	table.clear(activeAuraEmitters)
 
-	for _, att in ipairs(activeAuraAttachments) do
-		pcall(function() att:Destroy() end)
-	end
+	for _, att in ipairs(activeAuraAttachments) do pcall(function() att:Destroy() end) end
 	table.clear(activeAuraAttachments)
 
-	for _, ex in ipairs(activeAuraExtras) do
-		pcall(function() ex:Destroy() end)
-	end
+	for _, ex in ipairs(activeAuraExtras) do pcall(function() ex:Destroy() end) end
 	table.clear(activeAuraExtras)
 
-	if auraWorldFolder then
-		pcall(function() auraWorldFolder:Destroy() end)
-		auraWorldFolder = nil
-	end
-	if crackRootFolder then
-		pcall(function() crackRootFolder:Destroy() end)
-		crackRootFolder = nil
-	end
+	if auraWorldFolder then pcall(function() auraWorldFolder:Destroy() end); auraWorldFolder = nil end
+	if crackRootFolder then pcall(function() crackRootFolder:Destroy() end); crackRootFolder = nil end
 
-	local roots = {}
-	if LocalPlayer.Character then table.insert(roots, LocalPlayer.Character) end
-	table.insert(roots, workspace)
-	for _, root in ipairs(roots) do
-		local ok, descList = pcall(function() return root:GetDescendants() end)
-		if ok and descList then
-			for _, desc in ipairs(descList) do
-				if desc:GetAttribute(AURA_OWNER_ATTR) or desc:GetAttribute("MortalAuraFX") then
-					pcall(function() desc:Destroy() end)
+	for _, root in ipairs({ LocalPlayer.Character, workspace }) do
+		if root then
+			local ok, descList = pcall(function() return root:GetDescendants() end)
+			if ok and descList then
+				for _, desc in ipairs(descList) do
+					if desc:GetAttribute(AURA_OWNER_ATTR) or desc:GetAttribute("MortalAuraFX") then
+						pcall(function() desc:Destroy() end)
+					end
 				end
 			end
 		end
@@ -1620,50 +1465,31 @@ local function applyLiveAuraColorOnly()
 	local set = buildAuraColorSet(modeName)
 	for _, pe in ipairs(activeAuraEmitters) do
 		local emitter = pe.emitter or pe
-		if emitter and emitter.Parent then
-			emitter.Color = seq
-		end
+		if emitter and emitter.Parent then emitter.Color = seq end
 	end
 	for _, item in ipairs(activeAuraItems) do
-		if item.emitters then
-			for _, pe in ipairs(item.emitters) do
-				local emitter = pe.emitter or pe
-				if emitter and emitter.Parent then
-					emitter.Color = seq
+		for _, listKey in ipairs({ "emitters", "spreadEmitters" }) do
+			if item[listKey] then
+				for _, pe in ipairs(item[listKey]) do
+					local emitter = pe.emitter or pe
+					if emitter and emitter.Parent then emitter.Color = seq end
 				end
 			end
 		end
-		if item.spreadEmitters then
-			for _, spe in ipairs(item.spreadEmitters) do
-				if spe and spe.Parent then
-					spe.Color = seq
-				end
-			end
-		end
-		if item.light and item.light.Parent then
-			item.light.Color = set.Light
-		end
+		if item.light and item.light.Parent then item.light.Color = set.Light end
 		if item.extras then
 			for _, ex in ipairs(item.extras) do
 				if ex and ex.Parent then
-					if ex:IsA("Highlight") then
-						ex.FillColor = set.Deep
-						ex.OutlineColor = set.Outline
-					elseif ex:IsA("PointLight") then
-						ex.Color = set.Light
-					end
+					if ex:IsA("Highlight") then ex.FillColor = set.Deep; ex.OutlineColor = set.Outline
+					elseif ex:IsA("PointLight") then ex.Color = set.Light end
 				end
 			end
 		end
 	end
 	for _, ex in ipairs(activeAuraExtras) do
 		if ex and ex.Parent then
-			if ex:IsA("Highlight") then
-				ex.FillColor = set.Deep
-				ex.OutlineColor = set.Outline
-			elseif ex:IsA("PointLight") then
-				ex.Color = set.Light
-			end
+			if ex:IsA("Highlight") then ex.FillColor = set.Deep; ex.OutlineColor = set.Outline
+			elseif ex:IsA("PointLight") then ex.Color = set.Light end
 		end
 	end
 	builtAuraColorSig = getAuraColorSignature()
@@ -1686,20 +1512,15 @@ local function collectAuraBodyParts(char, hrp)
 			table.insert(parts, desc)
 		end
 	end
-	if #parts == 0 then
-		table.insert(parts, hrp)
-	end
+	if #parts == 0 then table.insert(parts, hrp) end
 	return parts
 end
 
 local function isAuraLegOrFoot(part)
 	local n = string.lower(part.Name)
-	return string.find(n, "leg", 1, true) ~= nil
-		or string.find(n, "foot", 1, true) ~= nil
-		or string.find(n, "feet", 1, true) ~= nil
-		or string.find(n, "ankle", 1, true) ~= nil
-		or string.find(n, "shin", 1, true) ~= nil
-		or string.find(n, "thigh", 1, true) ~= nil
+	return string.find(n, "leg", 1, true) ~= nil or string.find(n, "foot", 1, true) ~= nil
+		or string.find(n, "feet", 1, true) ~= nil or string.find(n, "ankle", 1, true) ~= nil
+		or string.find(n, "shin", 1, true) ~= nil or string.find(n, "thigh", 1, true) ~= nil
 end
 
 local function applyAuraUltimateGlow(char, modeName, extrasOut)
@@ -1735,10 +1556,8 @@ end
 local function attachAuraUltimateSpread(char, modeName, texList, spreadOut)
 	local parts = getAuraTargetParts(char)
 	local offsets = {
-		Vector3.new(-0.55, 0.35, 0),
-		Vector3.new(0.55, -0.25, 0),
-		Vector3.new(0, 0.25, 0.55),
-		Vector3.new(0, -0.35, -0.55),
+		Vector3.new(-0.55, 0.35, 0), Vector3.new(0.55, -0.25, 0),
+		Vector3.new(0, 0.25, 0.55), Vector3.new(0, -0.35, -0.55),
 	}
 	local seq = makeAuraSequence(modeName)
 	local isColumn = (modeName == "COLUMN")
@@ -1765,16 +1584,11 @@ local function attachAuraUltimateSpread(char, modeName, texList, spreadOut)
 					NumberSequenceKeypoint.new(1, 0),
 				})
 				pe.Transparency = NumberSequence.new({
-					NumberSequenceKeypoint.new(0, 0.24),
-					NumberSequenceKeypoint.new(0.55, 0.40),
-					NumberSequenceKeypoint.new(1, 1),
+					NumberSequenceKeypoint.new(0, 0.24), NumberSequenceKeypoint.new(0.55, 0.40), NumberSequenceKeypoint.new(1, 1),
 				})
 				pe.Lifetime = NumberRange.new(0.65, 1.2)
 				pe.Rate = math.clamp(38 * ULTIMATE_SPREAD_PRESET.rateMult * legBoost, 50, 16000)
-				pe.Speed = NumberRange.new(
-					math.clamp(4.2 * ULTIMATE_SPREAD_PRESET.speedMult, 1.5, 280),
-					math.clamp(9.8 * ULTIMATE_SPREAD_PRESET.speedMult, 3, 400)
-				)
+				pe.Speed = NumberRange.new(math.clamp(4.2 * ULTIMATE_SPREAD_PRESET.speedMult, 1.5, 280), math.clamp(9.8 * ULTIMATE_SPREAD_PRESET.speedMult, 3, 400))
 				pe.SpreadAngle = Vector2.new(195, 195)
 				pe.Drag = 2.4
 				pe.Acceleration = Vector3.new(0, 65, 0)
@@ -1796,10 +1610,7 @@ local function attachAuraUltimateSpread(char, modeName, texList, spreadOut)
 				})
 				pe.Lifetime = NumberRange.new(0.95, 1.75)
 				pe.Rate = math.clamp(28 * ULTIMATE_SPREAD_PRESET.rateMult * legBoost, 40, 16000)
-				pe.Speed = NumberRange.new(
-					math.clamp((modeName == "SMOKE" and 2.4 or 3.0) * ULTIMATE_SPREAD_PRESET.speedMult, 0.8, 240),
-					math.clamp((modeName == "SMOKE" and 6.4 or 7.5) * ULTIMATE_SPREAD_PRESET.speedMult, 1.5, 350)
-				)
+				pe.Speed = NumberRange.new(math.clamp((modeName == "SMOKE" and 2.4 or 3.0) * ULTIMATE_SPREAD_PRESET.speedMult, 0.8, 240), math.clamp((modeName == "SMOKE" and 6.4 or 7.5) * ULTIMATE_SPREAD_PRESET.speedMult, 1.5, 350))
 				pe.SpreadAngle = Vector2.new(360, 360)
 				pe.Drag = modeName == "SMOKE" and 1.1 or 1.0
 				pe.Acceleration = Vector3.new(0, 14, 0)
@@ -1828,10 +1639,8 @@ local function createColumnEmitterEntry(part, cfg, partCount, isCoreDark, texIdx
 	})
 	pe.Size = baseSize
 	pe.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.30),
-		NumberSequenceKeypoint.new(0.25, isCoreDark and 0.08 or 0.14),
-		NumberSequenceKeypoint.new(0.72, isCoreDark and 0.28 or 0.36),
-		NumberSequenceKeypoint.new(1, 1),
+		NumberSequenceKeypoint.new(0, 0.30), NumberSequenceKeypoint.new(0.25, isCoreDark and 0.08 or 0.14),
+		NumberSequenceKeypoint.new(0.72, isCoreDark and 0.28 or 0.36), NumberSequenceKeypoint.new(1, 1),
 	})
 	local legBoost = isAuraLegOrFoot(part) and 2.2 or 1.0
 	pe.EmissionDirection = Enum.NormalId.Top
@@ -1849,16 +1658,9 @@ local function createColumnEmitterEntry(part, cfg, partCount, isCoreDark, texIdx
 	pe.Enabled = true
 	pe.Parent = part
 	return {
-		emitter = pe,
-		kind = "column",
-		baseRate = rate,
-		minRate = 24,
-		baseSize = baseSize,
-		baseSpeedMin = cfg.speedMin,
-		baseSpeedMax = cfg.speedMax,
-		baseSpread = cfg.spread,
-		baseRotSpeed = 45,
-		baseAccel = Vector3.new(0, cfg.accelY, 0),
+		emitter = pe, kind = "column", baseRate = rate, minRate = 24, baseSize = baseSize,
+		baseSpeedMin = cfg.speedMin, baseSpeedMax = cfg.speedMax, baseSpread = cfg.spread,
+		baseRotSpeed = 45, baseAccel = Vector3.new(0, cfg.accelY, 0),
 	}
 end
 
@@ -1868,15 +1670,11 @@ local function createColumnSparkEntry(part, cfg, partCount)
 	pe.Texture = STAR_TEXTURE
 	pe.Color = makeAuraSequence("COLUMN")
 	local baseSize = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.45),
-		NumberSequenceKeypoint.new(0.5, 0.72),
-		NumberSequenceKeypoint.new(1, 0),
+		NumberSequenceKeypoint.new(0, 0.45), NumberSequenceKeypoint.new(0.5, 0.72), NumberSequenceKeypoint.new(1, 0),
 	})
 	pe.Size = baseSize
 	pe.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.14),
-		NumberSequenceKeypoint.new(0.7, 0.42),
-		NumberSequenceKeypoint.new(1, 1),
+		NumberSequenceKeypoint.new(0, 0.14), NumberSequenceKeypoint.new(0.7, 0.42), NumberSequenceKeypoint.new(1, 1),
 	})
 	local legBoost = isAuraLegOrFoot(part) and 2.0 or 1.0
 	pe.EmissionDirection = Enum.NormalId.Top
@@ -1892,16 +1690,9 @@ local function createColumnSparkEntry(part, cfg, partCount)
 	pe.Enabled = true
 	pe.Parent = part
 	return {
-		emitter = pe,
-		kind = "spark",
-		baseRate = rate,
-		minRate = 18,
-		baseSize = baseSize,
-		baseSpeedMin = cfg.speedMin * 0.9,
-		baseSpeedMax = cfg.speedMax * 1.15,
-		baseSpread = cfg.spread * 1.25,
-		baseRotSpeed = 45,
-		baseAccel = Vector3.new(0, cfg.accelY * 0.85, 0),
+		emitter = pe, kind = "spark", baseRate = rate, minRate = 18, baseSize = baseSize,
+		baseSpeedMin = cfg.speedMin * 0.9, baseSpeedMax = cfg.speedMax * 1.15, baseSpread = cfg.spread * 1.25,
+		baseRotSpeed = 45, baseAccel = Vector3.new(0, cfg.accelY * 0.85, 0),
 	}
 end
 
@@ -1919,10 +1710,8 @@ local function createSurgeCloudEntry(part, cfg, partCount, isDeepVoid, texIdx)
 	local baseAccel = Vector3.new(0, 1.6 + (Cfg.AuraLevel * 0.35), 0)
 	pe.Size = baseSize
 	pe.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.72),
-		NumberSequenceKeypoint.new(0.22, isDeepVoid and 0.36 or 0.44),
-		NumberSequenceKeypoint.new(0.68, isDeepVoid and 0.58 or 0.66),
-		NumberSequenceKeypoint.new(1, 1),
+		NumberSequenceKeypoint.new(0, 0.72), NumberSequenceKeypoint.new(0.22, isDeepVoid and 0.36 or 0.44),
+		NumberSequenceKeypoint.new(0.68, isDeepVoid and 0.58 or 0.66), NumberSequenceKeypoint.new(1, 1),
 	})
 	pe.Lifetime = NumberRange.new(1.15, 2.15)
 	pe.Rate = baseRate
@@ -1937,16 +1726,9 @@ local function createSurgeCloudEntry(part, cfg, partCount, isDeepVoid, texIdx)
 	pe.Enabled = true
 	pe.Parent = part
 	return {
-		emitter = pe,
-		kind = "cloud",
-		baseRate = baseRate,
-		minRate = 16,
-		baseSize = baseSize,
-		baseSpeedMin = cfg.speedMin,
-		baseSpeedMax = cfg.speedMax,
-		baseSpread = cfg.spread,
-		baseRotSpeed = 38,
-		baseAccel = baseAccel,
+		emitter = pe, kind = "cloud", baseRate = baseRate, minRate = 16, baseSize = baseSize,
+		baseSpeedMin = cfg.speedMin, baseSpeedMax = cfg.speedMax, baseSpread = cfg.spread,
+		baseRotSpeed = 38, baseAccel = baseAccel,
 	}
 end
 
@@ -1956,17 +1738,13 @@ local function createSurgeWispEntry(part, cfg, partCount, texIdx)
 	pe.Texture = SURGE_TEXTURES[texIdx] or SURGE_TEXTURES[2]
 	pe.Color = makeAuraSequence("SURGE")
 	local baseSize = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, cfg.sizeStart * 0.48),
-		NumberSequenceKeypoint.new(0.5, cfg.sizeEnd * 0.45),
-		NumberSequenceKeypoint.new(1, 0),
+		NumberSequenceKeypoint.new(0, cfg.sizeStart * 0.48), NumberSequenceKeypoint.new(0.5, cfg.sizeEnd * 0.45), NumberSequenceKeypoint.new(1, 0),
 	})
 	local baseRate = math.max(10, math.floor(cfg.wispRate / math.max(1, partCount)))
 	local baseAccel = Vector3.new(0, 3.0 + (Cfg.AuraLevel * 0.45), 0)
 	pe.Size = baseSize
 	pe.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.36),
-		NumberSequenceKeypoint.new(0.6, 0.56),
-		NumberSequenceKeypoint.new(1, 1),
+		NumberSequenceKeypoint.new(0, 0.36), NumberSequenceKeypoint.new(0.6, 0.56), NumberSequenceKeypoint.new(1, 1),
 	})
 	pe.Lifetime = NumberRange.new(0.9, 1.7)
 	pe.Rate = baseRate
@@ -1981,16 +1759,9 @@ local function createSurgeWispEntry(part, cfg, partCount, texIdx)
 	pe.Enabled = true
 	pe.Parent = part
 	return {
-		emitter = pe,
-		kind = "wisp",
-		baseRate = baseRate,
-		minRate = 10,
-		baseSize = baseSize,
-		baseSpeedMin = cfg.speedMin * 1.25,
-		baseSpeedMax = cfg.speedMax * 1.35,
-		baseSpread = cfg.spread * 0.8,
-		baseRotSpeed = 58,
-		baseAccel = baseAccel,
+		emitter = pe, kind = "wisp", baseRate = baseRate, minRate = 10, baseSize = baseSize,
+		baseSpeedMin = cfg.speedMin * 1.25, baseSpeedMax = cfg.speedMax * 1.35, baseSpread = cfg.spread * 0.8,
+		baseRotSpeed = 58, baseAccel = baseAccel,
 	}
 end
 
@@ -2014,12 +1785,8 @@ local function raycastAuraGroundY(fromPos, fallbackY)
 	if auraWorldFolder then table.insert(excl, auraWorldFolder) end
 	if crackRootFolder then table.insert(excl, crackRootFolder) end
 	params.FilterDescendantsInstances = excl
-
 	local hit = workspace:Raycast(fromPos + Vector3.new(0, 2.0, 0), Vector3.new(0, -16, 0), params)
-	if hit then
-		return hit.Position.Y, true
-	end
-	return fallbackY, false
+	return hit and hit.Position.Y or fallbackY, hit ~= nil
 end
 
 local function makeCrackPart(parent, size, color, material, transparency)
@@ -2039,20 +1806,8 @@ local function makeCrackPart(parent, size, color, material, transparency)
 end
 
 local function createCrackSeg(folder, p0, p1, thick, isMega, edgeColor)
-	local core = makeCrackPart(
-		folder,
-		Vector3.new(thick * (isMega and 2.5 or 1.85), 0.12, 1),
-		Color3.fromRGB(3, 1, 7),
-		Enum.Material.SmoothPlastic,
-		0
-	)
-	local edge = makeCrackPart(
-		folder,
-		Vector3.new(thick * (isMega and 1.15 or 0.78), 0.14, 1),
-		edgeColor or Color3.fromRGB(115, 16, 255),
-		Enum.Material.Neon,
-		0.05
-	)
+	local core = makeCrackPart(folder, Vector3.new(thick * (isMega and 2.5 or 1.85), 0.12, 1), Color3.fromRGB(3, 1, 7), Enum.Material.SmoothPlastic, 0)
+	local edge = makeCrackPart(folder, Vector3.new(thick * (isMega and 1.15 or 0.78), 0.14, 1), edgeColor or Color3.fromRGB(115, 16, 255), Enum.Material.Neon, 0.05)
 	return { core = core, edge = edge, p0 = p0, p1 = p1 }
 end
 
@@ -2068,8 +1823,7 @@ local function updateCrackSeg(seg)
 	local p1W = Vector3.new(seg.p1.X, y1 + 0.04, seg.p1.Z)
 	local dist = (p1W - p0W).Magnitude
 	if dist < 0.05 then return end
-	local mid = (p0W + p1W) * 0.5
-	local cf = CFrame.lookAt(mid, p1W)
+	local cf = CFrame.lookAt((p0W + p1W) * 0.5, p1W)
 	seg.core.Size = Vector3.new(seg.core.Size.X, 0.12, dist * 1.16)
 	seg.edge.Size = Vector3.new(seg.edge.Size.X, 0.14, dist * 1.09)
 	seg.core.CFrame = cf
@@ -2122,9 +1876,8 @@ local function spawnWalkCrack(item, groundPos, moveDir, scale)
 			cur = nxt
 		end
 	end
-	local popup = createRiftPopup(node, scale, set.Start)
 	table.insert(item.walkCracks, {
-		folder = node, segs = segs, popup = popup,
+		folder = node, segs = segs, popup = createRiftPopup(node, scale, set.Start),
 		originPos = groundPos, spawnTime = os.clock(), duration = 2.2
 	})
 	if #item.walkCracks > 14 then
@@ -2154,9 +1907,8 @@ local function spawnLandingMegaCrack(item, groundPos, scale)
 			cur = nxt
 		end
 	end
-	local popup = createRiftPopup(node, scale * 1.25, set.Start)
 	table.insert(item.landingCracks, {
-		folder = node, segs = segs, popup = popup,
+		folder = node, segs = segs, popup = createRiftPopup(node, scale * 1.25, set.Start),
 		originPos = groundPos, spawnTime = os.clock(), duration = 3.0
 	})
 	if #item.landingCracks > 6 then
@@ -2172,9 +1924,7 @@ local function attachStarEmitterEntry(parentPart, opts)
 	pe.Color = opts.color
 	pe.Size = opts.size
 	pe.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.05),
-		NumberSequenceKeypoint.new(0.60, 0.25),
-		NumberSequenceKeypoint.new(1, 1),
+		NumberSequenceKeypoint.new(0, 0.05), NumberSequenceKeypoint.new(0.60, 0.25), NumberSequenceKeypoint.new(1, 1),
 	})
 	pe.Lifetime = NumberRange.new(0.45, 0.85)
 	pe.Rate = math.max(120, math.floor(opts.rate or 260))
@@ -2187,14 +1937,7 @@ local function attachStarEmitterEntry(parentPart, opts)
 	pe.Acceleration = opts.accel
 	pe.Enabled = true
 	pe.Parent = parentPart
-	return {
-		emitter = pe,
-		kind = "star",
-		baseRate = pe.Rate,
-		baseSize = opts.size,
-		baseSpeed = opts.speed,
-		baseSpread = opts.spread,
-	}
+	return { emitter = pe, kind = "star", baseRate = pe.Rate, baseSize = opts.size, baseSpeed = opts.speed, baseSpread = opts.spread }
 end
 
 local function buildAura(char, hrp)
@@ -2231,15 +1974,11 @@ local function buildAura(char, hrp)
 			attachAuraUltimateSpread(char, "SMOKE", SURGE_TEXTURES, spreadEmitters)
 		end
 		local offsets = isUltimate and {
-			Vector3.new(-0.55, 0.35, 0),
-			Vector3.new(0.55, -0.25, 0),
-			Vector3.new(0, 0.25, 0.55),
-			Vector3.new(0, -0.35, -0.55),
+			Vector3.new(-0.55, 0.35, 0), Vector3.new(0.55, -0.25, 0),
+			Vector3.new(0, 0.25, 0.55), Vector3.new(0, -0.35, -0.55),
 		} or {
-			Vector3.new(-0.32, 0.25, 0),
-			Vector3.new(0.32, -0.25, 0),
-			Vector3.new(0, 0, 0.32),
-			Vector3.new(0, -0.35, 0),
+			Vector3.new(-0.32, 0.25, 0), Vector3.new(0.32, -0.25, 0),
+			Vector3.new(0, 0, 0.32), Vector3.new(0, -0.35, 0),
 		}
 		local minAuraRate = isUltimate and 40 or ((lvl == 1) and 10 or ((lvl == 2) and 28 or 42))
 		local maxAuraRate = isUltimate and 16000 or 1200
@@ -2320,8 +2059,7 @@ local function buildAura(char, hrp)
 						NumberSequenceKeypoint.new(1, math.clamp(0.15 * (isUltimate and 18 or 1), 0.1, 22)),
 					})
 					surge.Transparency = NumberSequence.new({
-						NumberSequenceKeypoint.new(0, isUltimate and 0.50 or 0.2),
-						NumberSequenceKeypoint.new(1, 1),
+						NumberSequenceKeypoint.new(0, isUltimate and 0.50 or 0.2), NumberSequenceKeypoint.new(1, 1),
 					})
 					surge.Lifetime = NumberRange.new(0.6, isUltimate and 1.35 or 1.05)
 					surge.Rate = math.clamp(28 * preset.rateMult * legBoost, 45, maxSurgeRate)
@@ -2341,15 +2079,14 @@ local function buildAura(char, hrp)
 		local bodyParts = collectAuraBodyParts(char, hrp)
 		for idx, bp in ipairs(bodyParts) do
 			local texIdx = ((idx - 1) % 2) + 1
-			local e1 = createColumnEmitterEntry(bp, cfg, #bodyParts, true, texIdx)
-			local e2 = createColumnEmitterEntry(bp, cfg, #bodyParts, false, texIdx)
-			local e3 = createColumnSparkEntry(bp, cfg, #bodyParts)
-			table.insert(emitters, e1)
-			table.insert(emitters, e2)
-			table.insert(emitters, e3)
-			table.insert(activeAuraEmitters, e1)
-			table.insert(activeAuraEmitters, e2)
-			table.insert(activeAuraEmitters, e3)
+			for _, entry in ipairs({
+				createColumnEmitterEntry(bp, cfg, #bodyParts, true, texIdx),
+				createColumnEmitterEntry(bp, cfg, #bodyParts, false, texIdx),
+				createColumnSparkEntry(bp, cfg, #bodyParts),
+			}) do
+				table.insert(emitters, entry)
+				table.insert(activeAuraEmitters, entry)
+			end
 		end
 		ptLight = Instance.new("PointLight")
 		markAuraOwned(ptLight, "MortalColumnAura")
@@ -2366,15 +2103,14 @@ local function buildAura(char, hrp)
 		local bodyParts = collectAuraBodyParts(char, hrp)
 		for idx, bp in ipairs(bodyParts) do
 			local texIdx = ((idx - 1) % #SURGE_TEXTURES) + 1
-			local c1 = createSurgeCloudEntry(bp, cfg, #bodyParts, false, texIdx)
-			local c2 = createSurgeCloudEntry(bp, cfg, #bodyParts, true, texIdx)
-			local w1 = createSurgeWispEntry(bp, cfg, #bodyParts, texIdx)
-			table.insert(emitters, c1)
-			table.insert(emitters, c2)
-			table.insert(emitters, w1)
-			table.insert(activeAuraEmitters, c1)
-			table.insert(activeAuraEmitters, c2)
-			table.insert(activeAuraEmitters, w1)
+			for _, entry in ipairs({
+				createSurgeCloudEntry(bp, cfg, #bodyParts, false, texIdx),
+				createSurgeCloudEntry(bp, cfg, #bodyParts, true, texIdx),
+				createSurgeWispEntry(bp, cfg, #bodyParts, texIdx),
+			}) do
+				table.insert(emitters, entry)
+				table.insert(activeAuraEmitters, entry)
+			end
 		end
 		ptLight = Instance.new("PointLight")
 		markAuraOwned(ptLight, "MortalSurgeAura")
@@ -2399,33 +2135,23 @@ local function buildAura(char, hrp)
 			local s1 = attachStarEmitterEntry(bp, {
 				color = seq,
 				size = NumberSequence.new({
-					NumberSequenceKeypoint.new(0, 0.65 * sMult),
-					NumberSequenceKeypoint.new(0.55, 1.55 * sMult),
-					NumberSequenceKeypoint.new(1, 0),
+					NumberSequenceKeypoint.new(0, 0.65 * sMult), NumberSequenceKeypoint.new(0.55, 1.55 * sMult), NumberSequenceKeypoint.new(1, 0),
 				}),
-				rate = baseRate,
-				speed = NumberRange.new(4.5 * tier.speedMult, 11.5 * tier.speedMult),
+				rate = baseRate, speed = NumberRange.new(4.5 * tier.speedMult, 11.5 * tier.speedMult),
 				spread = Vector2.new(math.clamp(135 * tier.spreadMult, 50, 180), math.clamp(135 * tier.spreadMult, 50, 180)),
-				rotSpeed = NumberRange.new(-120, 120),
-				accel = Vector3.new(0, 6.0, 0),
+				rotSpeed = NumberRange.new(-120, 120), accel = Vector3.new(0, 6.0, 0),
 			})
 			local s2 = attachStarEmitterEntry(bp, {
 				color = seq,
 				size = NumberSequence.new({
-					NumberSequenceKeypoint.new(0, 0.60 * sMult),
-					NumberSequenceKeypoint.new(0.60, 1.45 * sMult),
-					NumberSequenceKeypoint.new(1, 0),
+					NumberSequenceKeypoint.new(0, 0.60 * sMult), NumberSequenceKeypoint.new(0.60, 1.45 * sMult), NumberSequenceKeypoint.new(1, 0),
 				}),
-				rate = baseRate,
-				speed = NumberRange.new(4.5 * tier.speedMult, 11.5 * tier.speedMult),
+				rate = baseRate, speed = NumberRange.new(4.5 * tier.speedMult, 11.5 * tier.speedMult),
 				spread = Vector2.new(math.clamp(170 * tier.spreadMult, 50, 180), math.clamp(170 * tier.spreadMult, 50, 180)),
-				rotSpeed = NumberRange.new(-155, 155),
-				accel = Vector3.new(0, 4.0, 0),
+				rotSpeed = NumberRange.new(-155, 155), accel = Vector3.new(0, 4.0, 0),
 			})
-			table.insert(emitters, s1)
-			table.insert(emitters, s2)
-			table.insert(activeAuraEmitters, s1)
-			table.insert(activeAuraEmitters, s2)
+			table.insert(emitters, s1); table.insert(emitters, s2)
+			table.insert(activeAuraEmitters, s1); table.insert(activeAuraEmitters, s2)
 		end
 
 		ptLight = Instance.new("PointLight")
@@ -2434,27 +2160,19 @@ local function buildAura(char, hrp)
 		ptLight.Range = tier.lightRange
 		ptLight.Brightness = tier.lightBright
 		ptLight.Parent = hrp
-
 		if isUltimate then
 			applyAuraUltimateGlow(char, "STAR_RADIANCE", extras)
 			attachAuraUltimateSpread(char, "STAR_RADIANCE", { STAR_TEXTURE }, spreadEmitters)
 		end
 
 		table.insert(activeAuraItems, {
-			mode = modeName,
-			emitters = emitters,
-			spreadEmitters = spreadEmitters,
-			extras = extras,
-			light = ptLight,
-			avatarScale = avatarScale,
-			fixedScale = fixedScale,
-			lastBurstTick = -1,
+			mode = modeName, emitters = emitters, spreadEmitters = spreadEmitters, extras = extras,
+			light = ptLight, avatarScale = avatarScale, fixedScale = fixedScale, lastBurstTick = -1,
 		})
 		return
 	elseif modeName == "MORTALS_NEVERDIE" then
 		local tier = STAR_RADIANCE_TIERS[lvl] or STAR_RADIANCE_TIERS[1]
-		local avatarScale = getAvatarHeightRatio(char, char:FindFirstChild("Head"))
-		local fixedScale = math.clamp(avatarScale, 0.85, 1.40)
+		local fixedScale = math.clamp(getAvatarHeightRatio(char, char:FindFirstChild("Head")), 0.85, 1.40)
 
 		local cFolder = Instance.new("Folder")
 		cFolder.Name = "MortalsGroundCracks"
@@ -2468,31 +2186,20 @@ local function buildAura(char, hrp)
 		ptLight.Range = tier.lightRange
 		ptLight.Brightness = tier.lightBright
 		ptLight.Parent = hrp
-
 		if isUltimate then
 			applyAuraUltimateGlow(char, "MORTALS_NEVERDIE", extras)
 			attachAuraUltimateSpread(char, "MORTALS_NEVERDIE", { STAR_TEXTURE, SURGE_TEXTURES[1] }, spreadEmitters)
 		end
 
 		table.insert(activeAuraItems, {
-			mode = modeName,
-			crackFolder = cFolder,
-			walkCracks = {},
-			landingCracks = {},
-			spreadEmitters = spreadEmitters,
-			extras = extras,
-			fixedScale = fixedScale,
-			light = ptLight,
+			mode = modeName, crackFolder = cFolder, walkCracks = {}, landingCracks = {},
+			spreadEmitters = spreadEmitters, extras = extras, fixedScale = fixedScale, light = ptLight,
 		})
 		return
 	end
 
 	table.insert(activeAuraItems, {
-		mode = modeName,
-		emitters = emitters,
-		spreadEmitters = spreadEmitters,
-		extras = extras,
-		light = ptLight,
+		mode = modeName, emitters = emitters, spreadEmitters = spreadEmitters, extras = extras, light = ptLight,
 	})
 end
 
@@ -2515,9 +2222,7 @@ local function stepAura(now, char, hum, hrp)
 		applyLiveAuraColorOnly()
 	end
 
-	if modeName == "SMOKE" then
-		return
-	end
+	if modeName == "SMOKE" then return end
 
 	local horizVel = Vector3.new(hrp.AssemblyLinearVelocity.X, 0, hrp.AssemblyLinearVelocity.Z)
 	local isIdle = horizVel.Magnitude <= 1.2
@@ -2531,9 +2236,8 @@ local function stepAura(now, char, hum, hrp)
 			local sizeBoost = isIdle and 1.12 or (1 + (moveFactor * 0.22))
 			local burstTick = math.floor(now * 14)
 			local shouldBurst = (not isUltimate) and (not isIdle) and (moveFactor > 0.15) and (burstTick ~= lastSurgeBurstTick)
-			if shouldBurst then
-				lastSurgeBurstTick = burstTick
-			end
+			if shouldBurst then lastSurgeBurstTick = burstTick end
+
 			for _, entry in ipairs(item.emitters or {}) do
 				local pe = entry.emitter
 				if pe and pe.Parent and entry.baseRate then
@@ -2544,15 +2248,8 @@ local function stepAura(now, char, hum, hrp)
 					if isUltimate then
 						pe.Rate = math.clamp(entry.baseRate * ULTIMATE_SPREAD_PRESET.rateMult, 40, 16000)
 						pe.Size = scaleAuraNumberSeq(entry.baseSize, ULTIMATE_SPREAD_PRESET.sizeMult, 0.2, 78)
-						pe.Speed = NumberRange.new(
-							math.clamp(entry.baseSpeedMin * ULTIMATE_SPREAD_PRESET.speedMult, 1.2, 240),
-							math.clamp(entry.baseSpeedMax * ULTIMATE_SPREAD_PRESET.speedMult, 2.5, 350)
-						)
-						pe.Transparency = NumberSequence.new({
-							NumberSequenceKeypoint.new(0, 0.28),
-							NumberSequenceKeypoint.new(0.55, 0.46),
-							NumberSequenceKeypoint.new(1, 1),
-						})
+						pe.Speed = NumberRange.new(math.clamp(entry.baseSpeedMin * ULTIMATE_SPREAD_PRESET.speedMult, 1.2, 240), math.clamp(entry.baseSpeedMax * ULTIMATE_SPREAD_PRESET.speedMult, 2.5, 350))
+						pe.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.28), NumberSequenceKeypoint.new(0.55, 0.46), NumberSequenceKeypoint.new(1, 1) })
 						pe.SpreadAngle = Vector2.new(360, 360)
 						pe.Drag = 1.0
 						pe.RotSpeed = NumberRange.new(-360, 360)
@@ -2589,15 +2286,8 @@ local function stepAura(now, char, hum, hrp)
 						pe.LightInfluence = 0.25
 						pe.Rate = math.clamp(entry.baseRate * ULTIMATE_SPREAD_PRESET.rateMult, 50, 16000)
 						pe.Size = scaleAuraNumberSeq(entry.baseSize, ULTIMATE_SPREAD_PRESET.sizeMult, 0.2, 85)
-						pe.Speed = NumberRange.new(
-							math.clamp(entry.baseSpeedMin * ULTIMATE_SPREAD_PRESET.speedMult, 1.5, 280),
-							math.clamp(entry.baseSpeedMax * ULTIMATE_SPREAD_PRESET.speedMult, 3, 400)
-						)
-						pe.Transparency = NumberSequence.new({
-							NumberSequenceKeypoint.new(0, 0.24),
-							NumberSequenceKeypoint.new(0.55, 0.40),
-							NumberSequenceKeypoint.new(1, 1),
-						})
+						pe.Speed = NumberRange.new(math.clamp(entry.baseSpeedMin * ULTIMATE_SPREAD_PRESET.speedMult, 1.5, 280), math.clamp(entry.baseSpeedMax * ULTIMATE_SPREAD_PRESET.speedMult, 3, 400))
+						pe.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.24), NumberSequenceKeypoint.new(0.55, 0.40), NumberSequenceKeypoint.new(1, 1) })
 						pe.SpreadAngle = Vector2.new(195, 195)
 						pe.Drag = 2.4
 						pe.RotSpeed = NumberRange.new(-140, 140)
@@ -2638,10 +2328,7 @@ local function stepAura(now, char, hum, hrp)
 						NumberSequenceKeypoint.new(0.55, math.clamp(baseMid * sMult, 0.2, 85)),
 						NumberSequenceKeypoint.new(1, 0),
 					})
-					pe.Speed = NumberRange.new(
-						math.clamp(4.5 * tier.speedMult * (isUltimate and 6 or 1), 1, 240),
-						math.clamp(11.5 * tier.speedMult * (isUltimate and 6 or 1), 2, 320)
-					)
+					pe.Speed = NumberRange.new(math.clamp(4.5 * tier.speedMult * (isUltimate and 6 or 1), 1, 240), math.clamp(11.5 * tier.speedMult * (isUltimate and 6 or 1), 2, 320))
 					local baseSpread = (idx % 2 == 1) and 135 or 170
 					local clampedSpread = isUltimate and 360 or math.clamp(baseSpread * tier.spreadMult, 50, 180)
 					pe.SpreadAngle = Vector2.new(clampedSpread, clampedSpread)
@@ -2662,8 +2349,7 @@ local function stepAura(now, char, hum, hrp)
 			local groundPos = Vector3.new(hrp.Position.X, gY, hrp.Position.Z)
 			local crackScale = (item.fixedScale or 1) * tier.sizeMult * (isUltimate and 1.85 or 1.0)
 
-			if airborne then
-				wasAirborne = true
+			if airborne then wasAirborne = true
 			elseif wasAirborne and grounded then
 				wasAirborne = false
 				spawnLandingMegaCrack(item, groundPos, crackScale)
@@ -2706,7 +2392,7 @@ local function stepAura(now, char, hum, hrp)
 end
 
 -- ============================================================================
--- MAIN SCREENGUI & COLOR CIRCLE PICKER
+-- SCREENGUIS & COLOR CIRCLE PICKER
 -- ============================================================================
 local sg = Instance.new("ScreenGui")
 sg.Name = "MortalEightHub"
@@ -2724,8 +2410,6 @@ wheelGui.DisplayOrder = 1000000
 wheelGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 wheelGui.Enabled = false
 wheelGui.Parent = PlayerGui
-
-local refreshAuraUI
 
 do
 	UI.wheelFrame = Instance.new("Frame")
@@ -2852,8 +2536,7 @@ do
 
 	UI.wheelSatGrad = Instance.new("UIGradient")
 	UI.wheelSatGrad.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.05),
-		NumberSequenceKeypoint.new(1, 1.0),
+		NumberSequenceKeypoint.new(0, 0.05), NumberSequenceKeypoint.new(1, 1.0),
 	})
 	UI.wheelSatGrad.Parent = UI.wheelSatOverlay
 
@@ -2868,8 +2551,7 @@ do
 	UI.wheelValGrad = Instance.new("UIGradient")
 	UI.wheelValGrad.Rotation = 90
 	UI.wheelValGrad.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 1.0),
-		NumberSequenceKeypoint.new(1, 0.12),
+		NumberSequenceKeypoint.new(0, 1.0), NumberSequenceKeypoint.new(1, 0.12),
 	})
 	UI.wheelValGrad.Parent = UI.wheelValOverlay
 
@@ -2895,16 +2577,12 @@ do
 		local modeLabel = AURA_MODE_LABELS[modeName] or modeName
 		local lvl = math.clamp(math.floor(tonumber(Cfg.AuraLevel) or 1), 1, MAX_AURA_LEVEL)
 		local picked = getPickedAuraColor()
-		if topAuraLvlLbl then
-			topAuraLvlLbl.Text = "LV." .. tostring(lvl)
-		end
+		if topAuraLvlLbl then topAuraLvlLbl.Text = "LV." .. tostring(lvl) end
 		if topAuraOnOffBtn then
 			topAuraOnOffBtn.Text = "AURA: " .. (Cfg.AuraEnabled and "ON" or "OFF")
 			topAuraOnOffBtn.BackgroundColor3 = Cfg.AuraEnabled and BTN_ON or BTN_OFF
 		end
-		if auraModeBtn then
-			auraModeBtn.Text = "MODE: " .. modeLabel .. " (Tap)"
-		end
+		if auraModeBtn then auraModeBtn.Text = "MODE: " .. modeLabel .. " (Tap)" end
 		if auraUltimateBtn then
 			auraUltimateBtn.Text = "ULTIMATE AURA SPREAD: " .. (Cfg.UltimateSpread and "ON" or "OFF")
 			auraUltimateBtn.BackgroundColor3 = Cfg.UltimateSpread and BTN_ON or BTN_OFF
@@ -2912,9 +2590,7 @@ do
 		local colorTag = Cfg.AuraCustomColor
 			and string.format("H:%d S:%d%% V:%d%%", math.floor(Cfg.AuraHue * 360), math.floor(Cfg.AuraSat * 100), math.floor(Cfg.AuraVal * 100))
 			or "DEFAULT"
-		if auraColorStatusLbl then
-			auraColorStatusLbl.Text = "AURA COLOR: " .. colorTag .. " | LV." .. tostring(lvl)
-		end
+		if auraColorStatusLbl then auraColorStatusLbl.Text = "AURA COLOR: " .. colorTag .. " | LV." .. tostring(lvl) end
 		UI.wheelPreviewBox.BackgroundColor3 = picked
 		UI.wheelPickerDot.BackgroundColor3 = picked
 		UI.wheelShadeBox.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
@@ -2929,12 +2605,9 @@ do
 
 	UI.wheelDragTarget = nil
 	local function updateAuraHueFromPos(posX, posY)
-		local cPos = UI.wheelOuterCircle.AbsolutePosition
-		local cSize = UI.wheelOuterCircle.AbsoluteSize
+		local cPos, cSize = UI.wheelOuterCircle.AbsolutePosition, UI.wheelOuterCircle.AbsoluteSize
 		if cSize.X <= 1 or cSize.Y <= 1 then return end
-		local dx = posX - (cPos.X + cSize.X * 0.5)
-		local dy = posY - (cPos.Y + cSize.Y * 0.5)
-		local angle = math.atan2(dy, dx) + (math.pi / 2)
+		local angle = math.atan2(posY - (cPos.Y + cSize.Y * 0.5), posX - (cPos.X + cSize.X * 0.5)) + (math.pi / 2)
 		if angle < 0 then angle = angle + (math.pi * 2) end
 		Cfg.AuraCustomColor = true
 		Cfg.AuraHue = math.clamp(angle / (math.pi * 2), 0, 1)
@@ -2944,14 +2617,11 @@ do
 	end
 
 	local function updateAuraShadeFromPos(posX, posY)
-		local bPos = UI.wheelShadeBox.AbsolutePosition
-		local bSize = UI.wheelShadeBox.AbsoluteSize
+		local bPos, bSize = UI.wheelShadeBox.AbsolutePosition, UI.wheelShadeBox.AbsoluteSize
 		if bSize.X <= 1 or bSize.Y <= 1 then return end
-		local nx = math.clamp((posX - bPos.X) / bSize.X, 0, 1)
-		local ny = math.clamp((posY - bPos.Y) / bSize.Y, 0, 1)
 		Cfg.AuraCustomColor = true
-		Cfg.AuraSat = math.clamp(nx, 0.02, 1)
-		Cfg.AuraVal = math.clamp(1 - (ny * 0.82), 0.18, 1)
+		Cfg.AuraSat = math.clamp((posX - bPos.X) / bSize.X, 0.02, 1)
+		Cfg.AuraVal = math.clamp(1 - (math.clamp((posY - bPos.Y) / bSize.Y, 0, 1) * 0.82), 0.18, 1)
 		applyLiveAuraColorOnly()
 		refreshAuraUI()
 		scheduleAuraSave(0.18)
@@ -2963,28 +2633,33 @@ do
 			updateAuraHueFromPos(inp.Position.X, inp.Position.Y)
 		end
 	end)
+	UI.wheelRingSurface.InputChanged:Connect(function(inp)
+		if UI.wheelDragTarget == "ring" and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+			updateAuraHueFromPos(inp.Position.X, inp.Position.Y)
+		end
+	end)
+	UI.wheelRingSurface.InputEnded:Connect(function(inp)
+		if (inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch) and UI.wheelDragTarget == "ring" then
+			UI.wheelDragTarget = nil
+			saveAuraConfigNow()
+		end
+	end)
+
 	UI.wheelShadeSurface.InputBegan:Connect(function(inp)
 		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
 			UI.wheelDragTarget = "shade"
 			updateAuraShadeFromPos(inp.Position.X, inp.Position.Y)
 		end
 	end)
-	UserInputService.InputChanged:Connect(function(inp)
-		if not UI.wheelDragTarget then return end
-		if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
-			if UI.wheelDragTarget == "ring" then
-				updateAuraHueFromPos(inp.Position.X, inp.Position.Y)
-			elseif UI.wheelDragTarget == "shade" then
-				updateAuraShadeFromPos(inp.Position.X, inp.Position.Y)
-			end
+	UI.wheelShadeSurface.InputChanged:Connect(function(inp)
+		if UI.wheelDragTarget == "shade" and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+			updateAuraShadeFromPos(inp.Position.X, inp.Position.Y)
 		end
 	end)
-	UserInputService.InputEnded:Connect(function(inp)
-		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-			if UI.wheelDragTarget then
-				UI.wheelDragTarget = nil
-				saveAuraConfigNow()
-			end
+	UI.wheelShadeSurface.InputEnded:Connect(function(inp)
+		if (inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch) and UI.wheelDragTarget == "shade" then
+			UI.wheelDragTarget = nil
+			saveAuraConfigNow()
 		end
 	end)
 
@@ -3019,9 +2694,6 @@ do
 	makeDraggable(UI.wheelFrame, UI.wheelTitle, false, nil)
 end
 
--- ============================================================================
--- AIR WALK PAD GUI
--- ============================================================================
 airGui = Instance.new("ScreenGui")
 airGui.Name = "MortalAirWalkPad"
 airGui.ResetOnSpawn = false
@@ -3059,29 +2731,21 @@ do
 	addBorder(UI.downBtn, NEON_RIFT, 1.5, 0.1)
 
 	UI.upBtn.InputBegan:Connect(function(inp)
-		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-			airMoveDir = 1
-		end
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then airMoveDir = 1 end
 	end)
 	UI.upBtn.InputEnded:Connect(function(inp)
-		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-			if airMoveDir == 1 then airMoveDir = 0 end
-		end
+		if (inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch) and airMoveDir == 1 then airMoveDir = 0 end
 	end)
 	UI.downBtn.InputBegan:Connect(function(inp)
-		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-			airMoveDir = -1
-		end
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then airMoveDir = -1 end
 	end)
 	UI.downBtn.InputEnded:Connect(function(inp)
-		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-			if airMoveDir == -1 then airMoveDir = 0 end
-		end
+		if (inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch) and airMoveDir == -1 then airMoveDir = 0 end
 	end)
 end
 
 -- ============================================================================
--- 1ST EYE (MAIN HUB), TOP-RIGHT EYE & MAIN WINDOW
+-- 1ST EYE, TOP EYE & MAIN WINDOW
 -- ============================================================================
 local pages = {}
 local tabButtons = {}
@@ -3174,9 +2838,7 @@ do
 	addBorder(topAuraOnOffBtn, NEON_RING, 1, 0.25)
 	topAuraOnOffBtn.MouseButton1Click:Connect(function()
 		Cfg.AuraEnabled = not Cfg.AuraEnabled
-		if not Cfg.AuraEnabled then
-			clearAuraEffects()
-		end
+		if not Cfg.AuraEnabled then clearAuraEffects() end
 		refreshAuraUI()
 		saveAuraConfigNow()
 		playClick(Cfg.AuraEnabled and 1.15 or 0.9)
@@ -3316,20 +2978,12 @@ do
 	addBorder(UI.contentHolder, NEON_RING, 1.2, 0.25)
 
 	local sectionNames = {
-		"Info",
-		"Friends",
-		"Player",
-		"Exploits",
-		"Troll",
-		"Players Time",
-		"Aura",
-		"Spams",
+		"Info", "Friends", "Player", "Exploits",
+		"Troll", "Players Time", "Aura", "Spams",
 	}
 
 	switchSection = function(idx)
-		for i, page in ipairs(pages) do
-			page.Visible = (i == idx)
-		end
+		for i, page in ipairs(pages) do page.Visible = (i == idx) end
 		for i, btn in ipairs(tabButtons) do
 			btn.BackgroundColor3 = (i == idx) and BTN_ON or BTN_OFF
 			btn.TextColor3 = (i == idx) and TEXT_MAIN or TEXT_DIM
@@ -3471,25 +3125,20 @@ local function makeNumRow(parent, label, getState, setState, getVal, setVal, min
 		if box.Text == "" then return end
 		local parsed = parseHugeNum(box.Text, getVal(), minV)
 		setVal(parsed)
-		if liveApplyFn then
-			pcall(liveApplyFn, parsed)
-		end
+		if liveApplyFn then pcall(liveApplyFn, parsed) end
 	end)
 
 	box.FocusLost:Connect(function()
 		local parsed = parseHugeNum(box.Text, getVal(), minV)
 		setVal(parsed)
 		box.Text = tostring(parsed)
-		if liveApplyFn then
-			pcall(liveApplyFn, parsed)
-		elseif getState() == true then
-			setState(true, parsed)
-		end
+		if liveApplyFn then pcall(liveApplyFn, parsed)
+		elseif getState() == true then setState(true, parsed) end
 	end)
 end
 
 -- ============================================================================
--- SECTION 1: INFO
+-- SECTIONS 1 - 8
 -- ============================================================================
 do
 	local p1 = pages[1]
@@ -3578,12 +3227,14 @@ do
 	addBorder(UI.hopBtn, NEON_RING, 1, 0.3)
 	UI.hopBtn.MouseButton1Click:Connect(function() playClick(1.0); hopServer() end)
 
-	makeToggle(p1, "LOCK 1ST EYE", function() return Cfg.EyeLocked end, function(v) Cfg.EyeLocked = v end)
+	makeToggle(p1, "LOCK 1ST EYE", function() return Cfg.EyeLocked end, function(v)
+		Cfg.EyeLocked = v
+		if v then
+			for _, fn in ipairs(activeDragResetters) do pcall(fn) end
+		end
+	end)
 end
 
--- ============================================================================
--- SECTION 2: FRIENDS & 5-SEC SWIPE-UP NOTIFICATION
--- ============================================================================
 local friendsListFrame = nil
 local rebuildFriendsList
 local showFriendJoinNotify
@@ -3591,9 +3242,8 @@ local showFriendJoinNotify
 do
 	local p2 = pages[2]
 	local p2Layout = p2:FindFirstChildOfClass("UIListLayout")
-	if p2Layout then
-		p2Layout.SortOrder = Enum.SortOrder.LayoutOrder
-	end
+	if p2Layout then p2Layout.SortOrder = Enum.SortOrder.LayoutOrder end
+
 	local refreshBtn = makeBtn(p2, "REFRESH FRIENDS LIST", function() rebuildFriendsList() end)
 	refreshBtn.LayoutOrder = -100
 
@@ -3672,7 +3322,7 @@ do
 					if myR and tR then myR.CFrame = tR.CFrame * CFrame.new(0, 0, 3) end
 				end)
 
-				mkMini("SPEC", -74, BTN_OFF, function(b)
+				mkMini("SPEC", -74, spectatedFriend == plr and BTN_ON or BTN_OFF, function(b)
 					local cam = workspace.CurrentCamera
 					if spectatedFriend == plr then
 						spectatedFriend = nil
@@ -3746,19 +3396,17 @@ do
 			UI.swipeStartY = inp.Position.Y
 		end
 	end)
-	UserInputService.InputChanged:Connect(function(inp)
+	UI.joinBanner.InputChanged:Connect(function(inp)
 		if not UI.joinBanner.Visible or UI.swipeStartY == nil then return end
 		if inp.UserInputType == Enum.UserInputType.Touch or inp.UserInputType == Enum.UserInputType.MouseMovement then
 			local dy = inp.Position.Y - UI.swipeStartY
 			if dy < 0 then
 				UI.joinBanner.Position = UDim2.new(0.5, -136, 0, UI.bannerBaseY + dy)
-				if dy <= -24 then
-					dismissBannerUp()
-				end
+				if dy <= -24 then dismissBannerUp() end
 			end
 		end
 	end)
-	UserInputService.InputEnded:Connect(function(inp)
+	UI.joinBanner.InputEnded:Connect(function(inp)
 		if inp.UserInputType == Enum.UserInputType.Touch or inp.UserInputType == Enum.UserInputType.MouseButton1 then
 			if UI.joinBanner.Visible and UI.swipeStartY ~= nil then
 				UI.joinBanner.Position = UDim2.new(0.5, -136, 0, UI.bannerBaseY)
@@ -3768,8 +3416,7 @@ do
 	end)
 
 	showFriendJoinNotify = function(plr)
-		if not plr or notifiedFriends[plr.UserId] then return end
-		if not isFriend(plr) then return end
+		if not plr or notifiedFriends[plr.UserId] or not isFriend(plr) then return end
 		notifiedFriends[plr.UserId] = true
 		UI.bannerToken = UI.bannerToken + 1
 		local myToken = UI.bannerToken
@@ -3786,9 +3433,6 @@ do
 	end
 end
 
--- ============================================================================
--- SECTION 3: PLAYER
--- ============================================================================
 do
 	local p3 = pages[3]
 
@@ -3815,9 +3459,7 @@ do
 		Cfg.FlyVal = v
 	end)
 
-	makeToggle(p3, "AIR WALK", function() return Cfg.AirWalk end, function(v)
-		setAirWalkState(v)
-	end)
+	makeToggle(p3, "AIR WALK", function() return Cfg.AirWalk end, function(v) setAirWalkState(v) end)
 
 	makeNumRow(p3, "SPIN", function() return Cfg.Spin end, function(on, v)
 		Cfg.Spin = on; Cfg.SpinVal = v
@@ -3828,17 +3470,12 @@ do
 		if not on then
 			local _, h = getRig()
 			if h then
-				for _, tr in ipairs(getAllActiveAnimTracks(h)) do
-					pcall(function() tr:AdjustSpeed(1) end)
-				end
+				for _, tr in ipairs(getAllActiveAnimTracks(h)) do pcall(function() tr:AdjustSpeed(1) end) end
 			end
 		end
 	end, function() return Cfg.EmoteVal end, function(v) Cfg.EmoteVal = v end, nil)
 end
 
--- ============================================================================
--- SECTION 4: EXPLOITS
--- ============================================================================
 do
 	local p4 = pages[4]
 	makeToggle(p4, "ESP ALL", function() return Cfg.ESPAll end, function(v) Cfg.ESPAll = v; syncAllESP() end)
@@ -3846,11 +3483,7 @@ do
 		Cfg.Noclip = v
 		local c, h, r = getRig()
 		setNoclip(c, h, v)
-		if v and r then
-			noclipAnchorY = r.Position.Y
-		else
-			noclipAnchorY = nil
-		end
+		noclipAnchorY = (v and r) and r.Position.Y or nil
 	end)
 	makeToggle(p4, "ANTI SIT", function() return Cfg.AntiSit end, function(v)
 		Cfg.AntiSit = v
@@ -3861,15 +3494,10 @@ do
 	makeToggle(p4, "CLICK TP", function() return Cfg.ClickTP end, function(v) Cfg.ClickTP = v end)
 end
 
--- ============================================================================
--- SECTION 5: TROLL
--- ============================================================================
 local function resetSpectateCamera()
 	local cam = workspace.CurrentCamera
 	local _, myHum = getRig()
-	if cam and myHum then
-		pcall(function() cam.CameraSubject = myHum end)
-	end
+	if cam and myHum then pcall(function() cam.CameraSubject = myHum end) end
 	lastSpectatedTargetHum = nil
 end
 
@@ -4000,23 +3628,17 @@ do
 		Cfg.PlayerListOpen = not Cfg.PlayerListOpen
 		trollPlayerList.Visible = Cfg.PlayerListOpen
 		listToggleBtn.BackgroundColor3 = Cfg.PlayerListOpen and BTN_ON or BTN_OFF
-		if Cfg.PlayerListOpen then
-			rebuildTrollPlayerList()
-		end
+		if Cfg.PlayerListOpen then rebuildTrollPlayerList() end
 		playClick(Cfg.PlayerListOpen and 1.15 or 0.9)
 	end)
 
 	refreshCallbacks[5] = function()
-		if Cfg.PlayerListOpen then
-			rebuildTrollPlayerList()
-		end
+		if Cfg.PlayerListOpen then rebuildTrollPlayerList() end
 	end
 
 	makeToggle(p5, "SPECTATE TARGET", function() return Cfg.SpectateTarget end, function(v)
 		Cfg.SpectateTarget = v
-		if not v then
-			resetSpectateCamera()
-		end
+		if not v then resetSpectateCamera() end
 	end)
 
 	makeBtn(p5, "TP ONCE", function()
@@ -4050,16 +3672,10 @@ do
 
 	makeToggle(p5, "HS (HEAD SIT)", function() return Cfg.HeadSit end, function(v)
 		Cfg.HeadSit = v
-		if not v then
-			local _, h = getRig()
-			releaseHeadSit(h)
-		end
+		if not v then local _, h = getRig(); releaseHeadSit(h) end
 	end)
 end
 
--- ============================================================================
--- SECTION 6: PLAYERS TIME
--- ============================================================================
 local playersTimeContainer = nil
 local function rebuildPlayersTimeList()
 	if not playersTimeContainer then return end
@@ -4112,9 +3728,6 @@ do
 	refreshCallbacks[6] = rebuildPlayersTimeList
 end
 
--- ============================================================================
--- SECTION 7: AURA (ON/OFF & LEVEL REMOVED FROM SECTION 7 -> ONLY IN TOP EYE)
--- ============================================================================
 do
 	local p7 = pages[7]
 
@@ -4162,9 +3775,6 @@ do
 	refreshAuraUI()
 end
 
--- ============================================================================
--- SECTION 8: SPAMS
--- ============================================================================
 do
 	local p8 = pages[8]
 
@@ -4192,7 +3802,7 @@ do
 end
 
 -- ============================================================================
--- DRAG & TAP SYSTEM
+-- DRAG BINDINGS, EVENTS & MAIN LOOPS
 -- ============================================================================
 do
 	local consumeFirstEyeMoved = makeDraggable(eye1Holder, eye1TapBtn, false, function() return Cfg.EyeLocked end)
@@ -4202,15 +3812,9 @@ do
 			playClick(mainFrame.Visible and 1.15 or 0.9)
 		end
 	end)
-	local hdr = mainFrame:FindFirstChildOfClass("Frame")
-	if hdr then
-		makeDraggable(mainFrame, hdr, false, nil)
-	end
+	if UI.header then makeDraggable(mainFrame, UI.header, false, nil) end
 end
 
--- ============================================================================
--- INPUTS, PLAYER TRACKING, STEPPED & RENDER LOOP
--- ============================================================================
 UserInputService.InputBegan:Connect(function(inp, gp)
 	if inp.KeyCode == Enum.KeyCode.Space then
 		noclipJumpEndTick = os.clock() + 0.55
@@ -4242,9 +3846,7 @@ UserInputService.JumpRequest:Connect(function()
 end)
 
 local function registerPlayer(plr)
-	if not joinTimestamps[plr] then
-		joinTimestamps[plr] = os.clock()
-	end
+	if not joinTimestamps[plr] then joinTimestamps[plr] = os.clock() end
 	if plr ~= LocalPlayer then
 		showFriendJoinNotify(plr)
 		plr.CharacterAdded:Connect(function()
@@ -4272,6 +3874,7 @@ Players.PlayerRemoving:Connect(function(plr)
 	clearESP(plr)
 	clearThirdEyeTag(plr)
 	if spectatedFriend == plr then spectatedFriend = nil end
+	if lastMimicTarget == plr then lastMimicTarget = nil; clearMimic() end
 end)
 
 LocalPlayer.CharacterAdded:Connect(function(char)
@@ -4287,9 +3890,7 @@ LocalPlayer.CharacterAdded:Connect(function(char)
 	markSelfScriptPresence(char)
 	task.defer(function()
 		updateThirdEyeTag(LocalPlayer)
-		if Cfg.SpectateTarget then
-			resetSpectateCamera()
-		end
+		if Cfg.SpectateTarget then resetSpectateCamera() end
 		if Cfg.AuraEnabled then
 			local hrp = char:FindFirstChild("HumanoidRootPart")
 			if hrp then buildAura(char, hrp) end
@@ -4297,12 +3898,8 @@ LocalPlayer.CharacterAdded:Connect(function(char)
 	end)
 end)
 
-if LocalPlayer.Character then
-	markSelfScriptPresence(LocalPlayer.Character)
-end
-for _, plr in ipairs(Players:GetPlayers()) do
-	registerPlayer(plr)
-end
+if LocalPlayer.Character then markSelfScriptPresence(LocalPlayer.Character) end
+for _, plr in ipairs(Players:GetPlayers()) do registerPlayer(plr) end
 
 do
 	local lastStatsRefresh = 0
@@ -4341,8 +3938,7 @@ do
 		local safeDt = math.clamp(dt, 0.001, 0.05)
 
 		if eye1FpsLbl and dt > 0 then
-			local fps = math.clamp(math.floor((1 / dt) + 0.5), 1, 240)
-			eye1FpsLbl.Text = tostring(fps) .. " FPS"
+			eye1FpsLbl.Text = tostring(math.clamp(math.floor((1 / dt) + 0.5), 1, 240)) .. " FPS"
 		end
 
 		if eye1Pupil then
@@ -4355,15 +3951,11 @@ do
 		if now - lastStatsRefresh >= 0.5 then
 			lastStatsRefresh = now
 			if topStatsLbl then
-				local plrCount = #Players:GetPlayers()
-				local pingMs = getPing()
-				topStatsLbl.Text = "PLAYERS: " .. tostring(plrCount) .. " | PING: " .. tostring(pingMs) .. "ms"
+				topStatsLbl.Text = "PLAYERS: " .. tostring(#Players:GetPlayers()) .. " | PING: " .. tostring(getPing()) .. "ms"
 			end
 		end
 
-		for _, plr in ipairs(Players:GetPlayers()) do
-			updateThirdEyeTag(plr)
-		end
+		for _, plr in ipairs(Players:GetPlayers()) do updateThirdEyeTag(plr) end
 		syncAllESP()
 
 		if pages[6] and pages[6].Visible and (now - lastTimeListRefresh >= 1) then
@@ -4394,9 +3986,7 @@ do
 		end
 
 		local targetSpeed = Cfg.Speed and normalizeMovementSpeed(Cfg.SpeedVal) or 16
-		if Cfg.Speed then
-			hum.WalkSpeed = targetSpeed
-		end
+		if Cfg.Speed then hum.WalkSpeed = targetSpeed end
 		if Cfg.Jump then
 			hum.UseJumpPower = true
 			hum.JumpPower = normalizeJumpPower(Cfg.JumpVal)
@@ -4404,9 +3994,7 @@ do
 
 		if Cfg.EmoteSpeed then
 			local safeSpd = normalizeEmoteSpeed(Cfg.EmoteVal)
-			for _, tr in ipairs(getAllActiveAnimTracks(hum)) do
-				pcall(function() tr:AdjustSpeed(safeSpd) end)
-			end
+			for _, tr in ipairs(getAllActiveAnimTracks(hum)) do pcall(function() tr:AdjustSpeed(safeSpd) end) end
 		end
 
 		if Cfg.AirWalk then
@@ -4471,11 +4059,7 @@ do
 			local hRatio = getAvatarHeightRatio(tgtChar, tgtHead)
 			local lookDir = tgtRoot.CFrame.LookVector
 			local flatLook = Vector3.new(lookDir.X, 0, lookDir.Z)
-			if flatLook.Magnitude < 1e-4 then
-				flatLook = Vector3.new(0, 0, -1)
-			else
-				flatLook = flatLook.Unit
-			end
+			flatLook = (flatLook.Magnitude < 1e-4) and Vector3.new(0, 0, -1) or flatLook.Unit
 
 			if Cfg.LoopTP then
 				hrp.CFrame = tgtRoot.CFrame * CFrame.new(0, 0, 3)
@@ -4485,8 +4069,7 @@ do
 				local backPos = tgtRoot.Position - (flatLook * 3.5)
 				local goalPos = Vector3.new(backPos.X, followY, backPos.Z)
 				local lookTarget = Vector3.new(tgtRoot.Position.X, followY, tgtRoot.Position.Z)
-				local blendedPos = hrp.Position:Lerp(goalPos, math.clamp(safeDt * 10, 0, 1))
-				hrp.CFrame = CFrame.lookAt(blendedPos, lookTarget)
+				hrp.CFrame = CFrame.lookAt(hrp.Position:Lerp(goalPos, math.clamp(safeDt * 10, 0, 1)), lookTarget)
 			elseif Cfg.Orbit then
 				orbitAngle = orbitAngle + (3.5 * safeDt)
 				local rad = 5
@@ -4517,8 +4100,7 @@ do
 					if mode == "FaceBang" then
 						local faceCenter = tgtHead and tgtHead.Position or (tgtRoot.Position + Vector3.new(0, 1.5 * hRatio, 0))
 						local headRadius = (tgtHead and math.max(tgtHead.Size.Z, tgtHead.Size.X) * 0.5) or (0.6 * hRatio)
-						local closeDist = headRadius + (1.05 * hRatio) + pulse
-						local posAtFace = faceCenter + (flatLook * closeDist)
+						local posAtFace = faceCenter + (flatLook * (headRadius + (1.05 * hRatio) + pulse))
 						hrp.AssemblyLinearVelocity = Vector3.zero
 						hrp.AssemblyAngularVelocity = Vector3.zero
 						hrp.CFrame = CFrame.lookAt(posAtFace, faceCenter)
@@ -4532,13 +4114,10 @@ do
 			end
 		end
 
-		if not didHeadSit and headSitActiveLastFrame then
-			releaseHeadSit(hum)
-		end
+		if not didHeadSit and headSitActiveLastFrame then releaseHeadSit(hum) end
 
 		if Cfg.Spin then
-			local spinSpeed = normalizeSpinSpeed(Cfg.SpinVal)
-			local angDelta = math.rad(spinSpeed * 6 * safeDt)
+			local angDelta = math.rad(normalizeSpinSpeed(Cfg.SpinVal) * 6 * safeDt)
 			local pos = hrp.Position
 			local rotOnly = (hrp.CFrame - pos) * CFrame.Angles(0, angDelta, 0)
 			hrp.AssemblyAngularVelocity = Vector3.zero
