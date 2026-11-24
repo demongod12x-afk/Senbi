@@ -1,29 +1,51 @@
+-- ============================================================================
+-- MORTAL HUB (FRESH CLEAN BUILD FOR GITHUB LOADSTRING)
+-- ============================================================================
 if not game:IsLoaded() then
-	game.Loaded:Wait()
+	pcall(function() game.Loaded:Wait() end)
 end
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local TextChatService = game:GetService("TextChatService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local SoundService = game:GetService("SoundService")
-local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
-local VirtualUser = game:GetService("VirtualUser")
-local Stats = game:GetService("Stats")
+local function safeService(name)
+	local ok, svc = pcall(function() return game:GetService(name) end)
+	return ok and svc or nil
+end
+
+local Players = safeService("Players") or game:GetService("Players")
+local RunService = safeService("RunService") or game:GetService("RunService")
+local UserInputService = safeService("UserInputService") or game:GetService("UserInputService")
+local TextChatService = safeService("TextChatService")
+local ReplicatedStorage = safeService("ReplicatedStorage")
+local SoundService = safeService("SoundService")
+local TeleportService = safeService("TeleportService")
+local HttpService = safeService("HttpService")
+local VirtualUser = safeService("VirtualUser")
+local Stats = safeService("Stats")
 
 local LocalPlayer = Players.LocalPlayer
 if not LocalPlayer then
-	Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
-	LocalPlayer = Players.LocalPlayer
+	pcall(function()
+		Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
+		LocalPlayer = Players.LocalPlayer
+	end)
+end
+if not LocalPlayer then return end
+
+local function getSafeGuiParent()
+	local pg = LocalPlayer:FindFirstChildOfClass("PlayerGui")
+	if not pg then
+		pcall(function() pg = LocalPlayer:WaitForChild("PlayerGui", 10) end)
+	end
+	if not pg then
+		pcall(function()
+			pg = Instance.new("PlayerGui")
+			pg.Parent = LocalPlayer
+		end)
+	end
+	return pg
 end
 
-local PlayerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 15)
-if not PlayerGui then
-	PlayerGui = Instance.new("PlayerGui")
-	PlayerGui.Parent = LocalPlayer
-end
+local PlayerGui = getSafeGuiParent()
+if not PlayerGui then return end
 
 -- ============================================================================
 -- CONSTANTS & CLEANUP
@@ -170,7 +192,7 @@ local ULTIMATE_SPREAD_PRESET = {
 }
 
 -- ============================================================================
--- STATE & SHARED REFERENCES
+-- STATE & MODULES TABLE
 -- ============================================================================
 local Cfg = {
 	EyeLocked = false,
@@ -208,6 +230,17 @@ local Cfg = {
 	HeadSit = false,
 	ChatSpam = false,
 	SpamText = "MORTAL On Top!"
+}
+
+local Modules = {
+	Info = {},
+	Friends = {},
+	Player = {},
+	Exploits = {},
+	Troll = {},
+	PlayersTime = {},
+	Aura = {},
+	Spams = {},
 }
 
 local UI = {}
@@ -350,7 +383,7 @@ local function saveAuraConfigNow()
 		AuraCustomColor = Cfg.AuraCustomColor == true,
 	}
 	pcall(function()
-		if typeof(getgenv) == "function" or type(getgenv) == "function" then
+		if type(getgenv) == "function" then
 			local env = getgenv()
 			if type(env) == "table" then
 				env.MortalHubAuraSaved = payload
@@ -358,7 +391,7 @@ local function saveAuraConfigNow()
 		end
 	end)
 	pcall(function()
-		if type(writefile) == "function" then
+		if type(writefile) == "function" and HttpService then
 			writefile(AURA_SAVE_FILE, HttpService:JSONEncode(payload))
 		end
 	end)
@@ -376,7 +409,7 @@ end
 
 local function loadAuraConfig()
 	local loaded = nil
-	if type(isfile) == "function" and type(readfile) == "function" then
+	if type(isfile) == "function" and type(readfile) == "function" and HttpService then
 		local okEx, ex = pcall(isfile, AURA_SAVE_FILE)
 		if okEx and ex then
 			local okR, raw = pcall(readfile, AURA_SAVE_FILE)
@@ -414,22 +447,28 @@ loadAuraConfig()
 -- ============================================================================
 -- GENERAL UTILITIES & SERVER ACTIONS
 -- ============================================================================
-pcall(function()
-	LocalPlayer.Idled:Connect(function()
-		pcall(function()
-			VirtualUser:CaptureController()
-			VirtualUser:ClickButton2(Vector2.zero)
+if VirtualUser then
+	pcall(function()
+		LocalPlayer.Idled:Connect(function()
+			pcall(function()
+				VirtualUser:CaptureController()
+				VirtualUser:ClickButton2(Vector2.zero)
+			end)
 		end)
 	end)
+end
+
+local uiSound = nil
+pcall(function()
+	uiSound = Instance.new("Sound")
+	uiSound.Name = "MortalHubSound"
+	uiSound.SoundId = SFX_ID
+	uiSound.Volume = 0.65
+	if SoundService then uiSound.Parent = SoundService end
 end)
 
-local uiSound = Instance.new("Sound")
-uiSound.Name = "MortalHubSound"
-uiSound.SoundId = SFX_ID
-uiSound.Volume = 0.65
-pcall(function() uiSound.Parent = SoundService end)
-
 local function playClick(pitch)
+	if not uiSound then return end
 	pcall(function()
 		uiSound.PlaybackSpeed = pitch or 1
 		uiSound.TimePosition = 0
@@ -501,13 +540,15 @@ end
 
 local function getPing()
 	local ms = 0
-	pcall(function()
-		local net = Stats.Network and Stats.Network:FindFirstChild("ServerStatsItem")
-		local dp = net and net:FindFirstChild("Data Ping")
-		if dp and type(dp.GetValue) == "function" then
-			ms = math.floor(dp:GetValue())
-		end
-	end)
+	if Stats then
+		pcall(function()
+			local net = Stats.Network and Stats.Network:FindFirstChild("ServerStatsItem")
+			local dp = net and net:FindFirstChild("Data Ping")
+			if dp and type(dp.GetValue) == "function" then
+				ms = math.floor(dp:GetValue())
+			end
+		end)
+	end
 	if ms == 0 then
 		pcall(function()
 			if LocalPlayer.GetNetworkPing then
@@ -525,6 +566,7 @@ local function isFriend(plr)
 end
 
 local function rejoinServer()
+	if not TeleportService then return end
 	pcall(function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end)
 	task.delay(1.5, function()
 		pcall(function() TeleportService:Teleport(game.PlaceId, LocalPlayer) end)
@@ -532,6 +574,7 @@ local function rejoinServer()
 end
 
 local function hopServer()
+	if not TeleportService or not HttpService then return end
 	task.spawn(function()
 		local cursor = ""
 		local servers = {}
@@ -566,23 +609,27 @@ end
 local function sendChatMessage(msg)
 	local text = tostring(msg or "")
 	if text == "" then return end
-	pcall(function()
-		if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-			local channels = TextChatService:FindFirstChild("TextChannels")
-			local general = channels and (channels:FindFirstChild("RBXGeneral") or channels:GetChildren()[1])
-			if general and type(general.SendAsync) == "function" then
-				general:SendAsync(text)
-				return
+	if TextChatService then
+		pcall(function()
+			if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+				local channels = TextChatService:FindFirstChild("TextChannels")
+				local general = channels and (channels:FindFirstChild("RBXGeneral") or channels:GetChildren()[1])
+				if general and type(general.SendAsync) == "function" then
+					general:SendAsync(text)
+					return
+				end
 			end
-		end
-	end)
-	pcall(function()
-		local ev = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
-		local sayReq = ev and ev:FindFirstChild("SayMessageRequest")
-		if sayReq and type(sayReq.FireServer) == "function" then
-			sayReq:FireServer(text, "All")
-		end
-	end)
+		end)
+	end
+	if ReplicatedStorage then
+		pcall(function()
+			local ev = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
+			local sayReq = ev and ev:FindFirstChild("SayMessageRequest")
+			if sayReq and type(sayReq.FireServer) == "function" then
+				sayReq:FireServer(text, "All")
+			end
+		end)
+	end
 end
 
 -- ============================================================================
@@ -3026,11 +3073,9 @@ local function makeNumRow(parent, label, getState, setState, getVal, setVal, min
 end
 
 -- ============================================================================
--- SECTIONS 1 - 8
+-- SECTION 1: INFO
 -- ============================================================================
-do
-	local p1 = pages[1]
-
+function Modules.Info.Init(p1)
 	UI.gangBox = Instance.new("Frame")
 	UI.gangBox.Size = UDim2.new(0.96, 0, 0, 56)
 	UI.gangBox.BackgroundColor3 = VOID_BG
@@ -3123,12 +3168,14 @@ do
 	end)
 end
 
+-- ============================================================================
+-- SECTION 2: FRIENDS
+-- ============================================================================
 local friendsListFrame = nil
 local rebuildFriendsList
 local showFriendJoinNotify
 
-do
-	local p2 = pages[2]
+function Modules.Friends.Init(p2)
 	local p2Layout = p2:FindFirstChildOfClass("UIListLayout")
 	if p2Layout then p2Layout.SortOrder = Enum.SortOrder.LayoutOrder end
 
@@ -3321,9 +3368,10 @@ do
 	end
 end
 
-do
-	local p3 = pages[3]
-
+-- ============================================================================
+-- SECTION 3: PLAYER
+-- ============================================================================
+function Modules.Player.Init(p3)
 	makeNumRow(p3, "SPEED", function() return Cfg.Speed end, function(on, v)
 		Cfg.Speed = on; Cfg.SpeedVal = v
 		if not on then local _, h = getRig(); if h then h.WalkSpeed = 16 end end
@@ -3364,8 +3412,10 @@ do
 	end, function() return Cfg.EmoteVal end, function(v) Cfg.EmoteVal = v end, nil)
 end
 
-do
-	local p4 = pages[4]
+-- ============================================================================
+-- SECTION 4: EXPLOITS
+-- ============================================================================
+function Modules.Exploits.Init(p4)
 	makeToggle(p4, "ESP ALL", function() return Cfg.ESPAll end, function(v) Cfg.ESPAll = v; syncAllESP() end)
 	makeToggle(p4, "NOCLIP", function() return Cfg.Noclip end, function(v)
 		Cfg.Noclip = v
@@ -3382,6 +3432,9 @@ do
 	makeToggle(p4, "CLICK TP", function() return Cfg.ClickTP end, function(v) Cfg.ClickTP = v end)
 end
 
+-- ============================================================================
+-- SECTION 5: TROLL
+-- ============================================================================
 local function resetSpectateCamera()
 	local cam = workspace.CurrentCamera
 	local _, myHum = getRig()
@@ -3454,9 +3507,7 @@ local function rebuildTrollPlayerList()
 	end
 end
 
-do
-	local p5 = pages[5]
-
+function Modules.Troll.Init(p5)
 	UI.targetRow = Instance.new("Frame")
 	UI.targetRow.Size = UDim2.new(0.96, 0, 0, 28)
 	UI.targetRow.BackgroundTransparency = 1
@@ -3564,6 +3615,9 @@ do
 	end)
 end
 
+-- ============================================================================
+-- SECTION 6: PLAYERS TIME
+-- ============================================================================
 local playersTimeContainer = nil
 local playerTimeLabels = {}
 
@@ -3606,9 +3660,7 @@ local function updatePlayersTimeTexts()
 	end
 end
 
-do
-	local p6 = pages[6]
-
+function Modules.PlayersTime.Init(p6)
 	UI.sec6Header = Instance.new("TextLabel")
 	UI.sec6Header.Size = UDim2.new(0.96, 0, 0, 24)
 	UI.sec6Header.BackgroundColor3 = VOID_BG
@@ -3635,9 +3687,10 @@ do
 	refreshCallbacks[6] = updatePlayersTimeTexts
 end
 
-do
-	local p7 = pages[7]
-
+-- ============================================================================
+-- SECTION 7: AURA
+-- ============================================================================
+function Modules.Aura.Init(p7)
 	auraModeBtn = makeBtn(p7, "MODE: COLUMN (Tap)", function()
 		Cfg.AuraModeIdx = (Cfg.AuraModeIdx % #AURA_MODES) + 1
 		builtAuraMode = nil
@@ -3682,9 +3735,10 @@ do
 	refreshAuraUI()
 end
 
-do
-	local p8 = pages[8]
-
+-- ============================================================================
+-- SECTION 8: SPAMS
+-- ============================================================================
+function Modules.Spams.Init(p8)
 	UI.spamBox = Instance.new("TextBox")
 	UI.spamBox.Size = UDim2.new(0.96, 0, 0, 28)
 	UI.spamBox.BackgroundColor3 = VOID_BG
@@ -3706,6 +3760,27 @@ do
 		Cfg.ChatSpam = v
 		lastSpamTick = 0
 	end)
+end
+
+-- ============================================================================
+-- INITIALIZE ALL 8 MODULES SAFELY
+-- ============================================================================
+do
+	local orderedInits = {
+		{ fn = Modules.Info.Init, page = pages[1] },
+		{ fn = Modules.Friends.Init, page = pages[2] },
+		{ fn = Modules.Player.Init, page = pages[3] },
+		{ fn = Modules.Exploits.Init, page = pages[4] },
+		{ fn = Modules.Troll.Init, page = pages[5] },
+		{ fn = Modules.PlayersTime.Init, page = pages[6] },
+		{ fn = Modules.Aura.Init, page = pages[7] },
+		{ fn = Modules.Spams.Init, page = pages[8] },
+	}
+	for _, entry in ipairs(orderedInits) do
+		if type(entry.fn) == "function" and entry.page then
+			pcall(entry.fn, entry.page)
+		end
+	end
 end
 
 -- ============================================================================
@@ -3755,7 +3830,7 @@ end)
 local function registerPlayer(plr)
 	if not joinTimestamps[plr] then joinTimestamps[plr] = os.clock() end
 	if plr ~= LocalPlayer then
-		showFriendJoinNotify(plr)
+		if showFriendJoinNotify then pcall(showFriendJoinNotify, plr) end
 		plr.CharacterAdded:Connect(function()
 			task.defer(function()
 				updateThirdEyeTag(plr)
@@ -3770,9 +3845,9 @@ end
 
 Players.PlayerAdded:Connect(function(plr)
 	registerPlayer(plr)
-	if pages[2] and pages[2].Visible then rebuildFriendsList() end
-	if pages[5] and pages[5].Visible and Cfg.PlayerListOpen then rebuildTrollPlayerList() end
-	if pages[6] and pages[6].Visible then updatePlayersTimeTexts() end
+	if pages[2] and pages[2].Visible and rebuildFriendsList then pcall(rebuildFriendsList) end
+	if pages[5] and pages[5].Visible and Cfg.PlayerListOpen then pcall(rebuildTrollPlayerList) end
+	if pages[6] and pages[6].Visible then pcall(updatePlayersTimeTexts) end
 end)
 
 Players.PlayerRemoving:Connect(function(plr)
