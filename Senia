@@ -1,47 +1,56 @@
 -- ============================================================================
--- MORTAL HUB (FRESH CLEAN BUILD FOR GITHUB LOADSTRING)
+-- MORTAL HUB (LOADSTRING SAFE BUILD - ALL FEATURES PRESERVED)
 -- ============================================================================
-if not game:IsLoaded() then
-	pcall(function() game.Loaded:Wait() end)
-end
-
-local function safeService(name)
-	local ok, svc = pcall(function() return game:GetService(name) end)
+local function safeGetService(name)
+	local ok, svc = pcall(function()
+		return game:GetService(name)
+	end)
 	return ok and svc or nil
 end
 
-local Players = safeService("Players") or game:GetService("Players")
-local RunService = safeService("RunService") or game:GetService("RunService")
-local UserInputService = safeService("UserInputService") or game:GetService("UserInputService")
-local TextChatService = safeService("TextChatService")
-local ReplicatedStorage = safeService("ReplicatedStorage")
-local SoundService = safeService("SoundService")
-local TeleportService = safeService("TeleportService")
-local HttpService = safeService("HttpService")
-local VirtualUser = safeService("VirtualUser")
-local Stats = safeService("Stats")
+local Players = safeGetService("Players") or game:GetService("Players")
+local RunService = safeGetService("RunService") or game:GetService("RunService")
+local UserInputService = safeGetService("UserInputService") or game:GetService("UserInputService")
+local TextChatService = safeGetService("TextChatService")
+local ReplicatedStorage = safeGetService("ReplicatedStorage")
+local SoundService = safeGetService("SoundService")
+local TeleportService = safeGetService("TeleportService")
+local HttpService = safeGetService("HttpService")
+local VirtualUser = safeGetService("VirtualUser")
+local Stats = safeGetService("Stats")
 
 local LocalPlayer = Players.LocalPlayer
 if not LocalPlayer then
 	pcall(function()
-		Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
+		if Players.GetPropertyChangedSignal then
+			Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
+		end
 		LocalPlayer = Players.LocalPlayer
 	end)
 end
-if not LocalPlayer then return end
 
 local function getSafeGuiParent()
-	local pg = LocalPlayer:FindFirstChildOfClass("PlayerGui")
-	if not pg then
-		pcall(function() pg = LocalPlayer:WaitForChild("PlayerGui", 10) end)
-	end
-	if not pg then
+	local parent = nil
+	if LocalPlayer then
 		pcall(function()
-			pg = Instance.new("PlayerGui")
-			pg.Parent = LocalPlayer
+			parent = LocalPlayer:FindFirstChildOfClass("PlayerGui")
+				or LocalPlayer:WaitForChild("PlayerGui", 5)
+		end)
+		if not parent then
+			pcall(function()
+				local pg = Instance.new("PlayerGui")
+				pg.Name = "PlayerGui"
+				pg.Parent = LocalPlayer
+				parent = pg
+			end)
+		end
+	end
+	if not parent then
+		pcall(function()
+			parent = safeGetService("CoreGui")
 		end)
 	end
-	return pg
+	return parent
 end
 
 local PlayerGui = getSafeGuiParent()
@@ -118,8 +127,9 @@ local AURA_MODE_LABELS = {
 	MORTALS_NEVERDIE = "MORTALS NEVERDIE",
 }
 
-local AURA_SAVE_FILE = "MortalHubAuraConfig_" .. tostring(LocalPlayer.UserId) .. ".json"
-local AURA_OWNER_ATTR = "MortalHubAuraOwner_" .. tostring(LocalPlayer.UserId)
+local userIdStr = tostring((LocalPlayer and LocalPlayer.UserId) or 0)
+local AURA_SAVE_FILE = "MortalHubAuraConfig_" .. userIdStr .. ".json"
+local AURA_OWNER_ATTR = "MortalHubAuraOwner_" .. userIdStr
 
 local DEFAULT_AURA_PURPLE = {
 	Start = Color3.fromRGB(95, 0, 145),
@@ -263,7 +273,7 @@ local friendEspSet = {}
 local targetEspSet = {}
 local espStore = {}
 local thirdEyeTagStore = {}
-local verifiedScriptUsers = { [LocalPlayer.UserId] = true }
+local verifiedScriptUsers = LocalPlayer and { [LocalPlayer.UserId] = true } or {}
 local ncStore = {}
 local noclipAnchorY = nil
 local noclipJumpEndTick = 0
@@ -442,41 +452,36 @@ local function loadAuraConfig()
 		Cfg.AuraCustomColor = (loaded.AuraCustomColor == true)
 	end
 end
-loadAuraConfig()
 
 -- ============================================================================
 -- GENERAL UTILITIES & SERVER ACTIONS
 -- ============================================================================
-if VirtualUser then
+local uiSound = nil
+local function ensureUiSound()
+	if uiSound then return uiSound end
 	pcall(function()
-		LocalPlayer.Idled:Connect(function()
-			pcall(function()
-				VirtualUser:CaptureController()
-				VirtualUser:ClickButton2(Vector2.zero)
-			end)
-		end)
+		local s = Instance.new("Sound")
+		s.Name = "MortalHubSound"
+		s.SoundId = SFX_ID
+		s.Volume = 0.65
+		if SoundService then s.Parent = SoundService end
+		uiSound = s
 	end)
+	return uiSound
 end
 
-local uiSound = nil
-pcall(function()
-	uiSound = Instance.new("Sound")
-	uiSound.Name = "MortalHubSound"
-	uiSound.SoundId = SFX_ID
-	uiSound.Volume = 0.65
-	if SoundService then uiSound.Parent = SoundService end
-end)
-
 local function playClick(pitch)
-	if not uiSound then return end
+	local s = ensureUiSound()
+	if not s then return end
 	pcall(function()
-		uiSound.PlaybackSpeed = pitch or 1
-		uiSound.TimePosition = 0
-		uiSound:Play()
+		s.PlaybackSpeed = pitch or 1
+		s.TimePosition = 0
+		s:Play()
 	end)
 end
 
 local function getRig()
+	if not LocalPlayer then return nil, nil, nil, nil end
 	local char = LocalPlayer.Character
 	if not char or not char.Parent then return nil, nil, nil, nil end
 	return char, char:FindFirstChildOfClass("Humanoid"), char:FindFirstChild("HumanoidRootPart"), char:FindFirstChild("Head")
@@ -549,7 +554,7 @@ local function getPing()
 			end
 		end)
 	end
-	if ms == 0 then
+	if ms == 0 and LocalPlayer then
 		pcall(function()
 			if LocalPlayer.GetNetworkPing then
 				ms = math.floor(LocalPlayer:GetNetworkPing() * 1000)
@@ -560,13 +565,13 @@ local function getPing()
 end
 
 local function isFriend(plr)
-	if not plr or plr == LocalPlayer then return false end
+	if not plr or not LocalPlayer or plr == LocalPlayer then return false end
 	local ok, res = pcall(function() return LocalPlayer:IsFriendsWith(plr.UserId) end)
 	return ok and res == true
 end
 
 local function rejoinServer()
-	if not TeleportService then return end
+	if not TeleportService or not LocalPlayer then return end
 	pcall(function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end)
 	task.delay(1.5, function()
 		pcall(function() TeleportService:Teleport(game.PlaceId, LocalPlayer) end)
@@ -574,7 +579,7 @@ local function rejoinServer()
 end
 
 local function hopServer()
-	if not TeleportService or not HttpService then return end
+	if not TeleportService or not HttpService or not LocalPlayer then return end
 	task.spawn(function()
 		local cursor = ""
 		local servers = {}
@@ -1146,7 +1151,7 @@ end
 
 local function isVerifiedMortalUser(plr)
 	if not plr then return false end
-	if plr == LocalPlayer or verifiedScriptUsers[plr.UserId] == true then return true end
+	if (LocalPlayer and plr == LocalPlayer) or verifiedScriptUsers[plr.UserId] == true then return true end
 	local pChar = plr.Character
 	if pChar and (pChar:FindFirstChild("MortalHubMarker") or pChar:FindFirstChild("MortalsAuraFX", true)) then
 		verifiedScriptUsers[plr.UserId] = true
@@ -1782,7 +1787,7 @@ local function raycastAuraGroundY(fromPos, fallbackY)
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	local excl = {}
-	if LocalPlayer.Character then table.insert(excl, LocalPlayer.Character) end
+	if LocalPlayer and LocalPlayer.Character then table.insert(excl, LocalPlayer.Character) end
 	if auraWorldFolder then table.insert(excl, auraWorldFolder) end
 	if crackRootFolder then table.insert(excl, crackRootFolder) end
 	params.FilterDescendantsInstances = excl
@@ -3108,7 +3113,7 @@ function Modules.Info.Init(p1)
 	UI.avImg.Size = UDim2.new(0, 48, 0, 48)
 	UI.avImg.Position = UDim2.new(0, 8, 0, 7)
 	UI.avImg.BackgroundColor3 = BTN_OFF
-	UI.avImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LocalPlayer.UserId) .. "&w=150&h=150"
+	UI.avImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. userIdStr .. "&w=150&h=150"
 	UI.avImg.ZIndex = 34
 	UI.avImg.Parent = UI.infoCard
 	Instance.new("UICorner", UI.avImg).CornerRadius = UDim.new(1, 0)
@@ -3124,7 +3129,7 @@ function Modules.Info.Init(p1)
 	UI.infoTxt.TextYAlignment = Enum.TextYAlignment.Center
 	UI.infoTxt.TextColor3 = TEXT_MAIN
 	UI.infoTxt.ZIndex = 34
-	UI.infoTxt.Text = "User ID: " .. tostring(LocalPlayer.UserId) .. "\nUser: @" .. LocalPlayer.Name
+	UI.infoTxt.Text = "User ID: " .. userIdStr .. "\nUser: @" .. tostring(LocalPlayer and LocalPlayer.Name or "Player")
 	UI.infoTxt.Parent = UI.infoCard
 
 	UI.infoBtnRow = Instance.new("Frame")
@@ -3797,6 +3802,22 @@ do
 	if UI.header then makeDraggable(mainFrame, UI.header, false, nil) end
 end
 
+pcall(loadAuraConfig)
+pcall(function()
+	if refreshAuraUI then refreshAuraUI() end
+end)
+
+if VirtualUser and LocalPlayer then
+	pcall(function()
+		LocalPlayer.Idled:Connect(function()
+			pcall(function()
+				VirtualUser:CaptureController()
+				VirtualUser:ClickButton2(Vector2.zero)
+			end)
+		end)
+	end)
+end
+
 UserInputService.InputBegan:Connect(function(inp, gp)
 	if inp.KeyCode == Enum.KeyCode.Space then
 		noclipJumpEndTick = os.clock() + 0.55
@@ -3809,7 +3830,7 @@ UserInputService.InputBegan:Connect(function(inp, gp)
 			local rp = RaycastParams.new()
 			rp.FilterType = Enum.RaycastFilterType.Exclude
 			local excl = {}
-			if LocalPlayer.Character then table.insert(excl, LocalPlayer.Character) end
+			if LocalPlayer and LocalPlayer.Character then table.insert(excl, LocalPlayer.Character) end
 			if auraWorldFolder then table.insert(excl, auraWorldFolder) end
 			if crackRootFolder then table.insert(excl, crackRootFolder) end
 			rp.FilterDescendantsInstances = excl
@@ -3864,28 +3885,31 @@ Players.PlayerRemoving:Connect(function(plr)
 	if lastMimicTarget == plr then lastMimicTarget = nil; clearMimic() end
 end)
 
-LocalPlayer.CharacterAdded:Connect(function(char)
-	stopFly()
-	releaseHeadSit(char:FindFirstChildOfClass("Humanoid"))
-	noclipAnchorY = nil
-	noclipJumpEndTick = 0
-	airMoveDir = 0
-	airWalkWasMoving = false
-	if Cfg.AirWalk then airY = nil end
-	table.clear(ncStore)
-	clearMimic()
-	markSelfScriptPresence(char)
-	task.defer(function()
-		updateThirdEyeTag(LocalPlayer)
-		if Cfg.SpectateTarget then resetSpectateCamera() end
-		if Cfg.AuraEnabled then
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if hrp then buildAura(char, hrp) end
-		end
+if LocalPlayer then
+	LocalPlayer.CharacterAdded:Connect(function(char)
+		stopFly()
+		releaseHeadSit(char:FindFirstChildOfClass("Humanoid"))
+		noclipAnchorY = nil
+		noclipJumpEndTick = 0
+		airMoveDir = 0
+		airWalkWasMoving = false
+		if Cfg.AirWalk then airY = nil end
+		table.clear(ncStore)
+		clearMimic()
+		markSelfScriptPresence(char)
+		task.defer(function()
+			updateThirdEyeTag(LocalPlayer)
+			if Cfg.SpectateTarget then resetSpectateCamera() end
+			if Cfg.AuraEnabled then
+				local hrp = char:FindFirstChild("HumanoidRootPart")
+				if hrp then buildAura(char, hrp) end
+			end
+		end)
 	end)
-end)
 
-if LocalPlayer.Character then markSelfScriptPresence(LocalPlayer.Character) end
+	if LocalPlayer.Character then markSelfScriptPresence(LocalPlayer.Character) end
+end
+
 for _, plr in ipairs(Players:GetPlayers()) do registerPlayer(plr) end
 
 do
@@ -3896,236 +3920,240 @@ do
 	local fpsAccumFrames = 0
 
 	RunService.Stepped:Connect(function()
-		local char, hum, hrp = getRig()
-		if Cfg.Noclip then
-			setNoclip(char, hum, true)
-			applyNoclipHorizontalLock(char, hum, hrp)
-		elseif next(ncStore) ~= nil or (hum and not Cfg.AirWalk) then
-			setNoclip(char, hum, false)
-		end
-		if hum then
-			setAntiSit(hum, Cfg.AntiSit)
+		pcall(function()
+			local char, hum, hrp = getRig()
+			if Cfg.Noclip then
+				setNoclip(char, hum, true)
+				applyNoclipHorizontalLock(char, hum, hrp)
+			elseif next(ncStore) ~= nil or (hum and not Cfg.AirWalk) then
+				setNoclip(char, hum, false)
+			end
+			if hum then
+				setAntiSit(hum, Cfg.AntiSit)
+				if Cfg.AntiSit and not Cfg.HeadSit and (hum.Sit or hum.SeatPart) then
+					hum.Sit = false
+					hum.SeatPart = nil
+					forceUnseatSeatParts(char)
+				end
+			end
+			if Cfg.HeadSit and char and hum and hrp then
+				local tgtPlr = findPlayer(getTargetQuery())
+				local tgtChar = tgtPlr and tgtPlr.Character
+				local tgtRoot = tgtChar and tgtChar:FindFirstChild("HumanoidRootPart")
+				local tgtHead = tgtChar and tgtChar:FindFirstChild("Head")
+				if tgtRoot then
+					headSitActiveLastFrame = true
+					applyHeadSitLock(char, hum, hrp, tgtChar, tgtRoot, tgtHead)
+				end
+			end
+		end)
+	end)
+
+	RunService.RenderStepped:Connect(function(dt)
+		pcall(function()
+			local now = os.clock()
+			local safeDt = math.clamp(dt, 0.001, 0.05)
+
+			fpsAccumTime = fpsAccumTime + dt
+			fpsAccumFrames = fpsAccumFrames + 1
+			if eye1FpsLbl and fpsAccumTime >= 0.35 then
+				local avgFps = math.clamp(math.floor((fpsAccumFrames / fpsAccumTime) + 0.5), 1, 240)
+				eye1FpsLbl.Text = tostring(avgFps) .. " FPS"
+				fpsAccumTime = 0
+				fpsAccumFrames = 0
+			end
+
+			if eye1Pupil then
+				eye1Pupil.Position = UDim2.new(0.5 + math.cos(now * 2.0) * 0.14, -2.5, 0.5 + math.sin(now * 1.5) * 0.12, -2.5)
+			end
+			if topEyePupil then
+				topEyePupil.Position = UDim2.new(0.5 + math.cos(now * 2.2) * 0.12, -2, 0.5 + math.sin(now * 1.8) * 0.1, -2)
+			end
+
+			if now - lastStatsRefresh >= 0.6 then
+				lastStatsRefresh = now
+				if topStatsLbl then
+					topStatsLbl.Text = "PLAYERS: " .. tostring(#Players:GetPlayers()) .. " | PING: " .. tostring(getPing()) .. "ms"
+				end
+			end
+
+			if now - lastVisualSyncRefresh >= 0.25 then
+				lastVisualSyncRefresh = now
+				for _, plr in ipairs(Players:GetPlayers()) do updateThirdEyeTag(plr) end
+				syncAllESP()
+			end
+
+			if pages[6] and pages[6].Visible and (now - lastTimeTextRefresh >= 1) then
+				lastTimeTextRefresh = now
+				updatePlayersTimeTexts()
+			end
+
+			if Cfg.ChatSpam and (now - lastSpamTick >= 1.4) then
+				lastSpamTick = now
+				sendChatMessage(Cfg.SpamText ~= "" and Cfg.SpamText or "MORTAL On Top!")
+			end
+
+			local char, hum, hrp = getRig()
+			if not char or not hum or not hrp then return end
+
+			stepAura(now, char, hum, hrp)
+
+			if Cfg.Noclip then
+				setNoclip(char, hum, true)
+				applyNoclipHorizontalLock(char, hum, hrp)
+			end
+
 			if Cfg.AntiSit and not Cfg.HeadSit and (hum.Sit or hum.SeatPart) then
 				hum.Sit = false
 				hum.SeatPart = nil
 				forceUnseatSeatParts(char)
+				pcall(function() hum:ChangeState(Enum.HumanoidStateType.Running) end)
 			end
-		end
-		if Cfg.HeadSit and char and hum and hrp then
+
+			local targetSpeed = Cfg.Speed and normalizeMovementSpeed(Cfg.SpeedVal) or 16
+			if Cfg.Speed then hum.WalkSpeed = targetSpeed end
+			if Cfg.Jump then
+				hum.UseJumpPower = true
+				hum.JumpPower = normalizeJumpPower(Cfg.JumpVal)
+			end
+
+			if Cfg.EmoteSpeed then
+				local safeSpd = normalizeEmoteSpeed(Cfg.EmoteVal)
+				for _, tr in ipairs(getAllActiveAnimTracks(hum)) do
+					pcall(function()
+						if math.abs(tr.Speed - safeSpd) > 0.01 then
+							tr:AdjustSpeed(safeSpd)
+						end
+					end)
+				end
+			end
+
+			if Cfg.AirWalk then
+				sanitizeAirWalkAnim(hum)
+				enforceAirWalkStates(hum)
+				if airY == nil then airY = hrp.Position.Y end
+				if airMoveDir ~= 0 then
+					airY = airY + (airMoveDir * Cfg.AirStep * math.clamp(dt * 60, 0.25, 2.5))
+				end
+				local movingNow = hum.MoveDirection.Magnitude > 0.05
+				if movingNow then
+					airWalkWasMoving = true
+					hum.WalkSpeed = targetSpeed
+				else
+					if airWalkWasMoving then
+						airWalkWasMoving = false
+						hum.WalkSpeed = 0
+						task.defer(function()
+							if Cfg.AirWalk and hum and hum.Parent then
+								hum.WalkSpeed = Cfg.Speed and targetSpeed or 16
+							end
+						end)
+					end
+					hrp.AssemblyLinearVelocity = Vector3.zero
+				end
+				local pos = hrp.Position
+				hrp.AssemblyLinearVelocity = Vector3.zero
+				hrp.CFrame = CFrame.new(pos.X, airY, pos.Z) * (hrp.CFrame - hrp.Position)
+			else
+				airWalkWasMoving = false
+			end
+
 			local tgtPlr = findPlayer(getTargetQuery())
 			local tgtChar = tgtPlr and tgtPlr.Character
 			local tgtRoot = tgtChar and tgtChar:FindFirstChild("HumanoidRootPart")
 			local tgtHead = tgtChar and tgtChar:FindFirstChild("Head")
-			if tgtRoot then
-				headSitActiveLastFrame = true
-				applyHeadSitLock(char, hum, hrp, tgtChar, tgtRoot, tgtHead)
-			end
-		end
-	end)
+			local tgtHum = tgtChar and tgtChar:FindFirstChildOfClass("Humanoid")
 
-	RunService.RenderStepped:Connect(function(dt)
-		local now = os.clock()
-		local safeDt = math.clamp(dt, 0.001, 0.05)
-
-		fpsAccumTime = fpsAccumTime + dt
-		fpsAccumFrames = fpsAccumFrames + 1
-		if eye1FpsLbl and fpsAccumTime >= 0.35 then
-			local avgFps = math.clamp(math.floor((fpsAccumFrames / fpsAccumTime) + 0.5), 1, 240)
-			eye1FpsLbl.Text = tostring(avgFps) .. " FPS"
-			fpsAccumTime = 0
-			fpsAccumFrames = 0
-		end
-
-		if eye1Pupil then
-			eye1Pupil.Position = UDim2.new(0.5 + math.cos(now * 2.0) * 0.14, -2.5, 0.5 + math.sin(now * 1.5) * 0.12, -2.5)
-		end
-		if topEyePupil then
-			topEyePupil.Position = UDim2.new(0.5 + math.cos(now * 2.2) * 0.12, -2, 0.5 + math.sin(now * 1.8) * 0.1, -2)
-		end
-
-		if now - lastStatsRefresh >= 0.6 then
-			lastStatsRefresh = now
-			if topStatsLbl then
-				topStatsLbl.Text = "PLAYERS: " .. tostring(#Players:GetPlayers()) .. " | PING: " .. tostring(getPing()) .. "ms"
-			end
-		end
-
-		if now - lastVisualSyncRefresh >= 0.25 then
-			lastVisualSyncRefresh = now
-			for _, plr in ipairs(Players:GetPlayers()) do updateThirdEyeTag(plr) end
-			syncAllESP()
-		end
-
-		if pages[6] and pages[6].Visible and (now - lastTimeTextRefresh >= 1) then
-			lastTimeTextRefresh = now
-			updatePlayersTimeTexts()
-		end
-
-		if Cfg.ChatSpam and (now - lastSpamTick >= 1.4) then
-			lastSpamTick = now
-			sendChatMessage(Cfg.SpamText ~= "" and Cfg.SpamText or "MORTAL On Top!")
-		end
-
-		local char, hum, hrp = getRig()
-		if not char or not hum or not hrp then return end
-
-		stepAura(now, char, hum, hrp)
-
-		if Cfg.Noclip then
-			setNoclip(char, hum, true)
-			applyNoclipHorizontalLock(char, hum, hrp)
-		end
-
-		if Cfg.AntiSit and not Cfg.HeadSit and (hum.Sit or hum.SeatPart) then
-			hum.Sit = false
-			hum.SeatPart = nil
-			forceUnseatSeatParts(char)
-			pcall(function() hum:ChangeState(Enum.HumanoidStateType.Running) end)
-		end
-
-		local targetSpeed = Cfg.Speed and normalizeMovementSpeed(Cfg.SpeedVal) or 16
-		if Cfg.Speed then hum.WalkSpeed = targetSpeed end
-		if Cfg.Jump then
-			hum.UseJumpPower = true
-			hum.JumpPower = normalizeJumpPower(Cfg.JumpVal)
-		end
-
-		if Cfg.EmoteSpeed then
-			local safeSpd = normalizeEmoteSpeed(Cfg.EmoteVal)
-			for _, tr in ipairs(getAllActiveAnimTracks(hum)) do
-				pcall(function()
-					if math.abs(tr.Speed - safeSpd) > 0.01 then
-						tr:AdjustSpeed(safeSpd)
+			if Cfg.SpectateTarget then
+				local cam = workspace.CurrentCamera
+				if cam and tgtHum then
+					if cam.CameraSubject ~= tgtHum or lastSpectatedTargetHum ~= tgtHum then
+						pcall(function() cam.CameraSubject = tgtHum end)
+						lastSpectatedTargetHum = tgtHum
 					end
-				end)
-			end
-		end
-
-		if Cfg.AirWalk then
-			sanitizeAirWalkAnim(hum)
-			enforceAirWalkStates(hum)
-			if airY == nil then airY = hrp.Position.Y end
-			if airMoveDir ~= 0 then
-				airY = airY + (airMoveDir * Cfg.AirStep * math.clamp(dt * 60, 0.25, 2.5))
-			end
-			local movingNow = hum.MoveDirection.Magnitude > 0.05
-			if movingNow then
-				airWalkWasMoving = true
-				hum.WalkSpeed = targetSpeed
-			else
-				if airWalkWasMoving then
-					airWalkWasMoving = false
-					hum.WalkSpeed = 0
-					task.defer(function()
-						if Cfg.AirWalk and hum and hum.Parent then
-							hum.WalkSpeed = Cfg.Speed and targetSpeed or 16
-						end
-					end)
-				end
-				hrp.AssemblyLinearVelocity = Vector3.zero
-			end
-			local pos = hrp.Position
-			hrp.AssemblyLinearVelocity = Vector3.zero
-			hrp.CFrame = CFrame.new(pos.X, airY, pos.Z) * (hrp.CFrame - hrp.Position)
-		else
-			airWalkWasMoving = false
-		end
-
-		local tgtPlr = findPlayer(getTargetQuery())
-		local tgtChar = tgtPlr and tgtPlr.Character
-		local tgtRoot = tgtChar and tgtChar:FindFirstChild("HumanoidRootPart")
-		local tgtHead = tgtChar and tgtChar:FindFirstChild("Head")
-		local tgtHum = tgtChar and tgtChar:FindFirstChildOfClass("Humanoid")
-
-		if Cfg.SpectateTarget then
-			local cam = workspace.CurrentCamera
-			if cam and tgtHum then
-				if cam.CameraSubject ~= tgtHum or lastSpectatedTargetHum ~= tgtHum then
-					pcall(function() cam.CameraSubject = tgtHum end)
-					lastSpectatedTargetHum = tgtHum
+				elseif lastSpectatedTargetHum ~= nil then
+					resetSpectateCamera()
 				end
 			elseif lastSpectatedTargetHum ~= nil then
 				resetSpectateCamera()
 			end
-		elseif lastSpectatedTargetHum ~= nil then
-			resetSpectateCamera()
-		end
 
-		if Cfg.Mimic and tgtPlr then
-			runMimic(char, hum, tgtPlr)
-		elseif next(mimicTracks) ~= nil then
-			clearMimic()
-		end
+			if Cfg.Mimic and tgtPlr then
+				runMimic(char, hum, tgtPlr)
+			elseif next(mimicTracks) ~= nil then
+				clearMimic()
+			end
 
-		local didHeadSit = false
+			local didHeadSit = false
 
-		if tgtRoot then
-			local hRatio = getAvatarHeightRatio(tgtChar, tgtHead)
-			local lookDir = tgtRoot.CFrame.LookVector
-			local flatLook = Vector3.new(lookDir.X, 0, lookDir.Z)
-			flatLook = (flatLook.Magnitude < 1e-4) and Vector3.new(0, 0, -1) or flatLook.Unit
+			if tgtRoot then
+				local hRatio = getAvatarHeightRatio(tgtChar, tgtHead)
+				local lookDir = tgtRoot.CFrame.LookVector
+				local flatLook = Vector3.new(lookDir.X, 0, lookDir.Z)
+				flatLook = (flatLook.Magnitude < 1e-4) and Vector3.new(0, 0, -1) or flatLook.Unit
 
-			if Cfg.LoopTP then
-				hrp.CFrame = tgtRoot.CFrame * CFrame.new(0, 0, 3)
-			elseif Cfg.FollowTarget then
-				local gY = raycastAuraGroundY(tgtRoot.Position, tgtRoot.Position.Y)
-				local followY = math.min(tgtRoot.Position.Y, gY + (2.5 * getAvatarHeightRatio(char, char:FindFirstChild("Head"))))
-				local backPos = tgtRoot.Position - (flatLook * 3.5)
-				local goalPos = Vector3.new(backPos.X, followY, backPos.Z)
-				local lookTarget = Vector3.new(tgtRoot.Position.X, followY, tgtRoot.Position.Z)
-				hrp.CFrame = CFrame.lookAt(hrp.Position:Lerp(goalPos, math.clamp(safeDt * 10, 0, 1)), lookTarget)
-			elseif Cfg.Orbit then
-				orbitAngle = orbitAngle + (3.5 * safeDt)
-				local rad = 5
-				local ox = tgtRoot.Position.X + math.cos(orbitAngle) * rad
-				local oz = tgtRoot.Position.Z + math.sin(orbitAngle) * rad
-				hrp.CFrame = CFrame.new(Vector3.new(ox, tgtRoot.Position.Y, oz), tgtRoot.Position)
-			elseif Cfg.HeadSit then
-				didHeadSit = true
-				headSitActiveLastFrame = true
-				applyHeadSitLock(char, hum, hrp, tgtChar, tgtRoot, tgtHead)
-			else
-				local mode = nil
-				local mbSpeed = normalizeMultiBangSpeed(Cfg.MultiBangSpeed)
-				if Cfg.MultiBang then
-					if now - lastMultiSwitchTick >= (1 / mbSpeed) then
-						lastMultiSwitchTick = now
-						multiBangIndex = (multiBangIndex % 3) + 1
-					end
-					mode = (multiBangIndex == 1 and "FaceBang") or (multiBangIndex == 2 and "Bang") or "FrontBang"
-				elseif Cfg.FaceBang then mode = "FaceBang"
-				elseif Cfg.FrontBang then mode = "FrontBang"
-				elseif Cfg.Bang then mode = "Bang" end
+				if Cfg.LoopTP then
+					hrp.CFrame = tgtRoot.CFrame * CFrame.new(0, 0, 3)
+				elseif Cfg.FollowTarget then
+					local gY = raycastAuraGroundY(tgtRoot.Position, tgtRoot.Position.Y)
+					local followY = math.min(tgtRoot.Position.Y, gY + (2.5 * getAvatarHeightRatio(char, char:FindFirstChild("Head"))))
+					local backPos = tgtRoot.Position - (flatLook * 3.5)
+					local goalPos = Vector3.new(backPos.X, followY, backPos.Z)
+					local lookTarget = Vector3.new(tgtRoot.Position.X, followY, tgtRoot.Position.Z)
+					hrp.CFrame = CFrame.lookAt(hrp.Position:Lerp(goalPos, math.clamp(safeDt * 10, 0, 1)), lookTarget)
+				elseif Cfg.Orbit then
+					orbitAngle = orbitAngle + (3.5 * safeDt)
+					local rad = 5
+					local ox = tgtRoot.Position.X + math.cos(orbitAngle) * rad
+					local oz = tgtRoot.Position.Z + math.sin(orbitAngle) * rad
+					hrp.CFrame = CFrame.new(Vector3.new(ox, tgtRoot.Position.Y, oz), tgtRoot.Position)
+				elseif Cfg.HeadSit then
+					didHeadSit = true
+					headSitActiveLastFrame = true
+					applyHeadSitLock(char, hum, hrp, tgtChar, tgtRoot, tgtHead)
+				else
+					local mode = nil
+					local mbSpeed = normalizeMultiBangSpeed(Cfg.MultiBangSpeed)
+					if Cfg.MultiBang then
+						if now - lastMultiSwitchTick >= (1 / mbSpeed) then
+							lastMultiSwitchTick = now
+							multiBangIndex = (multiBangIndex % 3) + 1
+						end
+						mode = (multiBangIndex == 1 and "FaceBang") or (multiBangIndex == 2 and "Bang") or "FrontBang"
+					elseif Cfg.FaceBang then mode = "FaceBang"
+					elseif Cfg.FrontBang then mode = "FrontBang"
+					elseif Cfg.Bang then mode = "Bang" end
 
-				if mode then
-					local activeSpeed = (mode == "FaceBang" or Cfg.MultiBang) and mbSpeed or 3.5
-					local clampedOsc = math.min(activeSpeed, 40)
-					local pulse = math.sin(now * (clampedOsc * 3.2)) * (0.42 * hRatio)
-					if mode == "FaceBang" then
-						local faceCenter = tgtHead and tgtHead.Position or (tgtRoot.Position + Vector3.new(0, 1.5 * hRatio, 0))
-						local headRadius = (tgtHead and math.max(tgtHead.Size.Z, tgtHead.Size.X) * 0.5) or (0.6 * hRatio)
-						local posAtFace = faceCenter + (flatLook * (headRadius + (1.05 * hRatio) + pulse))
-						hrp.AssemblyLinearVelocity = Vector3.zero
-						hrp.AssemblyAngularVelocity = Vector3.zero
-						hrp.CFrame = CFrame.lookAt(posAtFace, faceCenter)
-					elseif mode == "FrontBang" then
-						local frontPos = tgtRoot.Position + (flatLook * (2.2 + pulse))
-						hrp.CFrame = CFrame.lookAt(frontPos, Vector3.new(tgtRoot.Position.X, frontPos.Y, tgtRoot.Position.Z))
-					else
-						hrp.CFrame = tgtRoot.CFrame * CFrame.new(0, 0, 2.2 + pulse)
+					if mode then
+						local activeSpeed = (mode == "FaceBang" or Cfg.MultiBang) and mbSpeed or 3.5
+						local clampedOsc = math.min(activeSpeed, 40)
+						local pulse = math.sin(now * (clampedOsc * 3.2)) * (0.42 * hRatio)
+						if mode == "FaceBang" then
+							local faceCenter = tgtHead and tgtHead.Position or (tgtRoot.Position + Vector3.new(0, 1.5 * hRatio, 0))
+							local headRadius = (tgtHead and math.max(tgtHead.Size.Z, tgtHead.Size.X) * 0.5) or (0.6 * hRatio)
+							local posAtFace = faceCenter + (flatLook * (headRadius + (1.05 * hRatio) + pulse))
+							hrp.AssemblyLinearVelocity = Vector3.zero
+							hrp.AssemblyAngularVelocity = Vector3.zero
+							hrp.CFrame = CFrame.lookAt(posAtFace, faceCenter)
+						elseif mode == "FrontBang" then
+							local frontPos = tgtRoot.Position + (flatLook * (2.2 + pulse))
+							hrp.CFrame = CFrame.lookAt(frontPos, Vector3.new(tgtRoot.Position.X, frontPos.Y, tgtRoot.Position.Z))
+						else
+							hrp.CFrame = tgtRoot.CFrame * CFrame.new(0, 0, 2.2 + pulse)
+						end
 					end
 				end
 			end
-		end
 
-		if not didHeadSit and headSitActiveLastFrame then releaseHeadSit(hum) end
+			if not didHeadSit and headSitActiveLastFrame then releaseHeadSit(hum) end
 
-		if Cfg.Spin then
-			local angDelta = math.rad(normalizeSpinSpeed(Cfg.SpinVal) * 6 * safeDt)
-			local pos = hrp.Position
-			local rotOnly = (hrp.CFrame - pos) * CFrame.Angles(0, angDelta, 0)
-			hrp.AssemblyLinearVelocity = Vector3.zero
-			hrp.CFrame = CFrame.new(pos) * rotOnly
-		end
+			if Cfg.Spin then
+				local angDelta = math.rad(normalizeSpinSpeed(Cfg.SpinVal) * 6 * safeDt)
+				local pos = hrp.Position
+				local rotOnly = (hrp.CFrame - pos) * CFrame.Angles(0, angDelta, 0)
+				hrp.AssemblyLinearVelocity = Vector3.zero
+				hrp.CFrame = CFrame.new(pos) * rotOnly
+			end
+		end)
 	end)
 end
