@@ -350,15 +350,18 @@ local function saveAuraConfigNow()
 		AuraCustomColor = Cfg.AuraCustomColor == true,
 	}
 	pcall(function()
-		if type(getgenv) == "function" then
-			getgenv().MortalHubAuraSaved = payload
+		if typeof(getgenv) == "function" or type(getgenv) == "function" then
+			local env = getgenv()
+			if type(env) == "table" then
+				env.MortalHubAuraSaved = payload
+			end
 		end
 	end)
-	if type(writefile) == "function" then
-		pcall(function()
+	pcall(function()
+		if type(writefile) == "function" then
 			writefile(AURA_SAVE_FILE, HttpService:JSONEncode(payload))
-		end)
-	end
+		end
+	end)
 end
 
 local function scheduleAuraSave(delaySec)
@@ -387,8 +390,11 @@ local function loadAuraConfig()
 	end
 	if not loaded then
 		pcall(function()
-			if type(getgenv) == "function" and type(getgenv().MortalHubAuraSaved) == "table" then
-				loaded = getgenv().MortalHubAuraSaved
+			if type(getgenv) == "function" then
+				local env = getgenv()
+				if type(env) == "table" and type(env.MortalHubAuraSaved) == "table" then
+					loaded = env.MortalHubAuraSaved
+				end
 			end
 		end)
 	end
