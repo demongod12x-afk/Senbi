@@ -1,3 +1,7 @@
+if not game:IsLoaded() then
+	game.Loaded:Wait()
+end
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -16,7 +20,10 @@ if not LocalPlayer then
 end
 
 local PlayerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 15)
-if not PlayerGui then return end
+if not PlayerGui then
+	PlayerGui = Instance.new("PlayerGui")
+	PlayerGui.Parent = LocalPlayer
+end
 
 -- ============================================================================
 -- CONSTANTS & CLEANUP
@@ -116,7 +123,6 @@ local COLUMN_TEXTURES = {
 	"rbxassetid://6101261905",
 }
 
--- Lag-safe tuned configs (still scales up to Level 5)
 local COLUMN_CONFIG = {
 	[1] = { rate = 180, sizeStart = 1.4, sizeEnd = 3.8, speedMin = 3.8, speedMax = 7.4, spread = 58, accelY = 9.5, lightBright = 2.0, lightRange = 12 },
 	[2] = { rate = 260, sizeStart = 1.8, sizeEnd = 5.0, speedMin = 4.8, speedMax = 9.0, spread = 68, accelY = 12.0, lightBright = 2.8, lightRange = 15 },
@@ -155,7 +161,6 @@ local STAR_RADIANCE_TIERS = {
 	[5] = { rateMult = 9.5, speedMult = 1.62, burst = 60, sizeMult = 1.62, spreadMult = 1.62, lightBright = 4.2, lightRange = 22, reachMult = 1.65 },
 }
 
--- Capped so it looks huge without freezing client
 local ULTIMATE_SPREAD_PRESET = {
 	rateMult = 18.0,
 	sizeMult = 8.5,
@@ -3553,7 +3558,6 @@ do
 	end)
 end
 
--- Lag-free Players Time list (reuses existing labels, only updates text)
 local playersTimeContainer = nil
 local playerTimeLabels = {}
 
