@@ -1,5 +1,5 @@
 -- ============================================================================
--- MORTAL HUB - CLEAN LOADABLE BUILD (8 SECTIONS + 1ST EYE + TOP EYE + 3RD EYE TAG)
+-- MORTAL HUB - CLEAN BUILD (1ST EYE + TOP EYE + 3RD EYE TAG + 8 SECTIONS / SEC 1)
 -- ============================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -29,7 +29,7 @@ for _, name in ipairs({ "MortalEightHub", "MortalAuraColorWheelGUI", "MortalAirW
 	end)
 end
 
--- Colours (exact palette preserved)
+-- Colours
 local VOID_BG = Color3.fromRGB(5, 1, 13)
 local CARD_BG = Color3.fromRGB(12, 2, 29)
 local BTN_OFF = Color3.fromRGB(16, 3, 38)
@@ -218,7 +218,7 @@ eye1TapBtn.ZIndex = 20
 eye1TapBtn.Active = true
 eye1TapBtn.Parent = eye1Holder
 
--- Top Eye
+-- Top Eye (top-right corner eye + top bar)
 local topEyeBtn = Instance.new("TextButton")
 topEyeBtn.Name = "MortalThirdEyeCornerBtn"
 topEyeBtn.Size = UDim2.new(0, 44, 0, 32)
@@ -334,7 +334,7 @@ topEyeBtn.Activated:Connect(function()
 	topEyePanel.Visible = Cfg.TopEyeOpen
 end)
 
--- Main Window
+-- Main Window (8 Sections)
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MortalMainWindow"
 mainFrame.Size = UDim2.new(0, 440, 0, 320)
@@ -406,7 +406,6 @@ contentHolder.Parent = mainFrame
 Instance.new("UICorner", contentHolder).CornerRadius = UDim.new(0, 10)
 addBorder(contentHolder, NEON_RING, 1.2, 0.25)
 
--- Original 8 sections
 local sections = {
 	"Info",
 	"Friends",
@@ -451,7 +450,7 @@ for i, sec in ipairs(sections) do
 	end)
 end
 
--- Section 1 (Info) features restored
+-- Section 1 (Info) features
 do
 	local p1 = pages[1]
 	local lay1 = Instance.new("UIListLayout", p1)
@@ -564,7 +563,7 @@ do
 end
 
 -- ============================================================================
--- 3RD EYE OVERHEAD TAG
+-- 3RD EYE OVERHEAD TAG (CHARACTER HEAD)
 -- ============================================================================
 local thirdEyeTagStore = {}
 
