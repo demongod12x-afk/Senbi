@@ -1,5 +1,5 @@
 -- ============================================================================
--- MORTAL HUB (LOADSTRING SAFE BUILD - ALL FEATURES PRESERVED)
+-- MORTAL HUB (EXECUTOR LOAD-SAFE FIX - ALL FEATURES PRESERVED)
 -- ============================================================================
 local function safeGetService(name)
 	local ok, svc = pcall(function()
@@ -30,31 +30,40 @@ if not LocalPlayer then
 end
 
 local function getSafeGuiParent()
-	local parent = nil
 	if LocalPlayer then
-		pcall(function()
-			parent = LocalPlayer:FindFirstChildOfClass("PlayerGui")
-				or LocalPlayer:WaitForChild("PlayerGui", 5)
+		local okPg, pg = pcall(function()
+			return LocalPlayer:FindFirstChildOfClass("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 5)
 		end)
-		if not parent then
-			pcall(function()
-				local pg = Instance.new("PlayerGui")
-				pg.Name = "PlayerGui"
-				pg.Parent = LocalPlayer
-				parent = pg
-			end)
+		if okPg and pg then
+			return pg
 		end
-	end
-	if not parent then
 		pcall(function()
-			parent = safeGetService("CoreGui")
+			local newPg = Instance.new("PlayerGui")
+			newPg.Name = "PlayerGui"
+			newPg.Parent = LocalPlayer
+			pg = newPg
 		end)
+		if pg then return pg end
 	end
-	return parent
+
+	if type(gethui) == "function" then
+		local okH, hui = pcall(gethui)
+		if okH and hui then return hui end
+	end
+
+	local okCg, cg = pcall(function()
+		return safeGetService("CoreGui")
+	end)
+	if okCg and cg then return cg end
+
+	return nil
 end
 
 local PlayerGui = getSafeGuiParent()
-if not PlayerGui then return end
+if not PlayerGui then
+	warn("[Mortal Hub] GUI parent not available.")
+	return
+end
 
 -- ============================================================================
 -- CONSTANTS & CLEANUP
@@ -402,7 +411,10 @@ local function saveAuraConfigNow()
 	end)
 	pcall(function()
 		if type(writefile) == "function" and HttpService then
-			writefile(AURA_SAVE_FILE, HttpService:JSONEncode(payload))
+			local okEnc, encoded = pcall(function() return HttpService:JSONEncode(payload) end)
+			if okEnc and type(encoded) == "string" then
+				pcall(writefile, AURA_SAVE_FILE, encoded)
+			end
 		end
 	end)
 end
@@ -547,8 +559,9 @@ local function getPing()
 	local ms = 0
 	if Stats then
 		pcall(function()
-			local net = Stats.Network and Stats.Network:FindFirstChild("ServerStatsItem")
-			local dp = net and net:FindFirstChild("Data Ping")
+			local net = Stats:FindFirstChild("Network")
+			local srv = net and net:FindFirstChild("ServerStatsItem")
+			local dp = srv and srv:FindFirstChild("Data Ping")
 			if dp and type(dp.GetValue) == "function" then
 				ms = math.floor(dp:GetValue())
 			end
@@ -616,13 +629,11 @@ local function sendChatMessage(msg)
 	if text == "" then return end
 	if TextChatService then
 		pcall(function()
-			if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-				local channels = TextChatService:FindFirstChild("TextChannels")
-				local general = channels and (channels:FindFirstChild("RBXGeneral") or channels:GetChildren()[1])
-				if general and type(general.SendAsync) == "function" then
-					general:SendAsync(text)
-					return
-				end
+			local channels = TextChatService:FindFirstChild("TextChannels")
+			local general = channels and (channels:FindFirstChild("RBXGeneral") or channels:GetChildren()[1])
+			if general and type(general.SendAsync) == "function" then
+				general:SendAsync(text)
+				return
 			end
 		end)
 	end
