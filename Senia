@@ -1,5 +1,5 @@
 -- ============================================================================
--- MORTAL HUB (SECTION 1: INFO + SECTION 2: FRIENDS WITH GLOWING BROWN ESP & DIST)
+-- MORTAL HUB (SECTIONS 1, 2 & 3: INFO + FRIENDS + PLAYER)
 -- ============================================================================
 local function safeGetService(name)
 	local ok, svc = pcall(function()
@@ -110,8 +110,8 @@ local TAG_NEON_PURPLE = Color3.fromRGB(148, 35, 255)
 local TAG_NEON_OUTLINE = Color3.fromRGB(112, 0, 218)
 
 local FRIEND_BODY_BLUE = Color3.fromRGB(30, 110, 255)
-local FRIEND_NAME_BROWN = Color3.fromRGB(165, 95, 35)
-local FRIEND_GLOW_BROWN = Color3.fromRGB(215, 125, 45)
+local FRIEND_NAME_BROWN = Color3.fromRGB(205, 115, 38)
+local FRIEND_GLOW_BROWN = Color3.fromRGB(255, 155, 55)
 local TARGET_BODY_RED = Color3.fromRGB(255, 25, 25)
 local TARGET_NAME_YELLOW = Color3.fromRGB(255, 235, 30)
 local ALL_BODY_PURPLE = Color3.fromRGB(145, 25, 255)
@@ -125,15 +125,24 @@ local userIdStr = tostring((LocalPlayer and LocalPlayer.UserId) or 0)
 local Cfg = {
 	EyeLocked = false,
 	TopEyeOpen = true,
+	SelfTagVisible = true,
 	AuraEnabled = false,
 	AuraLevel = 1,
+	Speed = false, SpeedVal = 16,
+	Jump = false, JumpVal = 50,
+	Fly = false, FlyVal = 50,
+	AirWalk = false, AirY = nil, AirStep = 1.15,
+	Spin = false, SpinVal = 50,
+	EmoteSpeed = false, EmoteVal = 1,
 	Target = "",
 	ESPAll = false,
+	Noclip = false,
 }
 
 local Modules = {
 	Info = {},
 	Friends = {},
+	Player = {},
 }
 
 local UI = {}
@@ -145,6 +154,15 @@ local verifiedScriptUsers = LocalPlayer and { [LocalPlayer.UserId] = true } or {
 local notifiedFriends = {}
 local spectatedFriend = nil
 
+local airY = nil
+local airMoveDir = 0
+local airWalkWasMoving = false
+local flyConnection = nil
+local flyVelocity = nil
+local flyGyro = nil
+local flyAnimateDisabled = false
+local syncFlyUI = nil
+
 local mainFrame = nil
 local eye1Holder = nil
 local eye1TapBtn = nil
@@ -153,14 +171,68 @@ local eye1Pupil = nil
 local topEyePanel = nil
 local topEyeBtn = nil
 local topEyePupil = nil
+local topSelfTagBtn = nil
 local topAuraLvlLbl = nil
 local topAuraOnOffBtn = nil
 local topStatsLbl = nil
 local refreshCallbacks = {}
+local airGui = nil
 
 -- ============================================================================
--- GENERAL UTILITIES & SERVER ACTIONS
+-- NUMERIC & GENERAL UTILITIES
 -- ============================================================================
+local function parseHugeNum(raw, defaultVal, minVal)
+	local str = tostring(raw or ""):gsub("[%s_,]", "")
+	if str == "" then return defaultVal end
+	local n = tonumber(str)
+	if n == nil or n ~= n then
+		local cleanDigits = str:match("^([+-]?%d+)")
+		if cleanDigits then
+			local sign = (cleanDigits:sub(1, 1) == "-") and -1 or 1
+			local digitsOnly = cleanDigits:gsub("^[+-]", "")
+			if #digitsOnly >= 309 then
+				n = sign * 1e308
+			elseif #digitsOnly > 0 then
+				local head = digitsOnly:sub(1, math.min(15, #digitsOnly))
+				local expPart = #digitsOnly - #head
+				n = sign * (tonumber(head) or 1) * (10 ^ expPart)
+			end
+		end
+	end
+	if n == nil or n ~= n then return defaultVal end
+	if n == math.huge then n = 1e308 elseif n == -math.huge then n = -1e308 end
+	if minVal and n < minVal then n = minVal end
+	return n
+end
+
+local function normalizeMovementSpeed(v)
+	local n = tonumber(v) or 16
+	if n ~= n or n < 0 then return n ~= n and 16 or 0 end
+	return n
+end
+
+local function normalizeJumpPower(v)
+	local n = tonumber(v) or 50
+	if n ~= n or n < 0 then return n ~= n and 50 or 0 end
+	return n
+end
+
+local function normalizeFlySpeed(v)
+	local n = tonumber(v) or 50
+	if n ~= n or n < 0 then return n ~= n and 50 or 0 end
+	return n
+end
+
+local function normalizeSpinSpeed(v)
+	local n = tonumber(v) or 50
+	return (n == n) and n or 50
+end
+
+local function normalizeEmoteSpeed(v)
+	local n = tonumber(v) or 1
+	return (n == n) and n or 1
+end
+
 local uiSound = nil
 local function ensureUiSound()
 	if uiSound then return uiSound end
@@ -402,7 +474,182 @@ local function createEyeGraphic(parentFrame, eyeW, eyeH, irisSize, pupilSize, zB
 end
 
 -- ============================================================================
--- 3RD EYE OVERHEAD TAG & ESP ENGINE
+-- FLY & AIR WALK HELPERS
+-- ============================================================================
+local function clearAllCharacterAnims(char, hum)
+	if hum then
+		pcall(function()
+			local animator = hum:FindFirstChildOfClass("Animator")
+			if animator then
+				for _, tr in ipairs(animator:GetPlayingAnimationTracks()) do tr:Stop(0) end
+			end
+			for _, tr in ipairs(hum:GetPlayingAnimationTracks()) do tr:Stop(0) end
+		end)
+	end
+	if char then
+		pcall(function()
+			local animScript = char:FindFirstChild("Animate")
+			if animScript and animScript:IsA("BaseScript") then
+				flyAnimateDisabled = animScript.Enabled
+				animScript.Enabled = false
+			end
+		end)
+	end
+end
+
+local function restoreCharacterAnims(char)
+	if char and flyAnimateDisabled then
+		pcall(function()
+			local animScript = char:FindFirstChild("Animate")
+			if animScript and animScript:IsA("BaseScript") then animScript.Enabled = true end
+		end)
+	end
+	flyAnimateDisabled = false
+end
+
+local function stopFly()
+	Cfg.Fly = false
+	if flyConnection then flyConnection:Disconnect(); flyConnection = nil end
+	if flyVelocity then pcall(function() flyVelocity:Destroy() end); flyVelocity = nil end
+	if flyGyro then pcall(function() flyGyro:Destroy() end); flyGyro = nil end
+	local char, hum = getRig()
+	restoreCharacterAnims(char)
+	if hum then pcall(function() hum.PlatformStand = false end) end
+	if syncFlyUI then pcall(syncFlyUI) end
+end
+
+local function startFly()
+	stopFly()
+	local char, hum, root = getRig()
+	if not hum or not root then return end
+	Cfg.Fly = true
+	clearAllCharacterAnims(char, hum)
+	pcall(function() hum.PlatformStand = true end)
+	pcall(function() root.CFrame = root.CFrame + Vector3.new(0, 3.5, 0) end)
+
+	local vel = Instance.new("BodyVelocity")
+	vel.MaxForce = Vector3.new(1e7, 1e7, 1e7)
+	vel.Velocity = Vector3.zero
+	vel.Parent = root
+	flyVelocity = vel
+
+	local gyro = Instance.new("BodyGyro")
+	gyro.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
+	gyro.P = 1e4
+	gyro.Parent = root
+	flyGyro = gyro
+
+	if syncFlyUI then pcall(syncFlyUI) end
+
+	flyConnection = RunService.RenderStepped:Connect(function(dt)
+		if not Cfg.Fly or not root or not root.Parent then
+			stopFly()
+			return
+		end
+		local camera = workspace.CurrentCamera
+		local move = hum.MoveDirection
+		local spd = normalizeFlySpeed(Cfg.FlyVal)
+		local desiredVel = Vector3.zero
+		if move.Magnitude > 0.05 and camera then
+			local camCF = camera.CFrame
+			local camLook = camCF.LookVector
+			local camRight = camCF.RightVector
+			local horizRight = Vector3.new(camRight.X, 0, camRight.Z)
+			if horizRight.Magnitude > 1e-4 then horizRight = horizRight.Unit end
+			local flatLook = Vector3.new(camLook.X, 0, camLook.Z)
+			local forwardAmt = (flatLook.Magnitude > 1e-4) and move:Dot(flatLook.Unit) or move.Magnitude
+			local rightAmt = move:Dot(horizRight)
+			local aimDir = (camLook * forwardAmt) + (horizRight * rightAmt)
+			desiredVel = (aimDir.Magnitude > 1e-4) and (aimDir.Unit * math.clamp(move.Magnitude, 0, 1) * spd) or (move.Unit * spd)
+		elseif move.Magnitude > 0.05 then
+			desiredVel = move.Unit * spd
+		end
+		vel.Velocity = desiredVel
+		root.AssemblyLinearVelocity = desiredVel
+		if desiredVel.Magnitude > 0.05 then
+			root.CFrame = root.CFrame + (desiredVel * math.min(dt, 0.05))
+		end
+		if camera then gyro.CFrame = camera.CFrame end
+	end)
+end
+
+local function setFlyState(on)
+	if on then startFly() else stopFly() end
+end
+
+local function getAllActiveAnimTracks(hum)
+	local list = {}
+	if not hum then return list end
+	pcall(function()
+		local animator = hum:FindFirstChildOfClass("Animator")
+		if animator then
+			for _, tr in ipairs(animator:GetPlayingAnimationTracks()) do table.insert(list, tr) end
+		end
+		for _, tr in ipairs(hum:GetPlayingAnimationTracks()) do
+			local dup = false
+			for _, existing in ipairs(list) do
+				if existing == tr then dup = true; break end
+			end
+			if not dup then table.insert(list, tr) end
+		end
+	end)
+	return list
+end
+
+local function enforceAirWalkStates(hum)
+	if not hum then return end
+	pcall(function()
+		hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+		hum:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
+		hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
+		hum:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+		local st = (hum.MoveDirection.Magnitude > 0.05) and Enum.HumanoidStateType.Running or Enum.HumanoidStateType.Landed
+		if hum:GetState() ~= st then hum:ChangeState(st) end
+	end)
+end
+
+local function sanitizeAirWalkAnim(hum)
+	if not hum then return end
+	pcall(function()
+		for _, tr in ipairs(hum:GetPlayingAnimationTracks()) do
+			local animName = string.lower((tr.Animation and tr.Animation.Name) or "")
+			if string.find(animName, "fall", 1, true) or string.find(animName, "jump", 1, true) or string.find(animName, "climb", 1, true) then
+				tr:Stop(0.05)
+			end
+		end
+	end)
+end
+
+local function setAirWalkState(on)
+	Cfg.AirWalk = (on == true)
+	airMoveDir = 0
+	airWalkWasMoving = false
+	if airGui then airGui.Enabled = Cfg.AirWalk end
+	local _, hum, hrp = getRig()
+	if Cfg.AirWalk and hrp then
+		airY = hrp.Position.Y
+		if hum then
+			if Cfg.Speed then hum.WalkSpeed = normalizeMovementSpeed(Cfg.SpeedVal) end
+			enforceAirWalkStates(hum)
+			sanitizeAirWalkAnim(hum)
+		end
+	else
+		airY = nil
+		if hum then
+			pcall(function()
+				hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+				hum:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
+				hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+				hum:SetStateEnabled(Enum.HumanoidStateType.Climbing, not Cfg.Noclip)
+				hum.WalkSpeed = Cfg.Speed and normalizeMovementSpeed(Cfg.SpeedVal) or 16
+				hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+			end)
+		end
+	end
+end
+
+-- ============================================================================
+-- 3RD EYE OVERHEAD TAG (LOCAL VISIBILITY CONTROL) & ESP ENGINE
 -- ============================================================================
 local function clearThirdEyeTag(plr)
 	if thirdEyeTagStore[plr] then
@@ -494,9 +741,22 @@ local function updateThirdEyeTag(plr)
 			lbl.TextStrokeTransparency = 0
 			lbl.Parent = bar
 
-			thirdEyeTagStore[plr] = { Char = pChar, Billboard = bb, Pupil = pupil }
+			entry = { Char = pChar, Billboard = bb, Pupil = pupil }
+			thirdEyeTagStore[plr] = entry
 		end)
-	elseif entry.Pupil then
+	end
+
+	if entry and entry.Billboard then
+		-- Hide only on the local client for LocalPlayer when SelfTagVisible is OFF;
+		-- other players/script users are untouched.
+		if plr == LocalPlayer then
+			entry.Billboard.Enabled = (Cfg.SelfTagVisible == true)
+		else
+			entry.Billboard.Enabled = true
+		end
+	end
+
+	if entry and entry.Pupil and entry.Billboard and entry.Billboard.Enabled then
 		local t = os.clock()
 		entry.Pupil.Position = UDim2.new(0.5 + math.cos(t * 2.2) * 0.12, -1.5, 0.5 + math.sin(t * 1.7) * 0.1, -1.5)
 	end
@@ -545,8 +805,8 @@ local function drawESP(plr, bodyCol, nameCol, mode)
 			local isFriendMode = (mode == "FRIEND")
 			local bb = Instance.new("BillboardGui")
 			bb.Name = "MortalESP_BB"
-			bb.Size = UDim2.new(0, 210, 0, mode == "TARGET" and 46 or 30)
-			bb.StudsOffset = Vector3.new(0, mode == "TARGET" and 3.5 or 2.8, 0)
+			bb.Size = UDim2.new(0, 230, 0, mode == "TARGET" and 48 or 32)
+			bb.StudsOffset = Vector3.new(0, mode == "TARGET" and 3.5 or 2.9, 0)
 			bb.AlwaysOnTop = true
 			bb.MaxDistance = math.huge
 			bb.Parent = head
@@ -583,25 +843,51 @@ local function drawESP(plr, bodyCol, nameCol, mode)
 				nameLbl.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 				nameLbl.TextStrokeTransparency = 0.15
 				nameLbl.Parent = bb
+			elseif isFriendMode then
+				local pill = Instance.new("Frame")
+				pill.Size = UDim2.new(1, -8, 1, -4)
+				pill.Position = UDim2.new(0, 4, 0, 2)
+				pill.BackgroundColor3 = Color3.fromRGB(16, 7, 2)
+				pill.BackgroundTransparency = 0.25
+				pill.BorderSizePixel = 0
+				pill.Parent = bb
+				Instance.new("UICorner", pill).CornerRadius = UDim.new(0, 7)
+
+				local pillGlow = Instance.new("UIStroke")
+				pillGlow.Color = FRIEND_GLOW_BROWN
+				pillGlow.Thickness = 1.6
+				pillGlow.Transparency = 0.15
+				pillGlow.Parent = pill
+
+				nameLbl = Instance.new("TextLabel")
+				nameLbl.Size = UDim2.new(1, -8, 1, 0)
+				nameLbl.Position = UDim2.new(0, 4, 0, 0)
+				nameLbl.BackgroundTransparency = 1
+				nameLbl.Font = Enum.Font.GothamBlack
+				nameLbl.TextSize = 13
+				nameLbl.TextScaled = true
+				nameLbl.Text = plr.DisplayName .. " (@" .. plr.Name .. ")"
+				nameLbl.TextColor3 = nameCol
+				nameLbl.TextStrokeColor3 = Color3.fromRGB(35, 14, 3)
+				nameLbl.TextStrokeTransparency = 0
+				nameLbl.Parent = pill
+
+				local glow = Instance.new("UIStroke")
+				glow.Color = FRIEND_GLOW_BROWN
+				glow.Thickness = 2.2
+				glow.Transparency = 0.05
+				glow.Parent = nameLbl
 			else
 				nameLbl = Instance.new("TextLabel")
 				nameLbl.Size = UDim2.new(1, 0, 1, 0)
 				nameLbl.BackgroundTransparency = 1
-				nameLbl.Font = isFriendMode and Enum.Font.GothamBlack or Enum.Font.GothamBold
-				nameLbl.TextSize = isFriendMode and 13 or 12
+				nameLbl.Font = Enum.Font.GothamBold
+				nameLbl.TextSize = 12
 				nameLbl.Text = plr.DisplayName .. " (@" .. plr.Name .. ")"
 				nameLbl.TextColor3 = nameCol
-				nameLbl.TextStrokeColor3 = isFriendMode and Color3.fromRGB(35, 14, 4) or Color3.fromRGB(0, 0, 0)
-				nameLbl.TextStrokeTransparency = 0
+				nameLbl.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+				nameLbl.TextStrokeTransparency = 0.2
 				nameLbl.Parent = bb
-
-				if isFriendMode then
-					local glow = Instance.new("UIStroke")
-					glow.Color = FRIEND_GLOW_BROWN
-					glow.Thickness = 2.0
-					glow.Transparency = 0.1
-					glow.Parent = nameLbl
-				end
 			end
 
 			entry = { Char = pChar, Mode = mode, Highlight = hl, Billboard = bb, NameLabel = nameLbl }
@@ -646,7 +932,7 @@ local function syncAllESP()
 end
 
 -- ============================================================================
--- SCREENGUI & 1ST EYE / TOP EYE / MAIN WINDOW
+-- SCREENGUIS (MAIN + AIR WALK PAD)
 -- ============================================================================
 local sg = Instance.new("ScreenGui")
 sg.Name = "MortalEightHub"
@@ -656,15 +942,73 @@ sg.DisplayOrder = 100
 sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 sg.Parent = PlayerGui
 
+airGui = Instance.new("ScreenGui")
+airGui.Name = "MortalAirWalkPad"
+airGui.ResetOnSpawn = false
+airGui.IgnoreGuiInset = true
+airGui.DisplayOrder = 99
+airGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+airGui.Enabled = false
+airGui.Parent = PlayerGui
+
+do
+	UI.upBtn = Instance.new("TextButton")
+	UI.upBtn.Size = UDim2.new(0, 44, 0, 44)
+	UI.upBtn.Position = UDim2.new(1, -135, 1, -155)
+	UI.upBtn.BackgroundColor3 = BTN_ON
+	UI.upBtn.TextColor3 = TEXT_MAIN
+	UI.upBtn.Text = "UP"
+	UI.upBtn.Font = Enum.Font.GothamBlack
+	UI.upBtn.TextSize = 11
+	UI.upBtn.Active = true
+	UI.upBtn.Parent = airGui
+	Instance.new("UICorner", UI.upBtn).CornerRadius = UDim.new(1, 0)
+	addBorder(UI.upBtn, NEON_RIFT, 1.5, 0.1)
+
+	UI.downBtn = Instance.new("TextButton")
+	UI.downBtn.Size = UDim2.new(0, 44, 0, 44)
+	UI.downBtn.Position = UDim2.new(1, -135, 1, -102)
+	UI.downBtn.BackgroundColor3 = BTN_OFF
+	UI.downBtn.TextColor3 = TEXT_MAIN
+	UI.downBtn.Text = "DOWN"
+	UI.downBtn.Font = Enum.Font.GothamBlack
+	UI.downBtn.TextSize = 9
+	UI.downBtn.Active = true
+	UI.downBtn.Parent = airGui
+	Instance.new("UICorner", UI.downBtn).CornerRadius = UDim.new(1, 0)
+	addBorder(UI.downBtn, NEON_RIFT, 1.5, 0.1)
+
+	UI.upBtn.InputBegan:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then airMoveDir = 1 end
+	end)
+	UI.upBtn.InputEnded:Connect(function(inp)
+		if (inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch) and airMoveDir == 1 then airMoveDir = 0 end
+	end)
+	UI.downBtn.InputBegan:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then airMoveDir = -1 end
+	end)
+	UI.downBtn.InputEnded:Connect(function(inp)
+		if (inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch) and airMoveDir == -1 then airMoveDir = 0 end
+	end)
+end
+
+-- ============================================================================
+-- 1ST EYE, TOP EYE (WITH TAG ON/OFF) & MAIN WINDOW
+-- ============================================================================
 local pages = {}
 local tabButtons = {}
 local switchSection
 
-local function refreshTopAuraUI()
+local function refreshTopPanelUI()
 	if topAuraLvlLbl then topAuraLvlLbl.Text = "LV." .. tostring(Cfg.AuraLevel) end
 	if topAuraOnOffBtn then
 		topAuraOnOffBtn.Text = "AURA: " .. (Cfg.AuraEnabled and "ON" or "OFF")
 		topAuraOnOffBtn.BackgroundColor3 = Cfg.AuraEnabled and BTN_ON or BTN_OFF
+	end
+	if topSelfTagBtn then
+		local on = (Cfg.SelfTagVisible == true)
+		topSelfTagBtn.Text = "TAG: " .. (on and "ON" or "OFF")
+		topSelfTagBtn.BackgroundColor3 = on and BTN_ON or BTN_OFF
 	end
 end
 
@@ -719,8 +1063,8 @@ do
 
 	topEyePanel = Instance.new("Frame")
 	topEyePanel.Name = "MortalThirdEyePanel"
-	topEyePanel.Size = UDim2.new(0, 292, 0, 32)
-	topEyePanel.Position = UDim2.new(1, -352, 0, 10)
+	topEyePanel.Size = UDim2.new(0, 344, 0, 32)
+	topEyePanel.Position = UDim2.new(1, -404, 0, 10)
 	topEyePanel.BackgroundColor3 = TAG_DARK_BAR
 	topEyePanel.BackgroundTransparency = 0.06
 	topEyePanel.Active = true
@@ -731,7 +1075,7 @@ do
 	addBorder(topEyePanel, TAG_NEON_OUTLINE, 1.6, 0.08)
 
 	topStatsLbl = Instance.new("TextLabel")
-	topStatsLbl.Size = UDim2.new(0, 128, 1, 0)
+	topStatsLbl.Size = UDim2.new(0, 118, 1, 0)
 	topStatsLbl.Position = UDim2.new(0, 6, 0, 0)
 	topStatsLbl.BackgroundTransparency = 1
 	topStatsLbl.Font = Enum.Font.GothamBold
@@ -742,9 +1086,29 @@ do
 	topStatsLbl.ZIndex = 23
 	topStatsLbl.Parent = topEyePanel
 
+	topSelfTagBtn = Instance.new("TextButton")
+	topSelfTagBtn.Size = UDim2.new(0, 52, 0, 22)
+	topSelfTagBtn.Position = UDim2.new(0, 126, 0.5, -11)
+	topSelfTagBtn.BackgroundColor3 = BTN_ON
+	topSelfTagBtn.Font = Enum.Font.GothamBlack
+	topSelfTagBtn.TextSize = 9
+	topSelfTagBtn.Text = "TAG: ON"
+	topSelfTagBtn.TextColor3 = TEXT_MAIN
+	topSelfTagBtn.Active = true
+	topSelfTagBtn.ZIndex = 26
+	topSelfTagBtn.Parent = topEyePanel
+	Instance.new("UICorner", topSelfTagBtn).CornerRadius = UDim.new(0, 6)
+	addBorder(topSelfTagBtn, NEON_RING, 1, 0.25)
+	topSelfTagBtn.Activated:Connect(function()
+		Cfg.SelfTagVisible = not Cfg.SelfTagVisible
+		if LocalPlayer then updateThirdEyeTag(LocalPlayer) end
+		refreshTopPanelUI()
+		playClick(Cfg.SelfTagVisible and 1.15 or 0.9)
+	end)
+
 	topAuraOnOffBtn = Instance.new("TextButton")
-	topAuraOnOffBtn.Size = UDim2.new(0, 72, 0, 22)
-	topAuraOnOffBtn.Position = UDim2.new(0, 136, 0.5, -11)
+	topAuraOnOffBtn.Size = UDim2.new(0, 66, 0, 22)
+	topAuraOnOffBtn.Position = UDim2.new(0, 181, 0.5, -11)
 	topAuraOnOffBtn.BackgroundColor3 = BTN_OFF
 	topAuraOnOffBtn.Font = Enum.Font.GothamBlack
 	topAuraOnOffBtn.TextSize = 9
@@ -757,13 +1121,13 @@ do
 	addBorder(topAuraOnOffBtn, NEON_RING, 1, 0.25)
 	topAuraOnOffBtn.Activated:Connect(function()
 		Cfg.AuraEnabled = not Cfg.AuraEnabled
-		refreshTopAuraUI()
+		refreshTopPanelUI()
 		playClick(Cfg.AuraEnabled and 1.15 or 0.9)
 	end)
 
 	UI.topMinusBtn = Instance.new("TextButton")
 	UI.topMinusBtn.Size = UDim2.new(0, 18, 0, 22)
-	UI.topMinusBtn.Position = UDim2.new(0, 212, 0.5, -11)
+	UI.topMinusBtn.Position = UDim2.new(0, 250, 0.5, -11)
 	UI.topMinusBtn.BackgroundColor3 = BTN_OFF
 	UI.topMinusBtn.Font = Enum.Font.GothamBlack
 	UI.topMinusBtn.TextSize = 11
@@ -777,7 +1141,7 @@ do
 
 	topAuraLvlLbl = Instance.new("TextLabel")
 	topAuraLvlLbl.Size = UDim2.new(0, 34, 0, 22)
-	topAuraLvlLbl.Position = UDim2.new(0, 232, 0.5, -11)
+	topAuraLvlLbl.Position = UDim2.new(0, 270, 0.5, -11)
 	topAuraLvlLbl.BackgroundColor3 = VOID_BG
 	topAuraLvlLbl.Font = Enum.Font.GothamBlack
 	topAuraLvlLbl.TextSize = 10
@@ -790,7 +1154,7 @@ do
 
 	UI.topPlusBtn = Instance.new("TextButton")
 	UI.topPlusBtn.Size = UDim2.new(0, 18, 0, 22)
-	UI.topPlusBtn.Position = UDim2.new(0, 268, 0.5, -11)
+	UI.topPlusBtn.Position = UDim2.new(0, 306, 0.5, -11)
 	UI.topPlusBtn.BackgroundColor3 = BTN_OFF
 	UI.topPlusBtn.Font = Enum.Font.GothamBlack
 	UI.topPlusBtn.TextSize = 11
@@ -804,12 +1168,12 @@ do
 
 	UI.topMinusBtn.Activated:Connect(function()
 		Cfg.AuraLevel = math.max(1, Cfg.AuraLevel - 1)
-		refreshTopAuraUI()
+		refreshTopPanelUI()
 		playClick(0.95)
 	end)
 	UI.topPlusBtn.Activated:Connect(function()
 		Cfg.AuraLevel = math.min(5, Cfg.AuraLevel + 1)
-		refreshTopAuraUI()
+		refreshTopPanelUI()
 		playClick(1.1)
 	end)
 	topEyeBtn.Activated:Connect(function()
@@ -984,6 +1348,72 @@ local function makeToggle(parent, label, getState, setState)
 		playClick(nextState and 1.15 or 0.9)
 	end)
 	return b, sync
+end
+
+local function makeNumRow(parent, label, getState, setState, getVal, setVal, minV, bindSyncFn, liveApplyFn)
+	local row = Instance.new("Frame")
+	row.Size = UDim2.new(0.96, 0, 0, 28)
+	row.BackgroundTransparency = 1
+	row.ZIndex = 33
+	row.Parent = parent
+
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.new(0.64, -2, 1, 0)
+	b.BackgroundColor3 = BTN_OFF
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 11
+	b.TextColor3 = TEXT_MAIN
+	b.ZIndex = 33
+	b.Parent = row
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0, 7)
+	addBorder(b, NEON_RING, 1, 0.35)
+
+	local box = Instance.new("TextBox")
+	box.Size = UDim2.new(0.36, -2, 1, 0)
+	box.Position = UDim2.new(0.64, 2, 0, 0)
+	box.BackgroundColor3 = VOID_BG
+	box.Font = Enum.Font.GothamBold
+	box.TextSize = 11
+	box.Text = tostring(getVal())
+	box.TextColor3 = TAG_NEON_PURPLE
+	box.ClearTextOnFocus = true
+	box.ZIndex = 33
+	box.Parent = row
+	Instance.new("UICorner", box).CornerRadius = UDim.new(0, 7)
+	addBorder(box, NEON_RING, 1, 0.35)
+
+	local function syncBtn()
+		local on = getState() == true
+		b.Text = label .. ": " .. (on and "ON" or "OFF")
+		b.BackgroundColor3 = on and BTN_ON or BTN_OFF
+	end
+	syncBtn()
+	if bindSyncFn then bindSyncFn(syncBtn) end
+
+	b.MouseButton1Click:Connect(function()
+		local parsed = parseHugeNum(box.Text, getVal(), minV)
+		setVal(parsed)
+		box.Text = tostring(parsed)
+		local nextState = not (getState() == true)
+		setState(nextState, parsed)
+		syncBtn()
+		playClick(nextState and 1.15 or 0.9)
+	end)
+
+	box:GetPropertyChangedSignal("Text"):Connect(function()
+		if box.Text == "" then return end
+		local parsed = parseHugeNum(box.Text, getVal(), minV)
+		setVal(parsed)
+		if liveApplyFn then pcall(liveApplyFn, parsed) end
+	end)
+
+	box.FocusLost:Connect(function()
+		local parsed = parseHugeNum(box.Text, getVal(), minV)
+		setVal(parsed)
+		box.Text = tostring(parsed)
+		if liveApplyFn then pcall(liveApplyFn, parsed)
+		elseif getState() == true then setState(true, parsed) end
+	end)
 end
 
 -- ============================================================================
@@ -1283,12 +1713,57 @@ function Modules.Friends.Init(p2)
 end
 
 -- ============================================================================
--- INITIALIZE SECTION 1 & SECTION 2 MODULES
+-- SECTION 3: PLAYER
+-- ============================================================================
+function Modules.Player.Init(p3)
+	makeNumRow(p3, "SPEED", function() return Cfg.Speed end, function(on, v)
+		Cfg.Speed = on; Cfg.SpeedVal = v
+		if not on then local _, h = getRig(); if h then h.WalkSpeed = 16 end end
+	end, function() return Cfg.SpeedVal end, function(v) Cfg.SpeedVal = v end, 0, nil, function(v)
+		if Cfg.Speed then local _, h = getRig(); if h then h.WalkSpeed = normalizeMovementSpeed(v) end end
+	end)
+
+	makeNumRow(p3, "JUMP POWER", function() return Cfg.Jump end, function(on, v)
+		Cfg.Jump = on; Cfg.JumpVal = v
+		if not on then local _, h = getRig(); if h then h.UseJumpPower = true; h.JumpPower = 50 end end
+	end, function() return Cfg.JumpVal end, function(v) Cfg.JumpVal = v end, 0, nil, function(v)
+		if Cfg.Jump then local _, h = getRig(); if h then h.UseJumpPower = true; h.JumpPower = normalizeJumpPower(v) end end
+	end)
+
+	makeNumRow(p3, "FLY", function() return Cfg.Fly end, function(on, v)
+		Cfg.FlyVal = v
+		setFlyState(on)
+	end, function() return Cfg.FlyVal end, function(v) Cfg.FlyVal = v end, 0, function(fn)
+		syncFlyUI = fn
+	end, function(v)
+		Cfg.FlyVal = v
+	end)
+
+	makeToggle(p3, "AIR WALK", function() return Cfg.AirWalk end, function(v) setAirWalkState(v) end)
+
+	makeNumRow(p3, "SPIN", function() return Cfg.Spin end, function(on, v)
+		Cfg.Spin = on; Cfg.SpinVal = v
+	end, function() return Cfg.SpinVal end, function(v) Cfg.SpinVal = v end, nil)
+
+	makeNumRow(p3, "EMOTE SPEED", function() return Cfg.EmoteSpeed end, function(on, v)
+		Cfg.EmoteSpeed = on; Cfg.EmoteVal = v
+		if not on then
+			local _, h = getRig()
+			if h then
+				for _, tr in ipairs(getAllActiveAnimTracks(h)) do pcall(function() tr:AdjustSpeed(1) end) end
+			end
+		end
+	end, function() return Cfg.EmoteVal end, function(v) Cfg.EmoteVal = v end, nil)
+end
+
+-- ============================================================================
+-- INITIALIZE SECTIONS 1, 2 & 3 MODULES
 -- ============================================================================
 do
 	local orderedInits = {
 		{ fn = Modules.Info.Init, page = pages[1] },
 		{ fn = Modules.Friends.Init, page = pages[2] },
+		{ fn = Modules.Player.Init, page = pages[3] },
 	}
 	for _, entry in ipairs(orderedInits) do
 		if type(entry.fn) == "function" and entry.page then
@@ -1351,6 +1826,10 @@ end)
 
 if LocalPlayer then
 	LocalPlayer.CharacterAdded:Connect(function(char)
+		stopFly()
+		airMoveDir = 0
+		airWalkWasMoving = false
+		if Cfg.AirWalk then airY = nil end
 		markSelfScriptPresence(char)
 		task.defer(function()
 			updateThirdEyeTag(LocalPlayer)
@@ -1371,6 +1850,7 @@ do
 	RunService.RenderStepped:Connect(function(dt)
 		pcall(function()
 			local now = os.clock()
+			local safeDt = math.clamp(dt, 0.001, 0.05)
 
 			fpsAccumTime = fpsAccumTime + dt
 			fpsAccumFrames = fpsAccumFrames + 1
@@ -1399,6 +1879,65 @@ do
 				lastVisualSyncRefresh = now
 				for _, plr in ipairs(Players:GetPlayers()) do updateThirdEyeTag(plr) end
 				syncAllESP()
+			end
+
+			local char, hum, hrp = getRig()
+			if not char or not hum or not hrp then return end
+
+			local targetSpeed = Cfg.Speed and normalizeMovementSpeed(Cfg.SpeedVal) or 16
+			if Cfg.Speed then hum.WalkSpeed = targetSpeed end
+			if Cfg.Jump then
+				hum.UseJumpPower = true
+				hum.JumpPower = normalizeJumpPower(Cfg.JumpVal)
+			end
+
+			if Cfg.EmoteSpeed then
+				local safeSpd = normalizeEmoteSpeed(Cfg.EmoteVal)
+				for _, tr in ipairs(getAllActiveAnimTracks(hum)) do
+					pcall(function()
+						if math.abs(tr.Speed - safeSpd) > 0.01 then
+							tr:AdjustSpeed(safeSpd)
+						end
+					end)
+				end
+			end
+
+			if Cfg.AirWalk then
+				sanitizeAirWalkAnim(hum)
+				enforceAirWalkStates(hum)
+				if airY == nil then airY = hrp.Position.Y end
+				if airMoveDir ~= 0 then
+					airY = airY + (airMoveDir * Cfg.AirStep * math.clamp(dt * 60, 0.25, 2.5))
+				end
+				local movingNow = hum.MoveDirection.Magnitude > 0.05
+				if movingNow then
+					airWalkWasMoving = true
+					hum.WalkSpeed = targetSpeed
+				else
+					if airWalkWasMoving then
+						airWalkWasMoving = false
+						hum.WalkSpeed = 0
+						task.defer(function()
+							if Cfg.AirWalk and hum and hum.Parent then
+								hum.WalkSpeed = Cfg.Speed and targetSpeed or 16
+							end
+						end)
+					end
+					hrp.AssemblyLinearVelocity = Vector3.zero
+				end
+				local pos = hrp.Position
+				hrp.AssemblyLinearVelocity = Vector3.zero
+				hrp.CFrame = CFrame.new(pos.X, airY, pos.Z) * (hrp.CFrame - hrp.Position)
+			else
+				airWalkWasMoving = false
+			end
+
+			if Cfg.Spin then
+				local angDelta = math.rad(normalizeSpinSpeed(Cfg.SpinVal) * 6 * safeDt)
+				local pos = hrp.Position
+				local rotOnly = (hrp.CFrame - pos) * CFrame.Angles(0, angDelta, 0)
+				hrp.AssemblyLinearVelocity = Vector3.zero
+				hrp.CFrame = CFrame.new(pos) * rotOnly
 			end
 		end)
 	end)
