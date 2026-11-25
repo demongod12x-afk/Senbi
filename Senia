@@ -1,5 +1,5 @@
 -- ============================================================================
--- MORTAL HUB (SECTIONS 1, 2 & 3 - AIR WALK ANIMS, NO FLY PAD, EMOTE SPEED FIX)
+-- MORTAL HUB (LOADSTRING SAFE BUILD - ALL FEATURES PRESERVED)
 -- ============================================================================
 local function safeGetService(name)
 	local ok, svc = pcall(function()
@@ -62,6 +62,8 @@ if not PlayerGui then return end
 local CREATOR_NAME = "MORTAL"
 local GANG_NAME = "MORTALS"
 local SFX_ID = "rbxassetid://12221967"
+local STAR_TEXTURE = "rbxassetid://243098098"
+local MAX_AURA_LEVEL = 5
 
 local LEGACY_GUI_NAMES = {
 	"MortalDeltaRecodeV4", "MortalDeltaRecodeV3", "MortalDeltaRecodeV2",
@@ -84,7 +86,7 @@ local LEGACY_GUI_NAMES = {
 	"MortalV44CosmicRift", "MortalV45CosmicRift", "MortalV46CosmicRift",
 	"MortalV47CosmicRift", "MortalV48CosmicRift", "MortalV48CosmicRiftFixed",
 	"MortalV48CosmicRiftRecoded", "MortalCompactHub", "MortalEightHub",
-	"MortalAuraColorWheelGUI", "MortalAirWalkPad", "MortalFlyPad"
+	"MortalAuraColorWheelGUI", "MortalAirWalkPad"
 }
 
 for _, guiName in ipairs(LEGACY_GUI_NAMES) do
@@ -95,7 +97,7 @@ for _, guiName in ipairs(LEGACY_GUI_NAMES) do
 end
 
 -- ============================================================================
--- THEME PALETTE
+-- THEME PALETTE & AURA PRESETS
 -- ============================================================================
 local VOID_BG = Color3.fromRGB(5, 1, 13)
 local CARD_BG = Color3.fromRGB(12, 2, 29)
@@ -109,15 +111,95 @@ local TAG_DARK_BAR = Color3.fromRGB(4, 1, 9)
 local TAG_NEON_PURPLE = Color3.fromRGB(148, 35, 255)
 local TAG_NEON_OUTLINE = Color3.fromRGB(112, 0, 218)
 
-local FRIEND_BODY_BLUE = Color3.fromRGB(30, 110, 255)
-local FRIEND_NAME_BROWN = Color3.fromRGB(205, 115, 38)
-local FRIEND_GLOW_BROWN = Color3.fromRGB(255, 155, 55)
-local TARGET_BODY_RED = Color3.fromRGB(255, 25, 25)
-local TARGET_NAME_YELLOW = Color3.fromRGB(255, 235, 30)
-local ALL_BODY_PURPLE = Color3.fromRGB(145, 25, 255)
-local ALL_NAME_GREEN = Color3.fromRGB(45, 245, 95)
+local AURA_MODES = {
+	"COLUMN",
+	"SURGE",
+	"SMOKE",
+	"STAR_RADIANCE",
+	"MORTALS_NEVERDIE",
+}
+
+local AURA_MODE_LABELS = {
+	COLUMN = "COLUMN",
+	SURGE = "SURGE",
+	SMOKE = "SMOKE",
+	STAR_RADIANCE = "SERAPHIC & STARDUST",
+	MORTALS_NEVERDIE = "MORTALS NEVERDIE",
+}
 
 local userIdStr = tostring((LocalPlayer and LocalPlayer.UserId) or 0)
+local AURA_SAVE_FILE = "MortalHubAuraConfig_" .. userIdStr .. ".json"
+local AURA_OWNER_ATTR = "MortalHubAuraOwner_" .. userIdStr
+
+local DEFAULT_AURA_PURPLE = {
+	Start = Color3.fromRGB(95, 0, 145),
+	Mid = Color3.fromRGB(68, 0, 108),
+	Deep = Color3.fromRGB(45, 0, 75),
+	End = Color3.fromRGB(28, 0, 48),
+	Outline = Color3.fromRGB(125, 10, 190),
+	Light = Color3.fromRGB(88, 0, 138),
+}
+
+local DEFAULT_SURGE_PURPLE = {
+	Start = Color3.fromRGB(112, 12, 178),
+	Mid = Color3.fromRGB(86, 8, 142),
+	Deep = Color3.fromRGB(64, 5, 110),
+	End = Color3.fromRGB(46, 3, 82),
+	Outline = Color3.fromRGB(135, 22, 208),
+	Light = Color3.fromRGB(104, 10, 168),
+}
+
+local COLUMN_TEXTURES = {
+	"rbxassetid://1084960679",
+	"rbxassetid://243098098",
+	"rbxassetid://6101261905",
+}
+
+local COLUMN_CONFIG = {
+	[1] = { rate = 180, sizeStart = 1.4, sizeEnd = 3.8, speedMin = 3.8, speedMax = 7.4, spread = 58, accelY = 9.5, lightBright = 2.0, lightRange = 12 },
+	[2] = { rate = 260, sizeStart = 1.8, sizeEnd = 5.0, speedMin = 4.8, speedMax = 9.0, spread = 68, accelY = 12.0, lightBright = 2.8, lightRange = 15 },
+	[3] = { rate = 360, sizeStart = 2.2, sizeEnd = 6.2, speedMin = 5.8, speedMax = 10.8, spread = 78, accelY = 14.5, lightBright = 3.6, lightRange = 18 },
+	[4] = { rate = 480, sizeStart = 2.7, sizeEnd = 7.6, speedMin = 6.8, speedMax = 12.8, spread = 88, accelY = 17.5, lightBright = 4.5, lightRange = 21 },
+	[5] = { rate = 620, sizeStart = 3.2, sizeEnd = 9.2, speedMin = 8.0, speedMax = 15.0, spread = 98, accelY = 21.0, lightBright = 5.5, lightRange = 25 },
+}
+
+local SURGE_TEXTURES = {
+	"rbxassetid://1084960679",
+	"rbxassetid://6101261905",
+	"rbxassetid://7712212245",
+}
+
+local SURGE_CONFIG = {
+	[1] = { rate = 45, sizeStart = 1.5, sizeEnd = 4.0, speedMin = 1.3, speedMax = 3.2, spread = 115, wispRate = 20, idleMult = 1.8, lightBright = 1.8, lightRange = 11 },
+	[2] = { rate = 75, sizeStart = 2.0, sizeEnd = 5.2, speedMin = 1.7, speedMax = 4.0, spread = 135, wispRate = 32, idleMult = 2.4, lightBright = 2.5, lightRange = 14 },
+	[3] = { rate = 115, sizeStart = 2.5, sizeEnd = 6.6, speedMin = 2.2, speedMax = 5.0, spread = 155, wispRate = 48, idleMult = 3.2, lightBright = 3.2, lightRange = 17 },
+	[4] = { rate = 160, sizeStart = 3.0, sizeEnd = 8.0, speedMin = 2.8, speedMax = 6.2, spread = 175, wispRate = 68, idleMult = 4.0, lightBright = 4.0, lightRange = 20 },
+	[5] = { rate = 220, sizeStart = 3.6, sizeEnd = 9.8, speedMin = 3.4, speedMax = 7.5, spread = 195, wispRate = 95, idleMult = 5.0, lightBright = 5.0, lightRange = 24 },
+}
+
+local SMOKE_PRESETS = {
+	[1] = { label = "1 (Soft)", rateMult = 1.0, sizeMult = 0.85, speedMult = 0.95, shards = true, surge = false },
+	[2] = { label = "2 (Medium)", rateMult = 2.0, sizeMult = 1.25, speedMult = 1.15, shards = true, surge = false },
+	[3] = { label = "3 (High-)", rateMult = 3.2, sizeMult = 1.7, speedMult = 1.4, shards = true, surge = true },
+	[4] = { label = "4 (High)", rateMult = 4.2, sizeMult = 2.0, speedMult = 1.55, shards = true, surge = true },
+	[5] = { label = "5 (Max)", rateMult = 5.5, sizeMult = 2.35, speedMult = 1.75, shards = true, surge = true },
+}
+
+local STAR_RADIANCE_TIERS = {
+	[1] = { rateMult = 2.0, speedMult = 0.95, burst = 14, sizeMult = 0.85, spreadMult = 0.85, lightBright = 1.5, lightRange = 11, reachMult = 0.90 },
+	[2] = { rateMult = 3.2, speedMult = 1.10, burst = 22, sizeMult = 1.02, spreadMult = 1.02, lightBright = 2.0, lightRange = 14, reachMult = 1.08 },
+	[3] = { rateMult = 4.8, speedMult = 1.25, burst = 32, sizeMult = 1.20, spreadMult = 1.20, lightBright = 2.6, lightRange = 16, reachMult = 1.26 },
+	[4] = { rateMult = 6.8, speedMult = 1.42, burst = 44, sizeMult = 1.40, spreadMult = 1.40, lightBright = 3.3, lightRange = 19, reachMult = 1.44 },
+	[5] = { rateMult = 9.5, speedMult = 1.62, burst = 60, sizeMult = 1.62, spreadMult = 1.62, lightBright = 4.2, lightRange = 22, reachMult = 1.65 },
+}
+
+local ULTIMATE_SPREAD_PRESET = {
+	rateMult = 18.0,
+	sizeMult = 8.5,
+	speedMult = 7.5,
+	shards = true,
+	surge = true,
+}
 
 -- ============================================================================
 -- STATE & MODULES TABLE
@@ -125,40 +207,94 @@ local userIdStr = tostring((LocalPlayer and LocalPlayer.UserId) or 0)
 local Cfg = {
 	EyeLocked = false,
 	TopEyeOpen = true,
-	SelfTagVisible = true,
 	AuraEnabled = false,
+	AuraModeIdx = 1,
 	AuraLevel = 1,
+	UltimateSpread = false,
+	AuraHue = 0.77,
+	AuraSat = 0.94,
+	AuraVal = 0.65,
+	AuraCustomColor = false,
 	Speed = false, SpeedVal = 16,
 	Jump = false, JumpVal = 50,
 	Fly = false, FlyVal = 50,
-	AirWalk = false, AirY = nil, AirStep = 1.25,
+	AirWalk = false, AirY = 0, AirUp = false, AirDown = false, AirStep = 1.15,
 	Spin = false, SpinVal = 50,
 	EmoteSpeed = false, EmoteVal = 1,
-	Target = "",
 	ESPAll = false,
 	Noclip = false,
+	AntiSit = false,
+	ClickTP = false,
+	Target = "",
+	PlayerListOpen = false,
+	SpectateTarget = false,
+	LoopTP = false,
+	Orbit = false, OrbitSpeed = 3.5,
+	FollowTarget = false,
+	Mimic = false,
+	Bang = false,
+	FaceBang = false,
+	FrontBang = false,
+	MultiBang = false,
+	MultiBangSpeed = 2.2,
+	HeadSit = false,
+	ChatSpam = false,
+	SpamText = "MORTAL On Top!"
 }
 
 local Modules = {
 	Info = {},
 	Friends = {},
 	Player = {},
+	Exploits = {},
+	Troll = {},
+	PlayersTime = {},
+	Aura = {},
+	Spams = {},
 }
 
 local UI = {}
+local activeAuraItems = {}
+local activeAuraAttachments = {}
+local activeAuraEmitters = {}
+local activeAuraExtras = {}
+local auraWorldFolder = nil
+local crackRootFolder = nil
+local lastWalkCrackPos = nil
+local wasAirborne = false
+local builtAuraMode = nil
+local builtAuraLevel = nil
+local builtAuraUltimate = nil
+local builtAuraChar = nil
+local builtAuraColorSig = nil
+local lastSurgeBurstTick = -1
+
 local friendEspSet = {}
 local targetEspSet = {}
 local espStore = {}
 local thirdEyeTagStore = {}
 local verifiedScriptUsers = LocalPlayer and { [LocalPlayer.UserId] = true } or {}
-local notifiedFriends = {}
-local spectatedFriend = nil
-
+local ncStore = {}
+local noclipAnchorY = nil
+local noclipJumpEndTick = 0
+local mimicTracks = {}
+local lastMimicTarget = nil
 local airY = nil
 local airMoveDir = 0
+local airWalkWasMoving = false
+local orbitAngle = 0
+local lastSpamTick = 0
+local multiBangIndex = 1
+local lastMultiSwitchTick = 0
+local joinTimestamps = {}
+local notifiedFriends = {}
+local spectatedFriend = nil
+local lastSpectatedTargetHum = nil
+local headSitActiveLastFrame = false
 local flyConnection = nil
 local flyVelocity = nil
 local flyGyro = nil
+local flyAnimateDisabled = false
 local syncFlyUI = nil
 
 local mainFrame = nil
@@ -169,15 +305,22 @@ local eye1Pupil = nil
 local topEyePanel = nil
 local topEyeBtn = nil
 local topEyePupil = nil
-local topSelfTagBtn = nil
 local topAuraLvlLbl = nil
 local topAuraOnOffBtn = nil
 local topStatsLbl = nil
+local auraModeBtn = nil
+local auraUltimateBtn = nil
+local auraWheelOpenBtn = nil
+local auraColorStatusLbl = nil
+local targetInputBox = nil
+local listToggleBtn = nil
+local trollPlayerList = nil
 local refreshCallbacks = {}
+local refreshAuraUI = nil
 local airGui = nil
 
 -- ============================================================================
--- NUMERIC & HUGE VALUE PARSER
+-- NUMERIC & CONFIG HELPERS
 -- ============================================================================
 local function parseHugeNum(raw, defaultVal, minVal)
 	local str = tostring(raw or ""):gsub("[%s_,]", "")
@@ -203,62 +346,116 @@ local function parseHugeNum(raw, defaultVal, minVal)
 	return n
 end
 
-local function computeDynamicValue(rawOrNum, baseVal, bigBase, minVal, allowNegative)
-	local rawStr = tostring(rawOrNum or ""):gsub("[%s_,]", "")
-	local n = parseHugeNum(rawStr, baseVal, allowNegative and nil or 0)
-	if n == nil or n ~= n then return baseVal end
-	if n == 0 then return allowNegative and 0 or (minVal or 0) end
+local function normalizeMovementSpeed(v)
+	local n = tonumber(v) or 16
+	if n ~= n or n < 0 then return n ~= n and 16 or 0 end
+	return n
+end
 
-	local sign = 1
-	if n < 0 then
-		sign = allowNegative and -1 or 1
-		n = math.abs(n)
+local function normalizeJumpPower(v)
+	local n = tonumber(v) or 50
+	if n ~= n or n < 0 then return n ~= n and 50 or 0 end
+	return n
+end
+
+local function normalizeFlySpeed(v)
+	local n = tonumber(v) or 50
+	if n ~= n or n < 0 then return n ~= n and 50 or 0 end
+	return n
+end
+
+local function normalizeSpinSpeed(v)
+	local n = tonumber(v) or 50
+	return (n == n) and n or 50
+end
+
+local function normalizeEmoteSpeed(v)
+	local n = tonumber(v) or 1
+	return (n == n) and n or 1
+end
+
+local function normalizeMultiBangSpeed(v)
+	local n = tonumber(v) or 2.2
+	if n ~= n then return 2.2 end
+	return math.max(0.1, n)
+end
+
+local auraSaveVer = 0
+local function saveAuraConfigNow()
+	local payload = {
+		AuraEnabled = Cfg.AuraEnabled == true,
+		AuraModeIdx = math.clamp(tonumber(Cfg.AuraModeIdx) or 1, 1, #AURA_MODES),
+		AuraLevel = math.clamp(tonumber(Cfg.AuraLevel) or 1, 1, MAX_AURA_LEVEL),
+		UltimateSpread = Cfg.UltimateSpread == true,
+		AuraHue = math.clamp(tonumber(Cfg.AuraHue) or 0.77, 0, 1),
+		AuraSat = math.clamp(tonumber(Cfg.AuraSat) or 0.94, 0, 1),
+		AuraVal = math.clamp(tonumber(Cfg.AuraVal) or 0.65, 0.18, 1),
+		AuraCustomColor = Cfg.AuraCustomColor == true,
+	}
+	pcall(function()
+		if type(getgenv) == "function" then
+			local env = getgenv()
+			if type(env) == "table" then
+				env.MortalHubAuraSaved = payload
+			end
+		end
+	end)
+	pcall(function()
+		if type(writefile) == "function" and HttpService then
+			writefile(AURA_SAVE_FILE, HttpService:JSONEncode(payload))
+		end
+	end)
+end
+
+local function scheduleAuraSave(delaySec)
+	auraSaveVer = auraSaveVer + 1
+	local ver = auraSaveVer
+	task.delay(delaySec or 0.18, function()
+		if ver == auraSaveVer then
+			saveAuraConfigNow()
+		end
+	end)
+end
+
+local function loadAuraConfig()
+	local loaded = nil
+	if type(isfile) == "function" and type(readfile) == "function" and HttpService then
+		local okEx, ex = pcall(isfile, AURA_SAVE_FILE)
+		if okEx and ex then
+			local okR, raw = pcall(readfile, AURA_SAVE_FILE)
+			if okR and type(raw) == "string" and #raw > 0 then
+				local okD, dec = pcall(function() return HttpService:JSONDecode(raw) end)
+				if okD and type(dec) == "table" then
+					loaded = dec
+				end
+			end
+		end
 	end
-
-	local outVal
-	if n <= 50000 then
-		outVal = n
-	else
-		local digits = rawStr:gsub("[^%d]", "")
-		local lenBonus = #digits * 12
-		local headNum = tonumber(digits:sub(1, math.min(6, #digits))) or 100
-		local tailNum = tonumber(digits:sub(math.max(1, #digits - 5), #digits)) or 1
-		local mix = (headNum % 500) + (tailNum % 500)
-		outVal = bigBase + lenBonus + mix
+	if not loaded then
+		pcall(function()
+			if type(getgenv) == "function" then
+				local env = getgenv()
+				if type(env) == "table" and type(env.MortalHubAuraSaved) == "table" then
+					loaded = env.MortalHubAuraSaved
+				end
+			end
+		end)
 	end
-
-	outVal = outVal * sign
-	if minVal and outVal < minVal then outVal = minVal end
-	return outVal
+	if type(loaded) == "table" then
+		Cfg.AuraEnabled = (loaded.AuraEnabled == true)
+		Cfg.AuraModeIdx = math.clamp(tonumber(loaded.AuraModeIdx) or 1, 1, #AURA_MODES)
+		Cfg.AuraLevel = math.clamp(tonumber(loaded.AuraLevel) or 1, 1, MAX_AURA_LEVEL)
+		Cfg.UltimateSpread = (loaded.UltimateSpread == true)
+		Cfg.AuraHue = math.clamp(tonumber(loaded.AuraHue) or 0.77, 0, 1)
+		Cfg.AuraSat = math.clamp(tonumber(loaded.AuraSat) or 0.94, 0, 1)
+		Cfg.AuraVal = math.clamp(tonumber(loaded.AuraVal) or 0.65, 0.18, 1)
+		Cfg.AuraCustomColor = (loaded.AuraCustomColor == true)
+	end
 end
 
-local function getAppliedSpeed(val)
-	return computeDynamicValue(val, 16, 450, 0, false)
-end
-
-local function getAppliedJump(val)
-	return computeDynamicValue(val, 50, 550, 0, false)
-end
-
-local function getAppliedFlySpeed(val)
-	return computeDynamicValue(val, 50, 420, 0, false)
-end
-
-local function getAppliedSpin(val)
-	return computeDynamicValue(val, 50, 360, nil, true)
-end
-
-local function getAppliedEmoteSpeed(val)
-	local rawStr = tostring(val or ""):gsub("[%s_,]", "")
-	local n = parseHugeNum(rawStr, 1, 0)
-	if n == nil or n ~= n or n <= 0 then return 1 end
-	if n <= 50 then return n end
-	local digits = rawStr:gsub("[^%d]", "")
-	local headNum = tonumber(digits:sub(1, math.min(4, #digits))) or 10
-	local tailNum = tonumber(digits:sub(math.max(1, #digits - 3), #digits)) or 1
-	return 1.5 + ((#digits % 10) * 0.5) + ((headNum % 25) * 0.1) + ((tailNum % 25) * 0.05)
-end
-
+-- ============================================================================
+-- GENERAL UTILITIES & SERVER ACTIONS
+-- ============================================================================
 local uiSound = nil
 local function ensureUiSound()
 	if uiSound then return uiSound end
@@ -290,20 +487,60 @@ local function getRig()
 	return char, char:FindFirstChildOfClass("Humanoid"), char:FindFirstChild("HumanoidRootPart"), char:FindFirstChild("Head")
 end
 
+local function getTargetQuery()
+	if targetInputBox and targetInputBox.Text and (targetInputBox.Text:gsub("%s+", "")) ~= "" then
+		return targetInputBox.Text
+	end
+	return Cfg.Target
+end
+
 local function findPlayer(query)
 	if not query then return nil end
 	local q = string.lower((tostring(query):gsub("^%s+", ""):gsub("%s+$", "")))
 	if q == "" then return nil end
+	local partialList = {}
 	for _, plr in ipairs(Players:GetPlayers()) do
 		if plr ~= LocalPlayer then
 			local u = string.lower(plr.Name)
 			local d = string.lower(plr.DisplayName or "")
-			if u == q or d == q or string.find(u, q, 1, true) or (d ~= "" and string.find(d, q, 1, true)) then
-				return plr
-			end
+			if u == q or d == q then return plr end
+			table.insert(partialList, { plr = plr, u = u, d = d })
+		end
+	end
+	for _, entry in ipairs(partialList) do
+		if string.sub(entry.u, 1, #q) == q or (entry.d ~= "" and string.sub(entry.d, 1, #q) == q) then
+			return entry.plr
+		end
+	end
+	for _, entry in ipairs(partialList) do
+		if string.find(entry.u, q, 1, true) or (entry.d ~= "" and string.find(entry.d, q, 1, true)) then
+			return entry.plr
 		end
 	end
 	return nil
+end
+
+local function getAvatarHeightRatio(char, head)
+	local h = 5.0
+	if char then
+		local okExt, extSize = pcall(function() return char:GetExtentsSize() end)
+		if okExt and typeof(extSize) == "Vector3" and extSize.Y > 1 then
+			h = extSize.Y
+		elseif head and head:IsA("BasePart") then
+			h = math.max(2.5, head.Size.Y * 4.2)
+		end
+	end
+	return math.clamp(h / 5.0, 0.55, 2.6)
+end
+
+local function formatDuration(sec)
+	local s = math.max(0, math.floor(sec))
+	local h = math.floor(s / 3600)
+	local m = math.floor((s % 3600) / 60)
+	local r = s % 60
+	if h > 0 then return string.format("%dh %dm %ds", h, m, r)
+	elseif m > 0 then return string.format("%dm %ds", m, r)
+	else return string.format("%ds", r) end
 end
 
 local function getPing()
@@ -372,6 +609,32 @@ local function hopServer()
 			pcall(function() TeleportService:Teleport(game.PlaceId, LocalPlayer) end)
 		end
 	end)
+end
+
+local function sendChatMessage(msg)
+	local text = tostring(msg or "")
+	if text == "" then return end
+	if TextChatService then
+		pcall(function()
+			if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+				local channels = TextChatService:FindFirstChild("TextChannels")
+				local general = channels and (channels:FindFirstChild("RBXGeneral") or channels:GetChildren()[1])
+				if general and type(general.SendAsync) == "function" then
+					general:SendAsync(text)
+					return
+				end
+			end
+		end)
+	end
+	if ReplicatedStorage then
+		pcall(function()
+			local ev = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
+			local sayReq = ev and ev:FindFirstChild("SayMessageRequest")
+			if sayReq and type(sayReq.FireServer) == "function" then
+				sayReq:FireServer(text, "All")
+			end
+		end)
+	end
 end
 
 -- ============================================================================
@@ -500,45 +763,61 @@ local function createEyeGraphic(parentFrame, eyeW, eyeH, irisSize, pupilSize, zB
 end
 
 -- ============================================================================
--- FLY & AIR WALK (IDLE + WALK + RUN ANIMATIONS)
+-- FLY MODULE
 -- ============================================================================
+local function clearAllCharacterAnims(char, hum)
+	if hum then
+		pcall(function()
+			local animator = hum:FindFirstChildOfClass("Animator")
+			if animator then
+				for _, tr in ipairs(animator:GetPlayingAnimationTracks()) do tr:Stop(0) end
+			end
+			for _, tr in ipairs(hum:GetPlayingAnimationTracks()) do tr:Stop(0) end
+		end)
+	end
+	if char then
+		pcall(function()
+			local animScript = char:FindFirstChild("Animate")
+			if animScript and animScript:IsA("BaseScript") then
+				flyAnimateDisabled = animScript.Enabled
+				animScript.Enabled = false
+			end
+		end)
+	end
+end
+
+local function restoreCharacterAnims(char)
+	if char and flyAnimateDisabled then
+		pcall(function()
+			local animScript = char:FindFirstChild("Animate")
+			if animScript and animScript:IsA("BaseScript") then animScript.Enabled = true end
+		end)
+	end
+	flyAnimateDisabled = false
+end
+
 local function stopFly()
 	Cfg.Fly = false
-	if flyConnection then
-		flyConnection:Disconnect()
-		flyConnection = nil
-	end
-	if flyVelocity then
-		pcall(function() flyVelocity:Destroy() end)
-		flyVelocity = nil
-	end
-	if flyGyro then
-		pcall(function() flyGyro:Destroy() end)
-		flyGyro = nil
-	end
-
-	local _, hum = getRig()
-	if hum then
-		pcall(function() hum.PlatformStand = false end)
-	end
-	if syncFlyUI then
-		pcall(syncFlyUI)
-	end
+	if flyConnection then flyConnection:Disconnect(); flyConnection = nil end
+	if flyVelocity then pcall(function() flyVelocity:Destroy() end); flyVelocity = nil end
+	if flyGyro then pcall(function() flyGyro:Destroy() end); flyGyro = nil end
+	local char, hum = getRig()
+	restoreCharacterAnims(char)
+	if hum then pcall(function() hum.PlatformStand = false end) end
+	if syncFlyUI then pcall(syncFlyUI) end
 end
 
 local function startFly()
 	stopFly()
-	local _, hum, root = getRig()
+	local char, hum, root = getRig()
 	if not hum or not root then return end
-
 	Cfg.Fly = true
-	pcall(function()
-		hum.PlatformStand = true
-		root.CFrame = root.CFrame + Vector3.new(0, 3.5, 0)
-	end)
+	clearAllCharacterAnims(char, hum)
+	pcall(function() hum.PlatformStand = true end)
+	pcall(function() root.CFrame = root.CFrame + Vector3.new(0, 3.5, 0) end)
 
 	local vel = Instance.new("BodyVelocity")
-	vel.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+	vel.MaxForce = Vector3.new(1e7, 1e7, 1e7)
 	vel.Velocity = Vector3.zero
 	vel.Parent = root
 	flyVelocity = vel
@@ -549,60 +828,187 @@ local function startFly()
 	gyro.Parent = root
 	flyGyro = gyro
 
-	if syncFlyUI then
-		pcall(syncFlyUI)
-	end
+	if syncFlyUI then pcall(syncFlyUI) end
 
-	flyConnection = RunService.RenderStepped:Connect(function()
+	flyConnection = RunService.RenderStepped:Connect(function(dt)
 		if not Cfg.Fly or not root or not root.Parent then
 			stopFly()
 			return
 		end
-
 		local camera = workspace.CurrentCamera
 		local move = hum.MoveDirection
-		local spd = getAppliedFlySpeed(Cfg.FlyVal)
-		local vertical = 0
-
-		if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-			vertical = 1
-		elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-			vertical = -1
-		end
-
-		local moveDirVec = Vector3.zero
+		local spd = normalizeFlySpeed(Cfg.FlyVal)
+		local desiredVel = Vector3.zero
 		if move.Magnitude > 0.05 and camera then
 			local camCF = camera.CFrame
-			local rightFlat = Vector3.new(camCF.RightVector.X, 0, camCF.RightVector.Z)
-			if rightFlat.Magnitude > 1e-4 then rightFlat = rightFlat.Unit end
-			local forwardFlat = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z)
-			if forwardFlat.Magnitude > 1e-4 then forwardFlat = forwardFlat.Unit end
-
-			local forwardAmt = move:Dot(forwardFlat)
-			local rightAmt = move:Dot(rightFlat)
-			moveDirVec = (camCF.LookVector * forwardAmt) + (rightFlat * rightAmt)
+			local camLook = camCF.LookVector
+			local camRight = camCF.RightVector
+			local horizRight = Vector3.new(camRight.X, 0, camRight.Z)
+			if horizRight.Magnitude > 1e-4 then horizRight = horizRight.Unit end
+			local flatLook = Vector3.new(camLook.X, 0, camLook.Z)
+			local forwardAmt = (flatLook.Magnitude > 1e-4) and move:Dot(flatLook.Unit) or move.Magnitude
+			local rightAmt = move:Dot(horizRight)
+			local aimDir = (camLook * forwardAmt) + (horizRight * rightAmt)
+			desiredVel = (aimDir.Magnitude > 1e-4) and (aimDir.Unit * math.clamp(move.Magnitude, 0, 1) * spd) or (move.Unit * spd)
 		elseif move.Magnitude > 0.05 then
-			moveDirVec = move
+			desiredVel = move.Unit * spd
 		end
-
-		local totalDir = moveDirVec + Vector3.new(0, vertical, 0)
-		if totalDir.Magnitude > 1e-4 then
-			vel.Velocity = totalDir.Unit * spd
-		else
-			vel.Velocity = Vector3.zero
+		vel.Velocity = desiredVel
+		root.AssemblyLinearVelocity = desiredVel
+		if desiredVel.Magnitude > 0.05 then
+			root.CFrame = root.CFrame + (desiredVel * math.min(dt, 0.05))
 		end
-
-		if camera then
-			gyro.CFrame = camera.CFrame
-		end
+		if camera then gyro.CFrame = camera.CFrame end
 	end)
 end
 
 local function setFlyState(on)
-	if on then
-		startFly()
+	if on then startFly() else stopFly() end
+end
+
+-- ============================================================================
+-- MOVEMENT, ANTI-SIT, NOCLIP, HEAD-SIT, MIMIC & AIR WALK
+-- ============================================================================
+local function forceUnseatSeatParts(char)
+	if not char then return end
+	for _, desc in ipairs(char:GetDescendants()) do
+		if desc:IsA("Weld") or desc:IsA("WeldConstraint") or desc:IsA("ManualWeld") then
+			local p0, p1 = desc.Part0, desc.Part1
+			if (p0 and (p0:IsA("Seat") or p0:IsA("VehicleSeat"))) or (p1 and (p1:IsA("Seat") or p1:IsA("VehicleSeat"))) then
+				pcall(function() desc:Destroy() end)
+			end
+		end
+	end
+end
+
+local function setAntiSit(hum, enabled)
+	if not hum then return end
+	if Cfg.HeadSit then
+		pcall(function() hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true) end)
+		return
+	end
+	pcall(function()
+		hum:SetStateEnabled(Enum.HumanoidStateType.Seated, not enabled)
+		if enabled and (hum.Sit or hum.SeatPart) then
+			hum.Sit = false
+			hum.SeatPart = nil
+			forceUnseatSeatParts(hum.Parent)
+			if hum:GetState() == Enum.HumanoidStateType.Seated then
+				hum:ChangeState(Enum.HumanoidStateType.Running)
+			end
+		end
+	end)
+end
+
+local function setNoclip(char, hum, enabled)
+	if hum then
+		pcall(function()
+			hum:SetStateEnabled(Enum.HumanoidStateType.Climbing, not enabled)
+			hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+			if enabled and hum:GetState() == Enum.HumanoidStateType.Climbing then
+				hum:ChangeState(Enum.HumanoidStateType.Running)
+			end
+		end)
+	end
+	if not char then
+		noclipAnchorY = nil
+		return
+	end
+	if enabled then
+		for _, p in ipairs(char:GetDescendants()) do
+			if p:IsA("BasePart") then
+				if ncStore[p] == nil then ncStore[p] = p.CanCollide end
+				pcall(function() p.CanCollide = false end)
+			end
+		end
 	else
-		stopFly()
+		noclipAnchorY = nil
+		for p, oldCol in pairs(ncStore) do
+			if p and p.Parent then pcall(function() p.CanCollide = oldCol end) end
+			ncStore[p] = nil
+		end
+	end
+end
+
+local function applyNoclipHorizontalLock(char, hum, hrp)
+	if not Cfg.Noclip or Cfg.Fly or Cfg.AirWalk or not char or not hum or not hrp then
+		noclipAnchorY = nil
+		return
+	end
+	local now = os.clock()
+	local state = hum:GetState()
+	local isJumping = hum.Jump or state == Enum.HumanoidStateType.Jumping or state == Enum.HumanoidStateType.Freefall
+	if isJumping then
+		noclipJumpEndTick = now + 0.55
+		noclipAnchorY = nil
+		return
+	end
+	if now < noclipJumpEndTick then return end
+	local moving = hum.MoveDirection.Magnitude > 0.05
+	local vel = hrp.AssemblyLinearVelocity
+	if moving then
+		if noclipAnchorY == nil then
+			noclipAnchorY = hrp.Position.Y
+		else
+			local deltaY = hrp.Position.Y - noclipAnchorY
+			if math.abs(deltaY) > 0.08 then
+				local rotOnly = hrp.CFrame - hrp.Position
+				hrp.CFrame = CFrame.new(hrp.Position.X, noclipAnchorY, hrp.Position.Z) * rotOnly
+			end
+		end
+		if math.abs(vel.Y) > 0.1 then
+			hrp.AssemblyLinearVelocity = Vector3.new(vel.X, 0, vel.Z)
+		end
+	else
+		noclipAnchorY = hrp.Position.Y
+		if math.abs(vel.Y) > 0.1 then
+			hrp.AssemblyLinearVelocity = Vector3.new(vel.X, 0, vel.Z)
+		end
+	end
+end
+
+local function releaseHeadSit(hum)
+	headSitActiveLastFrame = false
+	if hum then
+		pcall(function()
+			hum.Sit = false
+			hum:SetStateEnabled(Enum.HumanoidStateType.Seated, not Cfg.AntiSit)
+			if hum:GetState() == Enum.HumanoidStateType.Seated then
+				hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+			end
+		end)
+	end
+end
+
+local function applyHeadSitLock(char, hum, hrp, tgtChar, tgtRoot, tgtHead)
+	if not hum or not hrp or not tgtChar or not tgtRoot then return false end
+	local hRatio = getAvatarHeightRatio(tgtChar, tgtHead)
+	local myRatio = getAvatarHeightRatio(char, char:FindFirstChild("Head"))
+	local lookDir = tgtRoot.CFrame.LookVector
+	local flatLook = Vector3.new(lookDir.X, 0, lookDir.Z)
+	flatLook = (flatLook.Magnitude < 1e-4) and Vector3.new(0, 0, -1) or flatLook.Unit
+	pcall(function()
+		hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+		hum.Sit = true
+		if hum:GetState() ~= Enum.HumanoidStateType.Seated then
+			hum:ChangeState(Enum.HumanoidStateType.Seated)
+		end
+	end)
+	local headPos = tgtHead and tgtHead.Position or (tgtRoot.Position + Vector3.new(0, 1.5 * hRatio, 0))
+	local headTopY = headPos.Y + ((tgtHead and tgtHead.Size.Y or (1.2 * hRatio)) * 0.5)
+	local sitPos = Vector3.new(headPos.X, headTopY + (1.05 * myRatio), headPos.Z)
+	hrp.AssemblyLinearVelocity = Vector3.zero
+	hrp.AssemblyAngularVelocity = Vector3.zero
+	hrp.CFrame = CFrame.lookAt(sitPos, sitPos + flatLook)
+	return true
+end
+
+local function clearMimic()
+	for id, tr in pairs(mimicTracks) do
+		pcall(function()
+			if tr then tr:Stop(0); tr:Destroy() end
+		end)
+		mimicTracks[id] = nil
 	end
 end
 
@@ -625,27 +1031,79 @@ local function getAllActiveAnimTracks(hum)
 	return list
 end
 
-local function applyEmoteSpeedToHum(hum, spd)
-	if not hum then return end
-	for _, tr in ipairs(getAllActiveAnimTracks(hum)) do
-		pcall(function()
-			tr:AdjustSpeed(spd)
-		end)
+local function runMimic(myChar, myHum, targetPlr)
+	if targetPlr ~= lastMimicTarget then
+		clearMimic()
+		lastMimicTarget = targetPlr
+	end
+	if not myChar or not myHum or not targetPlr or not targetPlr.Character then
+		clearMimic()
+		return
+	end
+	local tHum = targetPlr.Character:FindFirstChildOfClass("Humanoid")
+	if not tHum then
+		clearMimic()
+		return
+	end
+	local myAnimator = myHum:FindFirstChildOfClass("Animator") or Instance.new("Animator", myHum)
+	local activeKeys = {}
+
+	for idx, src in ipairs(getAllActiveAnimTracks(tHum)) do
+		local anim = src.Animation
+		local animId = anim and anim.AnimationId
+		if src.IsPlaying and animId and animId ~= "" then
+			local key = tostring(animId) .. "#" .. tostring(idx)
+			activeKeys[key] = true
+			local tr = mimicTracks[key]
+			if not tr then
+				local newAnim = Instance.new("Animation")
+				newAnim.AnimationId = animId
+				local ok, loaded = pcall(function() return myAnimator:LoadAnimation(newAnim) end)
+				if ok and loaded then
+					pcall(function() loaded.Priority = src.Priority end)
+					loaded.Looped = src.Looped
+					loaded:Play(0.05, 1, normalizeEmoteSpeed(src.Speed))
+					mimicTracks[key] = loaded
+					tr = loaded
+				end
+			end
+			if tr then
+				pcall(function()
+					if not tr.IsPlaying then tr:Play(0.05) end
+					tr.Looped = src.Looped
+					tr:AdjustSpeed(normalizeEmoteSpeed(src.Speed))
+				end)
+			end
+		end
+	end
+
+	for key, tr in pairs(mimicTracks) do
+		if not activeKeys[key] then
+			pcall(function() tr:Stop(0.05); tr:Destroy() end)
+			mimicTracks[key] = nil
+		end
 	end
 end
 
--- Keeps Humanoid animation states free (idle/walk/run) while holding vertical height in Air Walk.
-local function syncAirWalkMovementAnimations(hum, moveVec)
+local function enforceAirWalkStates(hum)
 	if not hum then return end
 	pcall(function()
-		hum.PlatformStand = false
-		if moveVec.Magnitude > 0.05 then
-			if hum:GetState() ~= Enum.HumanoidStateType.Running then
-				hum:ChangeState(Enum.HumanoidStateType.Running)
-			end
-		else
-			if hum:GetState() ~= Enum.HumanoidStateType.Running then
-				hum:ChangeState(Enum.HumanoidStateType.Running)
+		hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+		hum:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
+		hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
+		hum:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+		local st = (hum.MoveDirection.Magnitude > 0.05) and Enum.HumanoidStateType.Running or Enum.HumanoidStateType.Landed
+		if hum:GetState() ~= st then hum:ChangeState(st) end
+	end)
+end
+
+local function sanitizeAirWalkAnim(hum)
+	if not hum then return end
+	pcall(function()
+		for _, tr in ipairs(hum:GetPlayingAnimationTracks()) do
+			local animName = string.lower((tr.Animation and tr.Animation.Name) or "")
+			if string.find(animName, "fall", 1, true) or string.find(animName, "jump", 1, true) or string.find(animName, "climb", 1, true) then
+				tr:Stop(0.05)
 			end
 		end
 	end)
@@ -654,38 +1112,25 @@ end
 local function setAirWalkState(on)
 	Cfg.AirWalk = (on == true)
 	airMoveDir = 0
+	airWalkWasMoving = false
 	if airGui then airGui.Enabled = Cfg.AirWalk end
-	local char, hum, hrp = getRig()
+	local _, hum, hrp = getRig()
 	if Cfg.AirWalk and hrp then
 		airY = hrp.Position.Y
-		if char then
-			pcall(function()
-				local animScript = char:FindFirstChild("Animate")
-				if animScript and animScript:IsA("BaseScript") then
-					animScript.Enabled = true
-				end
-			end)
-		end
 		if hum then
-			pcall(function()
-				hum.PlatformStand = false
-				hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-				hum:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
-				hum:ChangeState(Enum.HumanoidStateType.Running)
-				if Cfg.Speed then
-					hum.WalkSpeed = getAppliedSpeed(Cfg.SpeedVal)
-				end
-			end)
+			if Cfg.Speed then hum.WalkSpeed = normalizeMovementSpeed(Cfg.SpeedVal) end
+			enforceAirWalkStates(hum)
+			sanitizeAirWalkAnim(hum)
 		end
 	else
 		airY = nil
 		if hum then
 			pcall(function()
 				hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+				hum:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
+				hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
 				hum:SetStateEnabled(Enum.HumanoidStateType.Climbing, not Cfg.Noclip)
-				if Cfg.Speed then
-					hum.WalkSpeed = getAppliedSpeed(Cfg.SpeedVal)
-				end
+				hum.WalkSpeed = Cfg.Speed and normalizeMovementSpeed(Cfg.SpeedVal) or 16
 				hum:ChangeState(Enum.HumanoidStateType.GettingUp)
 			end)
 		end
@@ -693,7 +1138,7 @@ local function setAirWalkState(on)
 end
 
 -- ============================================================================
--- 3RD EYE OVERHEAD TAG (LOCAL VISIBILITY CONTROL) & ESP ENGINE
+-- OVERHEAD TAG & ESP
 -- ============================================================================
 local function clearThirdEyeTag(plr)
 	if thirdEyeTagStore[plr] then
@@ -748,7 +1193,7 @@ local function updateThirdEyeTag(plr)
 			bb.Size = UDim2.new(0, barW, 0, 24)
 			bb.StudsOffset = Vector3.new(0, 2.8, 0)
 			bb.AlwaysOnTop = true
-			bb.MaxDistance = math.huge
+			bb.MaxDistance = 9999
 			bb.Parent = head
 
 			local bar = Instance.new("Frame")
@@ -785,20 +1230,9 @@ local function updateThirdEyeTag(plr)
 			lbl.TextStrokeTransparency = 0
 			lbl.Parent = bar
 
-			entry = { Char = pChar, Billboard = bb, Pupil = pupil }
-			thirdEyeTagStore[plr] = entry
+			thirdEyeTagStore[plr] = { Char = pChar, Billboard = bb, Pupil = pupil }
 		end)
-	end
-
-	if entry and entry.Billboard then
-		if plr == LocalPlayer then
-			entry.Billboard.Enabled = (Cfg.SelfTagVisible == true)
-		else
-			entry.Billboard.Enabled = true
-		end
-	end
-
-	if entry and entry.Pupil and entry.Billboard and entry.Billboard.Enabled then
+	elseif entry.Pupil then
 		local t = os.clock()
 		entry.Pupil.Position = UDim2.new(0.5 + math.cos(t * 2.2) * 0.12, -1.5, 0.5 + math.sin(t * 1.7) * 0.1, -1.5)
 	end
@@ -812,16 +1246,6 @@ local function clearESP(plr)
 		end)
 		espStore[plr] = nil
 	end
-end
-
-local function getDistanceMeters(plr)
-	local _, _, myR = getRig()
-	local tChar = plr and plr.Character
-	local tR = tChar and (tChar:FindFirstChild("HumanoidRootPart") or tChar:FindFirstChild("Head"))
-	if myR and tR then
-		return math.floor((myR.Position - tR.Position).Magnitude + 0.5)
-	end
-	return nil
 end
 
 local function drawESP(plr, bodyCol, nameCol, mode)
@@ -844,16 +1268,14 @@ local function drawESP(plr, bodyCol, nameCol, mode)
 			hl.OutlineColor = bodyCol
 			hl.Parent = pChar
 
-			local isFriendMode = (mode == "FRIEND")
 			local bb = Instance.new("BillboardGui")
 			bb.Name = "MortalESP_BB"
-			bb.Size = UDim2.new(0, 230, 0, mode == "TARGET" and 48 or 32)
-			bb.StudsOffset = Vector3.new(0, mode == "TARGET" and 3.5 or 2.9, 0)
+			bb.Size = UDim2.new(0, 195, 0, mode == "TARGET" and 46 or 28)
+			bb.StudsOffset = Vector3.new(0, mode == "TARGET" and 3.5 or 2.6, 0)
 			bb.AlwaysOnTop = true
-			bb.MaxDistance = math.huge
+			bb.MaxDistance = 9999
 			bb.Parent = head
 
-			local nameLbl = nil
 			if mode == "TARGET" then
 				local badge = Instance.new("TextLabel")
 				badge.Size = UDim2.new(0, 96, 0, 18)
@@ -874,7 +1296,7 @@ local function drawESP(plr, bodyCol, nameCol, mode)
 				glowStroke.Transparency = 0
 				glowStroke.Parent = badge
 
-				nameLbl = Instance.new("TextLabel")
+				local nameLbl = Instance.new("TextLabel")
 				nameLbl.Size = UDim2.new(1, 0, 0, 22)
 				nameLbl.Position = UDim2.new(0, 0, 0, 20)
 				nameLbl.BackgroundTransparency = 1
@@ -885,42 +1307,8 @@ local function drawESP(plr, bodyCol, nameCol, mode)
 				nameLbl.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 				nameLbl.TextStrokeTransparency = 0.15
 				nameLbl.Parent = bb
-			elseif isFriendMode then
-				local pill = Instance.new("Frame")
-				pill.Size = UDim2.new(1, -8, 1, -4)
-				pill.Position = UDim2.new(0, 4, 0, 2)
-				pill.BackgroundColor3 = Color3.fromRGB(16, 7, 2)
-				pill.BackgroundTransparency = 0.25
-				pill.BorderSizePixel = 0
-				pill.Parent = bb
-				Instance.new("UICorner", pill).CornerRadius = UDim.new(0, 7)
-
-				local pillGlow = Instance.new("UIStroke")
-				pillGlow.Color = FRIEND_GLOW_BROWN
-				pillGlow.Thickness = 1.6
-				pillGlow.Transparency = 0.15
-				pillGlow.Parent = pill
-
-				nameLbl = Instance.new("TextLabel")
-				nameLbl.Size = UDim2.new(1, -8, 1, 0)
-				nameLbl.Position = UDim2.new(0, 4, 0, 0)
-				nameLbl.BackgroundTransparency = 1
-				nameLbl.Font = Enum.Font.GothamBlack
-				nameLbl.TextSize = 13
-				nameLbl.TextScaled = true
-				nameLbl.Text = plr.DisplayName .. " (@" .. plr.Name .. ")"
-				nameLbl.TextColor3 = nameCol
-				nameLbl.TextStrokeColor3 = Color3.fromRGB(35, 14, 3)
-				nameLbl.TextStrokeTransparency = 0
-				nameLbl.Parent = pill
-
-				local glow = Instance.new("UIStroke")
-				glow.Color = FRIEND_GLOW_BROWN
-				glow.Thickness = 2.2
-				glow.Transparency = 0.05
-				glow.Parent = nameLbl
 			else
-				nameLbl = Instance.new("TextLabel")
+				local nameLbl = Instance.new("TextLabel")
 				nameLbl.Size = UDim2.new(1, 0, 1, 0)
 				nameLbl.BackgroundTransparency = 1
 				nameLbl.Font = Enum.Font.GothamBold
@@ -932,20 +1320,13 @@ local function drawESP(plr, bodyCol, nameCol, mode)
 				nameLbl.Parent = bb
 			end
 
-			entry = { Char = pChar, Mode = mode, Highlight = hl, Billboard = bb, NameLabel = nameLbl }
-			espStore[plr] = entry
+			espStore[plr] = { Char = pChar, Mode = mode, Highlight = hl, Billboard = bb }
 		end)
-	end
-
-	if entry and entry.NameLabel then
-		local dist = getDistanceMeters(plr)
-		local distSuffix = dist and (" [" .. tostring(dist) .. "m]") or ""
-		entry.NameLabel.Text = plr.DisplayName .. " (@" .. plr.Name .. ")" .. distSuffix
 	end
 end
 
 local function getActiveTargetPlayer()
-	local direct = findPlayer(Cfg.Target)
+	local direct = findPlayer(getTargetQuery())
 	if direct then return direct end
 	for plr, active in pairs(targetEspSet) do
 		if active and plr and plr.Parent == Players then return plr end
@@ -961,11 +1342,11 @@ local function syncAllESP()
 			local isFrd = (friendEspSet[plr] == true)
 			local isAll = (Cfg.ESPAll == true)
 			if isTgt then
-				drawESP(plr, TARGET_BODY_RED, TARGET_NAME_YELLOW, "TARGET")
+				drawESP(plr, Color3.fromRGB(255, 25, 25), Color3.fromRGB(255, 235, 30), "TARGET")
 			elseif isFrd then
-				drawESP(plr, FRIEND_BODY_BLUE, FRIEND_NAME_BROWN, "FRIEND")
+				drawESP(plr, Color3.fromRGB(30, 110, 255), Color3.fromRGB(155, 88, 35), "FRIEND")
 			elseif isAll then
-				drawESP(plr, ALL_BODY_PURPLE, ALL_NAME_GREEN, "ALL")
+				drawESP(plr, Color3.fromRGB(145, 25, 255), Color3.fromRGB(45, 245, 95), "ALL")
 			else
 				clearESP(plr)
 			end
@@ -974,7 +1355,973 @@ local function syncAllESP()
 end
 
 -- ============================================================================
--- SCREENGUIS (MAIN + AIR WALK PAD)
+-- AURA ENGINE
+-- ============================================================================
+local function getAuraColorSignature()
+	return string.format("%s:%.3f:%.3f:%.3f", tostring(Cfg.AuraCustomColor), Cfg.AuraHue, Cfg.AuraSat, Cfg.AuraVal)
+end
+
+local function scaleAuraColor3(col, factor)
+	return Color3.new(
+		math.clamp(col.R * factor, 0, 1),
+		math.clamp(col.G * factor, 0, 1),
+		math.clamp(col.B * factor, 0, 1)
+	)
+end
+
+local function getPickedAuraColor()
+	if not Cfg.AuraCustomColor then return DEFAULT_AURA_PURPLE.Start end
+	return Color3.fromHSV(
+		math.clamp(Cfg.AuraHue, 0, 1),
+		math.clamp(Cfg.AuraSat, 0, 1),
+		math.clamp(Cfg.AuraVal, 0.18, 1)
+	)
+end
+
+local function buildAuraColorSet(modeName)
+	if not Cfg.AuraCustomColor then
+		if modeName == "SURGE" then
+			return {
+				Start = DEFAULT_SURGE_PURPLE.Start, Mid = DEFAULT_SURGE_PURPLE.Mid,
+				Deep = DEFAULT_SURGE_PURPLE.Deep, End = DEFAULT_SURGE_PURPLE.End,
+				Outline = DEFAULT_SURGE_PURPLE.Outline, Light = DEFAULT_SURGE_PURPLE.Light,
+			}
+		elseif modeName == "STAR_RADIANCE" then
+			return {
+				Start = Color3.fromRGB(165, 235, 255), Mid = Color3.fromRGB(45, 165, 255),
+				Deep = Color3.fromRGB(25, 95, 225), End = Color3.fromRGB(10, 55, 195),
+				Outline = Color3.fromRGB(115, 215, 255), Light = Color3.fromRGB(55, 175, 255),
+			}
+		elseif modeName == "MORTALS_NEVERDIE" then
+			return {
+				Start = Color3.fromRGB(175, 65, 255), Mid = Color3.fromRGB(125, 20, 245),
+				Deep = Color3.fromRGB(75, 8, 175), End = Color3.fromRGB(35, 2, 95),
+				Outline = Color3.fromRGB(155, 45, 255), Light = Color3.fromRGB(155, 35, 255),
+			}
+		end
+		return DEFAULT_AURA_PURPLE
+	end
+	local baseCol = getPickedAuraColor()
+	local surgeBoost = (modeName == "SURGE") and 1.12 or 1.0
+	return {
+		Start = scaleAuraColor3(baseCol, math.clamp(1.0 * surgeBoost, 0.15, 1.25)),
+		Mid = scaleAuraColor3(baseCol, math.clamp(0.75 * surgeBoost, 0.12, 1.1)),
+		Deep = scaleAuraColor3(baseCol, math.clamp(0.52 * surgeBoost, 0.08, 0.9)),
+		End = scaleAuraColor3(baseCol, math.clamp(0.32 * surgeBoost, 0.05, 0.7)),
+		Outline = scaleAuraColor3(baseCol, math.clamp(1.22 * surgeBoost, 0.25, 1.45)),
+		Light = scaleAuraColor3(baseCol, math.clamp(0.95 * surgeBoost, 0.15, 1.2)),
+	}
+end
+
+local function makeAuraSequence(modeName)
+	local set = buildAuraColorSet(modeName)
+	return ColorSequence.new({
+		ColorSequenceKeypoint.new(0, set.Start),
+		ColorSequenceKeypoint.new(0.45, set.Mid),
+		ColorSequenceKeypoint.new(0.82, set.Deep),
+		ColorSequenceKeypoint.new(1, set.End),
+	})
+end
+
+local function markAuraOwned(inst, tagName)
+	inst:SetAttribute(AURA_OWNER_ATTR, true)
+	inst:SetAttribute("MortalAuraFX", true)
+	if tagName then inst:SetAttribute(tagName, true) end
+end
+
+local function clearAuraEffects()
+	for _, item in ipairs(activeAuraItems) do
+		for _, listKey in ipairs({ "emitters", "spreadEmitters" }) do
+			if item[listKey] then
+				for _, pe in ipairs(item[listKey]) do
+					local emitter = pe.emitter or pe
+					pcall(function() emitter.Enabled = false; emitter:Clear(); emitter:Destroy() end)
+				end
+			end
+		end
+		if item.light then pcall(function() item.light.Enabled = false; item.light:Destroy() end) end
+		if item.extras then
+			for _, ex in ipairs(item.extras) do pcall(function() ex:Destroy() end) end
+		end
+		for _, crackListKey in ipairs({ "walkCracks", "landingCracks" }) do
+			if item[crackListKey] then
+				for _, c in ipairs(item[crackListKey]) do
+					pcall(function() if c.folder then c.folder:Destroy() end end)
+				end
+				table.clear(item[crackListKey])
+			end
+		end
+	end
+	table.clear(activeAuraItems)
+
+	for _, pe in ipairs(activeAuraEmitters) do
+		local emitter = pe.emitter or pe
+		pcall(function() emitter.Enabled = false; emitter:Clear(); emitter:Destroy() end)
+	end
+	table.clear(activeAuraEmitters)
+
+	for _, att in ipairs(activeAuraAttachments) do pcall(function() att:Destroy() end) end
+	table.clear(activeAuraAttachments)
+
+	for _, ex in ipairs(activeAuraExtras) do pcall(function() ex:Destroy() end) end
+	table.clear(activeAuraExtras)
+
+	if auraWorldFolder then pcall(function() auraWorldFolder:Destroy() end); auraWorldFolder = nil end
+	if crackRootFolder then pcall(function() crackRootFolder:Destroy() end); crackRootFolder = nil end
+
+	builtAuraMode = nil
+	builtAuraLevel = nil
+	builtAuraUltimate = nil
+	builtAuraChar = nil
+	builtAuraColorSig = nil
+	lastSurgeBurstTick = -1
+	lastWalkCrackPos = nil
+	wasAirborne = false
+end
+
+local function applyLiveAuraColorOnly()
+	local modeName = AURA_MODES[Cfg.AuraModeIdx] or "COLUMN"
+	local seq = makeAuraSequence(modeName)
+	local set = buildAuraColorSet(modeName)
+	for _, pe in ipairs(activeAuraEmitters) do
+		local emitter = pe.emitter or pe
+		if emitter and emitter.Parent then emitter.Color = seq end
+	end
+	for _, item in ipairs(activeAuraItems) do
+		for _, listKey in ipairs({ "emitters", "spreadEmitters" }) do
+			if item[listKey] then
+				for _, pe in ipairs(item[listKey]) do
+					local emitter = pe.emitter or pe
+					if emitter and emitter.Parent then emitter.Color = seq end
+				end
+			end
+		end
+		if item.light and item.light.Parent then item.light.Color = set.Light end
+		if item.extras then
+			for _, ex in ipairs(item.extras) do
+				if ex and ex.Parent then
+					if ex:IsA("Highlight") then ex.FillColor = set.Deep; ex.OutlineColor = set.Outline
+					elseif ex:IsA("PointLight") then ex.Color = set.Light end
+				end
+			end
+		end
+	end
+	for _, ex in ipairs(activeAuraExtras) do
+		if ex and ex.Parent then
+			if ex:IsA("Highlight") then ex.FillColor = set.Deep; ex.OutlineColor = set.Outline
+			elseif ex:IsA("PointLight") then ex.Color = set.Light end
+		end
+	end
+	builtAuraColorSig = getAuraColorSignature()
+end
+
+local function getAuraTargetParts(char)
+	local parts = {}
+	for _, desc in ipairs(char:GetDescendants()) do
+		if desc:IsA("BasePart") and desc.Name ~= "HumanoidRootPart" then
+			table.insert(parts, desc)
+		end
+	end
+	return parts
+end
+
+local function collectAuraBodyParts(char, hrp)
+	local parts = {}
+	for _, desc in ipairs(char:GetDescendants()) do
+		if desc:IsA("BasePart") and desc.Name ~= "HumanoidRootPart" and desc.Size.Magnitude > 0.15 then
+			table.insert(parts, desc)
+		end
+	end
+	if #parts == 0 then table.insert(parts, hrp) end
+	return parts
+end
+
+local function isAuraLegOrFoot(part)
+	local n = string.lower(part.Name)
+	return string.find(n, "leg", 1, true) ~= nil or string.find(n, "foot", 1, true) ~= nil
+		or string.find(n, "feet", 1, true) ~= nil or string.find(n, "ankle", 1, true) ~= nil
+		or string.find(n, "shin", 1, true) ~= nil or string.find(n, "thigh", 1, true) ~= nil
+end
+
+local function applyAuraUltimateGlow(char, modeName, extrasOut)
+	local set = buildAuraColorSet(modeName)
+	local hl = Instance.new("Highlight")
+	hl.Name = "MortalUltimateGlowHighlight"
+	hl.Adornee = char
+	hl.FillColor = set.Deep
+	hl.FillTransparency = 1
+	hl.OutlineColor = set.Outline
+	hl.OutlineTransparency = 0
+	hl.DepthMode = Enum.HighlightDepthMode.Occluded
+	markAuraOwned(hl, "MortalUltimateGlow")
+	hl.Parent = char
+	table.insert(extrasOut, hl)
+	table.insert(activeAuraExtras, hl)
+end
+
+local function attachAuraUltimateSpread(char, modeName, texList, spreadOut)
+	local parts = getAuraTargetParts(char)
+	local offsets = {
+		Vector3.new(-0.45, 0.25, 0),
+		Vector3.new(0.45, -0.25, 0),
+	}
+	local seq = makeAuraSequence(modeName)
+	local isColumn = (modeName == "COLUMN")
+	for _, part in ipairs(parts) do
+		local legBoost = isAuraLegOrFoot(part) and 1.25 or 1.0
+		for i = 1, 2 do
+			local att = Instance.new("Attachment")
+			att.Name = "MortalAuraAtt_" .. tostring(i)
+			att.Position = offsets[i] or Vector3.zero
+			markAuraOwned(att, "MortalUltimateSpreadAtt")
+			att.Parent = part
+			table.insert(activeAuraAttachments, att)
+
+			local pe = Instance.new("ParticleEmitter")
+			pe.Name = "MortalUltimateAuraSpread"
+			markAuraOwned(pe, "MortalUltimateSpreadPe")
+			pe.Texture = texList and (texList[((i - 1) % #texList) + 1]) or STAR_TEXTURE
+			pe.Color = seq
+			if isColumn then
+				pe.EmissionDirection = Enum.NormalId.Top
+				pe.Size = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, math.clamp(0.70 * ULTIMATE_SPREAD_PRESET.sizeMult * legBoost, 0.1, 22)),
+					NumberSequenceKeypoint.new(0.55, math.clamp(2.10 * ULTIMATE_SPREAD_PRESET.sizeMult * legBoost, 0.2, 42)),
+					NumberSequenceKeypoint.new(1, 0),
+				})
+				pe.Transparency = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 0.24), NumberSequenceKeypoint.new(0.55, 0.40), NumberSequenceKeypoint.new(1, 1),
+				})
+				pe.Lifetime = NumberRange.new(0.6, 1.05)
+				pe.Rate = math.clamp(24 * ULTIMATE_SPREAD_PRESET.rateMult * legBoost, 25, 900)
+				pe.Speed = NumberRange.new(math.clamp(4.2 * ULTIMATE_SPREAD_PRESET.speedMult, 1.5, 95), math.clamp(9.8 * ULTIMATE_SPREAD_PRESET.speedMult, 3, 140))
+				pe.SpreadAngle = Vector2.new(180, 180)
+				pe.Drag = 2.4
+				pe.Acceleration = Vector3.new(0, 28, 0)
+				pe.Rotation = NumberRange.new(-35, 35)
+				pe.RotSpeed = NumberRange.new(-120, 120)
+				pe.LightEmission = 0
+				pe.LightInfluence = 0.25
+			else
+				pe.EmissionDirection = Enum.NormalId.Front
+				pe.Size = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, math.clamp(0.95 * ULTIMATE_SPREAD_PRESET.sizeMult * legBoost, 0.2, 24)),
+					NumberSequenceKeypoint.new(0.55, math.clamp(1.75 * ULTIMATE_SPREAD_PRESET.sizeMult * legBoost, 0.3, 38)),
+					NumberSequenceKeypoint.new(1, 0),
+				})
+				pe.Transparency = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, modeName == "SMOKE" and 0.48 or 0.28),
+					NumberSequenceKeypoint.new(0.55, modeName == "SMOKE" and 0.64 or 0.46),
+					NumberSequenceKeypoint.new(1, 1),
+				})
+				pe.Lifetime = NumberRange.new(0.8, 1.4)
+				pe.Rate = math.clamp(20 * ULTIMATE_SPREAD_PRESET.rateMult * legBoost, 25, 850)
+				pe.Speed = NumberRange.new(math.clamp(3.0 * ULTIMATE_SPREAD_PRESET.speedMult, 0.8, 80), math.clamp(7.5 * ULTIMATE_SPREAD_PRESET.speedMult, 1.5, 120))
+				pe.SpreadAngle = Vector2.new(360, 360)
+				pe.Drag = 1.1
+				pe.Acceleration = Vector3.new(0, 10, 0)
+				pe.Rotation = NumberRange.new(-180, 180)
+				pe.RotSpeed = NumberRange.new(-240, 240)
+				pe.LightEmission = (modeName == "STAR_RADIANCE") and 0.85 or 0
+				pe.LightInfluence = (modeName == "STAR_RADIANCE") and 0 or 0.35
+			end
+			pe.Enabled = true
+			pe.Parent = att
+			table.insert(spreadOut, pe)
+			table.insert(activeAuraEmitters, pe)
+		end
+	end
+end
+
+local function createColumnEmitterEntry(part, cfg, partCount, isCoreDark, texIdx)
+	local pe = Instance.new("ParticleEmitter")
+	markAuraOwned(pe, "MortalColumnAura")
+	pe.Texture = COLUMN_TEXTURES[texIdx] or COLUMN_TEXTURES[1]
+	pe.Color = makeAuraSequence("COLUMN")
+	local baseSize = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, cfg.sizeStart),
+		NumberSequenceKeypoint.new(0.5, (cfg.sizeStart + cfg.sizeEnd) * 0.56),
+		NumberSequenceKeypoint.new(1, cfg.sizeEnd * 0.65),
+	})
+	pe.Size = baseSize
+	pe.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.30), NumberSequenceKeypoint.new(0.25, isCoreDark and 0.08 or 0.14),
+		NumberSequenceKeypoint.new(0.72, isCoreDark and 0.28 or 0.36), NumberSequenceKeypoint.new(1, 1),
+	})
+	local legBoost = isAuraLegOrFoot(part) and 1.8 or 1.0
+	pe.EmissionDirection = Enum.NormalId.Top
+	pe.Lifetime = NumberRange.new(0.55, 1.0)
+	local rate = math.max(12, math.floor((cfg.rate / math.max(1, partCount)) * legBoost))
+	pe.Rate = rate
+	pe.Speed = NumberRange.new(cfg.speedMin, cfg.speedMax)
+	pe.SpreadAngle = Vector2.new(cfg.spread, cfg.spread)
+	pe.Rotation = NumberRange.new(-35, 35)
+	pe.RotSpeed = NumberRange.new(-45, 45)
+	pe.Drag = 2.0
+	pe.LightEmission = 0
+	pe.LightInfluence = 0.25
+	pe.Acceleration = Vector3.new(0, cfg.accelY, 0)
+	pe.Enabled = true
+	pe.Parent = part
+	return {
+		emitter = pe, kind = "column", baseRate = rate, minRate = 12, baseSize = baseSize,
+		baseSpeedMin = cfg.speedMin, baseSpeedMax = cfg.speedMax, baseSpread = cfg.spread,
+		baseRotSpeed = 45, baseAccel = Vector3.new(0, cfg.accelY, 0),
+	}
+end
+
+local function createColumnSparkEntry(part, cfg, partCount)
+	local pe = Instance.new("ParticleEmitter")
+	markAuraOwned(pe, "MortalColumnAura")
+	pe.Texture = STAR_TEXTURE
+	pe.Color = makeAuraSequence("COLUMN")
+	local baseSize = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.45), NumberSequenceKeypoint.new(0.5, 0.72), NumberSequenceKeypoint.new(1, 0),
+	})
+	pe.Size = baseSize
+	pe.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.14), NumberSequenceKeypoint.new(0.7, 0.42), NumberSequenceKeypoint.new(1, 1),
+	})
+	local legBoost = isAuraLegOrFoot(part) and 1.6 or 1.0
+	pe.EmissionDirection = Enum.NormalId.Top
+	pe.Lifetime = NumberRange.new(0.6, 1.15)
+	local rate = math.max(10, math.floor(((cfg.rate * 0.55) / math.max(1, partCount)) * legBoost))
+	pe.Rate = rate
+	pe.Speed = NumberRange.new(cfg.speedMin * 0.9, cfg.speedMax * 1.15)
+	pe.SpreadAngle = Vector2.new(cfg.spread * 1.25, cfg.spread * 1.25)
+	pe.Drag = 1.6
+	pe.LightEmission = 0
+	pe.LightInfluence = 0.25
+	pe.Acceleration = Vector3.new(0, cfg.accelY * 0.85, 0)
+	pe.Enabled = true
+	pe.Parent = part
+	return {
+		emitter = pe, kind = "spark", baseRate = rate, minRate = 10, baseSize = baseSize,
+		baseSpeedMin = cfg.speedMin * 0.9, baseSpeedMax = cfg.speedMax * 1.15, baseSpread = cfg.spread * 1.25,
+		baseRotSpeed = 45, baseAccel = Vector3.new(0, cfg.accelY * 0.85, 0),
+	}
+end
+
+local function createSurgeCloudEntry(part, cfg, partCount, isDeepVoid, texIdx)
+	local pe = Instance.new("ParticleEmitter")
+	markAuraOwned(pe, "MortalSurgeAura")
+	pe.Texture = SURGE_TEXTURES[texIdx] or SURGE_TEXTURES[1]
+	pe.Color = makeAuraSequence("SURGE")
+	local baseSize = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, cfg.sizeStart),
+		NumberSequenceKeypoint.new(0.45, (cfg.sizeStart + cfg.sizeEnd) * 0.54),
+		NumberSequenceKeypoint.new(1, cfg.sizeEnd),
+	})
+	local baseRate = math.max(10, math.floor(cfg.rate / math.max(1, partCount)))
+	local baseAccel = Vector3.new(0, 1.6 + (Cfg.AuraLevel * 0.35), 0)
+	pe.Size = baseSize
+	pe.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.72), NumberSequenceKeypoint.new(0.22, isDeepVoid and 0.36 or 0.44),
+		NumberSequenceKeypoint.new(0.68, isDeepVoid and 0.58 or 0.66), NumberSequenceKeypoint.new(1, 1),
+	})
+	pe.Lifetime = NumberRange.new(1.0, 1.8)
+	pe.Rate = baseRate
+	pe.Speed = NumberRange.new(cfg.speedMin, cfg.speedMax)
+	pe.SpreadAngle = Vector2.new(cfg.spread, cfg.spread)
+	pe.Rotation = NumberRange.new(0, 360)
+	pe.RotSpeed = NumberRange.new(-38, 38)
+	pe.Drag = 1.8
+	pe.LightEmission = 0
+	pe.LightInfluence = 0.35
+	pe.Acceleration = baseAccel
+	pe.Enabled = true
+	pe.Parent = part
+	return {
+		emitter = pe, kind = "cloud", baseRate = baseRate, minRate = 10, baseSize = baseSize,
+		baseSpeedMin = cfg.speedMin, baseSpeedMax = cfg.speedMax, baseSpread = cfg.spread,
+		baseRotSpeed = 38, baseAccel = baseAccel,
+	}
+end
+
+local function createSurgeWispEntry(part, cfg, partCount, texIdx)
+	local pe = Instance.new("ParticleEmitter")
+	markAuraOwned(pe, "MortalSurgeAura")
+	pe.Texture = SURGE_TEXTURES[texIdx] or SURGE_TEXTURES[2]
+	pe.Color = makeAuraSequence("SURGE")
+	local baseSize = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, cfg.sizeStart * 0.48), NumberSequenceKeypoint.new(0.5, cfg.sizeEnd * 0.45), NumberSequenceKeypoint.new(1, 0),
+	})
+	local baseRate = math.max(8, math.floor(cfg.wispRate / math.max(1, partCount)))
+	local baseAccel = Vector3.new(0, 3.0 + (Cfg.AuraLevel * 0.45), 0)
+	pe.Size = baseSize
+	pe.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.36), NumberSequenceKeypoint.new(0.6, 0.56), NumberSequenceKeypoint.new(1, 1),
+	})
+	pe.Lifetime = NumberRange.new(0.85, 1.5)
+	pe.Rate = baseRate
+	pe.Speed = NumberRange.new(cfg.speedMin * 1.25, cfg.speedMax * 1.35)
+	pe.SpreadAngle = Vector2.new(cfg.spread * 0.8, cfg.spread * 0.8)
+	pe.Rotation = NumberRange.new(0, 360)
+	pe.RotSpeed = NumberRange.new(-58, 58)
+	pe.Drag = 1.3
+	pe.LightEmission = 0
+	pe.LightInfluence = 0.35
+	pe.Acceleration = baseAccel
+	pe.Enabled = true
+	pe.Parent = part
+	return {
+		emitter = pe, kind = "wisp", baseRate = baseRate, minRate = 8, baseSize = baseSize,
+		baseSpeedMin = cfg.speedMin * 1.25, baseSpeedMax = cfg.speedMax * 1.35, baseSpread = cfg.spread * 0.8,
+		baseRotSpeed = 58, baseAccel = baseAccel,
+	}
+end
+
+local function scaleAuraNumberSeq(seq, mult, minClamp, maxClamp)
+	local kps = {}
+	for _, kp in ipairs(seq.Keypoints) do
+		local val = kp.Value * mult
+		if minClamp or maxClamp then
+			val = math.clamp(val, minClamp or -math.huge, maxClamp or math.huge)
+		end
+		table.insert(kps, NumberSequenceKeypoint.new(kp.Time, val))
+	end
+	return NumberSequence.new(kps)
+end
+
+local function raycastAuraGroundY(fromPos, fallbackY)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local excl = {}
+	if LocalPlayer and LocalPlayer.Character then table.insert(excl, LocalPlayer.Character) end
+	if auraWorldFolder then table.insert(excl, auraWorldFolder) end
+	if crackRootFolder then table.insert(excl, crackRootFolder) end
+	params.FilterDescendantsInstances = excl
+	local hit = workspace:Raycast(fromPos + Vector3.new(0, 2.0, 0), Vector3.new(0, -16, 0), params)
+	return hit and hit.Position.Y or fallbackY, hit ~= nil
+end
+
+local function makeCrackPart(parent, size, color, material, transparency)
+	local p = Instance.new("Part")
+	markAuraOwned(p, "MortalCrackPart")
+	p.Size = size
+	p.Color = color
+	p.Material = material or Enum.Material.Neon
+	p.Transparency = transparency or 0
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.CastShadow = false
+	p.Parent = parent
+	return p
+end
+
+local function createCrackSeg(folder, p0, p1, thick, isMega, edgeColor)
+	local core = makeCrackPart(folder, Vector3.new(thick * (isMega and 2.5 or 1.85), 0.12, 1), Color3.fromRGB(3, 1, 7), Enum.Material.SmoothPlastic, 0)
+	local edge = makeCrackPart(folder, Vector3.new(thick * (isMega and 1.15 or 0.78), 0.14, 1), edgeColor or Color3.fromRGB(115, 16, 255), Enum.Material.Neon, 0.05)
+	return { core = core, edge = edge, p0 = p0, p1 = p1 }
+end
+
+local function updateCrackSeg(seg)
+	local y0, ok0 = raycastAuraGroundY(seg.p0, seg.p0.Y)
+	local y1, ok1 = raycastAuraGroundY(seg.p1, seg.p1.Y)
+	if not ok0 and not ok1 then
+		seg.core.Transparency = 1
+		seg.edge.Transparency = 1
+		return
+	end
+	local p0W = Vector3.new(seg.p0.X, y0 + 0.04, seg.p0.Z)
+	local p1W = Vector3.new(seg.p1.X, y1 + 0.04, seg.p1.Z)
+	local dist = (p1W - p0W).Magnitude
+	if dist < 0.05 then return end
+	local cf = CFrame.lookAt((p0W + p1W) * 0.5, p1W)
+	seg.core.Size = Vector3.new(seg.core.Size.X, 0.12, dist * 1.16)
+	seg.edge.Size = Vector3.new(seg.edge.Size.X, 0.14, dist * 1.09)
+	seg.core.CFrame = cf
+	seg.edge.CFrame = cf * CFrame.new(0, 0.015, 0)
+end
+
+local function createRiftPopup(folder, scale, textCol)
+	local holder = makeCrackPart(folder, Vector3.new(0.2, 0.2, 0.2), Color3.new(0, 0, 0), Enum.Material.SmoothPlastic, 1)
+	local bb = Instance.new("BillboardGui")
+	bb.Size = UDim2.new(0, 190 * scale, 0, 30 * scale)
+	bb.AlwaysOnTop = true
+	bb.LightInfluence = 0
+	bb.Parent = holder
+
+	local lbl = Instance.new("TextLabel")
+	lbl.Size = UDim2.new(1, 0, 1, 0)
+	lbl.BackgroundTransparency = 1
+	lbl.Font = Enum.Font.GothamBlack
+	lbl.TextScaled = true
+	lbl.Text = "MORTALS NEVERDIE"
+	lbl.TextColor3 = textCol or Color3.fromRGB(165, 55, 255)
+	lbl.TextStrokeColor3 = Color3.fromRGB(8, 1, 18)
+	lbl.TextStrokeTransparency = 0
+	lbl.Parent = bb
+
+	local st = Instance.new("UIStroke")
+	st.Color = Color3.fromRGB(80, 10, 185)
+	st.Thickness = 2
+	st.Parent = lbl
+
+	return { holder = holder, bb = bb, label = lbl }
+end
+
+local function spawnWalkCrack(item, groundPos, moveDir, scale)
+	if not item.crackFolder or not item.crackFolder.Parent then return end
+	local set = buildAuraColorSet("MORTALS_NEVERDIE")
+	local node = Instance.new("Folder")
+	node.Name = "WalkCrackNode"
+	markAuraOwned(node, "MortalCrackNode")
+	node.Parent = item.crackFolder
+	local segs = {}
+	for b = 1, 4 do
+		local ang = math.atan2(moveDir.Z, moveDir.X) + (((b - 2.5) / 2) * 1.35)
+		local cur = groundPos
+		local segLen = 0.72 * scale
+		for s = 1, 2 do
+			ang = ang + (((s % 2 == 0) and 1 or -1) * 0.52)
+			local nxt = cur + Vector3.new(math.cos(ang), 0, math.sin(ang)) * segLen
+			table.insert(segs, createCrackSeg(node, cur, nxt, 0.25 * scale, false, set.Outline))
+			cur = nxt
+		end
+	end
+	table.insert(item.walkCracks, {
+		folder = node, segs = segs, popup = createRiftPopup(node, scale, set.Start),
+		originPos = groundPos, spawnTime = os.clock(), duration = 1.8
+	})
+	if #item.walkCracks > 8 then
+		local old = table.remove(item.walkCracks, 1)
+		pcall(function() old.folder:Destroy() end)
+	end
+end
+
+local function spawnLandingMegaCrack(item, groundPos, scale)
+	if not item.crackFolder or not item.crackFolder.Parent then return end
+	local set = buildAuraColorSet("MORTALS_NEVERDIE")
+	local node = Instance.new("Folder")
+	node.Name = "LandingMegaCrackNode"
+	markAuraOwned(node, "MortalCrackNode")
+	node.Parent = item.crackFolder
+	local segs = {}
+	local armCount = 10
+	local reach = 9.0 * scale
+	for i = 1, armCount do
+		local baseAng = ((i - 1) / armCount) * math.pi * 2
+		local cur = groundPos
+		local ang = baseAng
+		for s = 1, 3 do
+			ang = ang + (((s % 2 == 0) and 1 or -1) * 0.42)
+			local nxt = cur + Vector3.new(math.cos(ang), 0, math.sin(ang)) * (reach / 3)
+			table.insert(segs, createCrackSeg(node, cur, nxt, 0.36 * scale, true, set.Outline))
+			cur = nxt
+		end
+	end
+	table.insert(item.landingCracks, {
+		folder = node, segs = segs, popup = createRiftPopup(node, scale * 1.2, set.Start),
+		originPos = groundPos, spawnTime = os.clock(), duration = 2.4
+	})
+	if #item.landingCracks > 4 then
+		local old = table.remove(item.landingCracks, 1)
+		pcall(function() old.folder:Destroy() end)
+	end
+end
+
+local function attachStarEmitterEntry(parentPart, opts)
+	local pe = Instance.new("ParticleEmitter")
+	markAuraOwned(pe, "MortalStarRadiance")
+	pe.Texture = STAR_TEXTURE
+	pe.Color = opts.color
+	pe.Size = opts.size
+	pe.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.05), NumberSequenceKeypoint.new(0.60, 0.25), NumberSequenceKeypoint.new(1, 1),
+	})
+	pe.Lifetime = NumberRange.new(0.45, 0.8)
+	pe.Rate = math.max(45, math.floor(opts.rate or 110))
+	pe.Speed = opts.speed
+	pe.SpreadAngle = opts.spread
+	pe.RotSpeed = opts.rotSpeed
+	pe.Rotation = NumberRange.new(-180, 180)
+	pe.Drag = 1.15
+	pe.LightEmission = 0.85
+	pe.Acceleration = opts.accel
+	pe.Enabled = true
+	pe.Parent = parentPart
+	return { emitter = pe, kind = "star", baseRate = pe.Rate, baseSize = opts.size, baseSpeed = opts.speed, baseSpread = opts.spread }
+end
+
+local function buildAura(char, hrp)
+	if not char or not hrp then return end
+	local modeName = AURA_MODES[Cfg.AuraModeIdx] or "COLUMN"
+	local lvl = math.clamp(math.floor(tonumber(Cfg.AuraLevel) or 1), 1, MAX_AURA_LEVEL)
+	local isUltimate = (Cfg.UltimateSpread == true)
+	clearAuraEffects()
+
+	builtAuraMode = modeName
+	builtAuraLevel = lvl
+	builtAuraUltimate = isUltimate
+	builtAuraChar = char
+	builtAuraColorSig = getAuraColorSignature()
+
+	local fxFolder = Instance.new("Folder")
+	fxFolder.Name = "MortalsAuraFX"
+	markAuraOwned(fxFolder, "MortalAuraFolder")
+	fxFolder.Parent = char
+	auraWorldFolder = fxFolder
+
+	local activeSet = buildAuraColorSet(modeName)
+	local emitters = {}
+	local spreadEmitters = {}
+	local extras = {}
+	local ptLight = nil
+
+	if modeName == "SMOKE" then
+		local preset = isUltimate and ULTIMATE_SPREAD_PRESET or (SMOKE_PRESETS[lvl] or SMOKE_PRESETS[1])
+		local parts = getAuraTargetParts(char)
+		local smokeSeq = makeAuraSequence("SMOKE")
+		if isUltimate then
+			applyAuraUltimateGlow(char, "SMOKE", extras)
+			attachAuraUltimateSpread(char, "SMOKE", SURGE_TEXTURES, spreadEmitters)
+		end
+		local offsets = { Vector3.new(-0.32, 0.22, 0), Vector3.new(0.32, -0.22, 0) }
+		local minAuraRate = isUltimate and 25 or ((lvl == 1) and 8 or ((lvl == 2) and 16 or 24))
+		local maxAuraRate = isUltimate and 650 or 320
+		local maxShardRate = isUltimate and 450 or 220
+		local maxSurgeRate = isUltimate and 550 or 260
+
+		for _, part in ipairs(parts) do
+			local legBoost = (isAuraLegOrFoot(part) and (isUltimate or lvl >= 3)) and 1.25 or ((isAuraLegOrFoot(part) and lvl == 2) and 1.1 or 1.0)
+			for i = 1, 2 do
+				local att = Instance.new("Attachment")
+				att.Name = "MortalAuraAtt_" .. tostring(i)
+				att.Position = offsets[i] or Vector3.zero
+				markAuraOwned(att, "MortalSmokeAtt")
+				att.Parent = part
+				table.insert(activeAuraAttachments, att)
+
+				local aura = Instance.new("ParticleEmitter")
+				aura.Name = "MortalDarkNeonAura"
+				markAuraOwned(aura, "MortalSmokeAura")
+				aura.Parent = att
+				aura.Color = smokeSeq
+				aura.Size = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, math.clamp(0.80 * preset.sizeMult * legBoost, 0.1, 18)),
+					NumberSequenceKeypoint.new(0.55, math.clamp(1.85 * preset.sizeMult * legBoost, 0.2, 32)),
+					NumberSequenceKeypoint.new(1, 0),
+				})
+				aura.Transparency = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, isUltimate and 0.50 or 0.28),
+					NumberSequenceKeypoint.new(0.55, isUltimate and 0.66 or 0.52),
+					NumberSequenceKeypoint.new(1, 1),
+				})
+				aura.Lifetime = NumberRange.new(0.5, 0.95)
+				aura.Rate = math.clamp(20 * preset.rateMult * legBoost, minAuraRate, maxAuraRate)
+				aura.Speed = NumberRange.new(math.clamp(2.8 * preset.speedMult, 0.5, 70), math.clamp(7.2 * preset.speedMult, 1.0, 110))
+				aura.SpreadAngle = Vector2.new(360, 360)
+				aura.Rotation = NumberRange.new(-180, 180)
+				aura.RotSpeed = NumberRange.new(-140, 140)
+				aura.LightEmission = 0
+				aura.LightInfluence = 0.25
+				aura.Enabled = true
+				table.insert(activeAuraEmitters, aura)
+				table.insert(emitters, aura)
+
+				if preset.shards then
+					local shards = Instance.new("ParticleEmitter")
+					shards.Name = "MortalDarkNeonShards"
+					markAuraOwned(shards, "MortalSmokeAura")
+					shards.Parent = att
+					shards.Color = smokeSeq
+					shards.Size = NumberSequence.new({
+						NumberSequenceKeypoint.new(0, math.clamp(0.34 * preset.sizeMult * legBoost, 0.05, 10)),
+						NumberSequenceKeypoint.new(1, 0),
+					})
+					shards.Transparency = NumberSequence.new({
+						NumberSequenceKeypoint.new(0, 0.22), NumberSequenceKeypoint.new(1, 1),
+					})
+					shards.Lifetime = NumberRange.new(0.35, 0.7)
+					shards.Rate = math.clamp(14 * preset.rateMult * legBoost, 8, maxShardRate)
+					shards.Speed = NumberRange.new(math.clamp(5.0 * preset.speedMult, 1.0, 90), math.clamp(12.0 * preset.speedMult, 2.0, 140))
+					shards.SpreadAngle = Vector2.new(360, 360)
+					shards.LightEmission = 0
+					shards.LightInfluence = 0.25
+					shards.Enabled = true
+					table.insert(activeAuraEmitters, shards)
+					table.insert(emitters, shards)
+				end
+
+				if preset.surge then
+					local surge = Instance.new("ParticleEmitter")
+					surge.Name = "MortalDarkNeonSurge"
+					markAuraOwned(surge, "MortalSmokeAura")
+					surge.Parent = att
+					surge.Color = smokeSeq
+					surge.Size = NumberSequence.new({
+						NumberSequenceKeypoint.new(0, math.clamp(1.1 * preset.sizeMult * legBoost, 0.2, 22)),
+						NumberSequenceKeypoint.new(0.7, math.clamp(2.4 * preset.sizeMult * legBoost, 0.4, 36)),
+						NumberSequenceKeypoint.new(1, 0),
+					})
+					surge.Transparency = NumberSequence.new({
+						NumberSequenceKeypoint.new(0, 0.25), NumberSequenceKeypoint.new(1, 1),
+					})
+					surge.Lifetime = NumberRange.new(0.55, 1.0)
+					surge.Rate = math.clamp(16 * preset.rateMult * legBoost, 14, maxSurgeRate)
+					surge.Speed = NumberRange.new(math.clamp(3.5 * preset.speedMult, 1.0, 80), math.clamp(9.0 * preset.speedMult, 2.0, 120))
+					surge.SpreadAngle = Vector2.new(360, 360)
+					surge.RotSpeed = NumberRange.new(-180, 180)
+					surge.LightEmission = 0
+					surge.LightInfluence = 0.25
+					surge.Enabled = true
+					table.insert(activeAuraEmitters, surge)
+					table.insert(emitters, surge)
+				end
+			end
+		end
+	elseif modeName == "COLUMN" then
+		local cfg = COLUMN_CONFIG[lvl] or COLUMN_CONFIG[1]
+		local bodyParts = collectAuraBodyParts(char, hrp)
+		for idx, bp in ipairs(bodyParts) do
+			local texIdx = ((idx - 1) % 2) + 1
+			for _, entry in ipairs({
+				createColumnEmitterEntry(bp, cfg, #bodyParts, true, texIdx),
+				createColumnSparkEntry(bp, cfg, #bodyParts),
+			}) do
+				table.insert(emitters, entry)
+				table.insert(activeAuraEmitters, entry)
+			end
+		end
+		ptLight = Instance.new("PointLight")
+		markAuraOwned(ptLight, "MortalColumnAura")
+		ptLight.Color = activeSet.Light
+		ptLight.Brightness = cfg.lightBright
+		ptLight.Range = cfg.lightRange
+		ptLight.Parent = hrp
+		if isUltimate then
+			applyAuraUltimateGlow(char, "COLUMN", extras)
+			attachAuraUltimateSpread(char, "COLUMN", COLUMN_TEXTURES, spreadEmitters)
+		end
+	elseif modeName == "SURGE" then
+		local cfg = SURGE_CONFIG[lvl] or SURGE_CONFIG[1]
+		local bodyParts = collectAuraBodyParts(char, hrp)
+		for idx, bp in ipairs(bodyParts) do
+			local texIdx = ((idx - 1) % #SURGE_TEXTURES) + 1
+			for _, entry in ipairs({
+				createSurgeCloudEntry(bp, cfg, #bodyParts, false, texIdx),
+				createSurgeWispEntry(bp, cfg, #bodyParts, texIdx),
+			}) do
+				table.insert(emitters, entry)
+				table.insert(activeAuraEmitters, entry)
+			end
+		end
+		ptLight = Instance.new("PointLight")
+		markAuraOwned(ptLight, "MortalSurgeAura")
+		ptLight.Color = activeSet.Light
+		ptLight.Brightness = cfg.lightBright
+		ptLight.Range = cfg.lightRange
+		ptLight.Parent = hrp
+		if isUltimate then
+			applyAuraUltimateGlow(char, "SURGE", extras)
+			attachAuraUltimateSpread(char, "SURGE", SURGE_TEXTURES, spreadEmitters)
+		end
+	elseif modeName == "STAR_RADIANCE" then
+		local tier = STAR_RADIANCE_TIERS[lvl] or STAR_RADIANCE_TIERS[1]
+		local avatarScale = getAvatarHeightRatio(char, char:FindFirstChild("Head"))
+		local fixedScale = math.clamp(avatarScale, 0.85, 1.40)
+		local bodyParts = collectAuraBodyParts(char, hrp)
+		local baseRate = math.max(45, math.floor((110 * tier.rateMult) / #bodyParts))
+		local sMult = tier.sizeMult * fixedScale
+		local seq = makeAuraSequence("STAR_RADIANCE")
+
+		for _, bp in ipairs(bodyParts) do
+			local s1 = attachStarEmitterEntry(bp, {
+				color = seq,
+				size = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 0.65 * sMult), NumberSequenceKeypoint.new(0.55, 1.55 * sMult), NumberSequenceKeypoint.new(1, 0),
+				}),
+				rate = baseRate, speed = NumberRange.new(4.5 * tier.speedMult, 11.5 * tier.speedMult),
+				spread = Vector2.new(math.clamp(135 * tier.spreadMult, 50, 180), math.clamp(135 * tier.spreadMult, 50, 180)),
+				rotSpeed = NumberRange.new(-120, 120), accel = Vector3.new(0, 6.0, 0),
+			})
+			table.insert(emitters, s1)
+			table.insert(activeAuraEmitters, s1)
+		end
+
+		ptLight = Instance.new("PointLight")
+		markAuraOwned(ptLight, "MortalStarRadiance")
+		ptLight.Color = activeSet.Light
+		ptLight.Range = tier.lightRange
+		ptLight.Brightness = tier.lightBright
+		ptLight.Parent = hrp
+		if isUltimate then
+			applyAuraUltimateGlow(char, "STAR_RADIANCE", extras)
+			attachAuraUltimateSpread(char, "STAR_RADIANCE", { STAR_TEXTURE }, spreadEmitters)
+		end
+
+		table.insert(activeAuraItems, {
+			mode = modeName, emitters = emitters, spreadEmitters = spreadEmitters, extras = extras,
+			light = ptLight, avatarScale = avatarScale, fixedScale = fixedScale, lastBurstTick = -1,
+		})
+		return
+	elseif modeName == "MORTALS_NEVERDIE" then
+		local tier = STAR_RADIANCE_TIERS[lvl] or STAR_RADIANCE_TIERS[1]
+		local fixedScale = math.clamp(getAvatarHeightRatio(char, char:FindFirstChild("Head")), 0.85, 1.40)
+
+		local cFolder = Instance.new("Folder")
+		cFolder.Name = "MortalsGroundCracks"
+		markAuraOwned(cFolder, "MortalCrackRoot")
+		cFolder.Parent = workspace
+		crackRootFolder = cFolder
+
+		ptLight = Instance.new("PointLight")
+		markAuraOwned(ptLight, "MortalNeverDieLight")
+		ptLight.Color = activeSet.Light
+		ptLight.Range = tier.lightRange
+		ptLight.Brightness = tier.lightBright
+		ptLight.Parent = hrp
+		if isUltimate then
+			applyAuraUltimateGlow(char, "MORTALS_NEVERDIE", extras)
+			attachAuraUltimateSpread(char, "MORTALS_NEVERDIE", { STAR_TEXTURE, SURGE_TEXTURES[1] }, spreadEmitters)
+		end
+
+		table.insert(activeAuraItems, {
+			mode = modeName, crackFolder = cFolder, walkCracks = {}, landingCracks = {},
+			spreadEmitters = spreadEmitters, extras = extras, fixedScale = fixedScale, light = ptLight,
+		})
+		return
+	end
+
+	table.insert(activeAuraItems, {
+		mode = modeName, emitters = emitters, spreadEmitters = spreadEmitters, extras = extras, light = ptLight,
+	})
+end
+
+local function stepAura(now, char, hum, hrp)
+	local modeName = AURA_MODES[Cfg.AuraModeIdx] or "COLUMN"
+	local lvl = math.clamp(math.floor(tonumber(Cfg.AuraLevel) or 1), 1, MAX_AURA_LEVEL)
+	local isUltimate = (Cfg.UltimateSpread == true)
+	local colorSig = getAuraColorSignature()
+
+	if not Cfg.AuraEnabled or not char or not hum or hum.Health <= 0 or not hrp then
+		if builtAuraMode ~= nil or #activeAuraEmitters > 0 or crackRootFolder ~= nil then
+			clearAuraEffects()
+		end
+		return
+	end
+
+	if builtAuraChar ~= char or builtAuraMode ~= modeName or builtAuraLevel ~= lvl or builtAuraUltimate ~= isUltimate then
+		buildAura(char, hrp)
+	elseif builtAuraColorSig ~= colorSig then
+		applyLiveAuraColorOnly()
+	end
+
+	if modeName == "SMOKE" then return end
+
+	local horizVel = Vector3.new(hrp.AssemblyLinearVelocity.X, 0, hrp.AssemblyLinearVelocity.Z)
+	local isIdle = horizVel.Magnitude <= 1.2
+	local activeSeq = makeAuraSequence(modeName)
+
+	for _, item in ipairs(activeAuraItems) do
+		if modeName == "SURGE" then
+			local cfg = SURGE_CONFIG[lvl] or SURGE_CONFIG[1]
+			local moveFactor = math.clamp(horizVel.Magnitude / 16, 0, 2.5)
+			local rateBoost = isIdle and cfg.idleMult or (1 + (moveFactor * 1.2))
+			local sizeBoost = isIdle and 1.1 or (1 + (moveFactor * 0.2))
+			local burstTick = math.floor(now * 8)
+			local shouldBurst = (not isUltimate) and (not isIdle) and (moveFactor > 0.15) and (burstTick ~= lastSurgeBurstTick)
+			if shouldBurst then lastSurgeBurstTick = burstTick end
+
+			for _, entry in ipairs(item.emitters or {}) do
+				local pe = entry.emitter
+				if pe and pe.Parent and entry.baseRate then
+					pe.Enabled = true
+					pe.Color = activeSeq
+					pe.Rate = math.max(entry.minRate or 8, math.floor(entry.baseRate * rateBoost))
+					pe.Size = scaleAuraNumberSeq(entry.baseSize, sizeBoost)
+					if shouldBurst then
+						pe:Emit(1)
+					end
+				end
+			end
+			if item.light and item.light.Parent then
+				item.light.Range = cfg.lightRange
+				item.light.Brightness = cfg.lightBright + math.sin(now * 4.5) * 0.2
+			end
+		elseif modeName == "COLUMN" then
+			local cfg = COLUMN_CONFIG[lvl] or COLUMN_CONFIG[1]
+			for _, entry in ipairs(item.emitters or {}) do
+				local pe = entry.emitter
+				if pe and pe.Parent then
+					pe.Enabled = true
+					pe.Color = activeSeq
+				end
+			end
+			if item.light and item.light.Parent then
+				item.light.Range = cfg.lightRange
+				item.light.Brightness = cfg.lightBright + math.sin(now * 4.5) * 0.2
+			end
+		elseif modeName == "STAR_RADIANCE" then
+			local tier = STAR_RADIANCE_TIERS[lvl] or STAR_RADIANCE_TIERS[1]
+			local burstTick = math.floor(now * (3.0 * tier.speedMult))
+			local emitNow = (burstTick ~= (item.lastBurstTick or -1))
+			if emitNow then item.lastBurstTick = burstTick end
+
+			for _, entry in ipairs(item.emitters or {}) do
+				local pe = entry.emitter
+				if pe and pe.Parent then
+					pe.Enabled = true
+					pe.Color = activeSeq
+					if emitNow then
+						pe:Emit(math.max(2, math.floor((tier.burst * (isUltimate and 2 or 1)) / math.max(1, #item.emitters))))
+					end
+				end
+			end
+			if item.light and item.light.Parent then
+				item.light.Range = tier.lightRange
+				item.light.Brightness = tier.lightBright + math.sin(now * 6) * 0.2
+			end
+		elseif modeName == "MORTALS_NEVERDIE" then
+			local tier = STAR_RADIANCE_TIERS[lvl] or STAR_RADIANCE_TIERS[1]
+			local airborne = (hum.FloorMaterial == Enum.Material.Air) and (hrp.AssemblyLinearVelocity.Y < -2)
+			local gY, grounded = raycastAuraGroundY(hrp.Position, hrp.Position.Y - 3)
+			local groundPos = Vector3.new(hrp.Position.X, gY, hrp.Position.Z)
+			local crackScale = (item.fixedScale or 1) * tier.sizeMult * (isUltimate and 1.6 or 1.0)
+
+			if airborne then wasAirborne = true
+			elseif wasAirborne and grounded then
+				wasAirborne = false
+				spawnLandingMegaCrack(item, groundPos, crackScale)
+			end
+
+			if not airborne and grounded and horizVel.Magnitude > 2.5 then
+				if not lastWalkCrackPos or (groundPos - lastWalkCrackPos).Magnitude >= (3.2 / tier.speedMult) then
+					lastWalkCrackPos = groundPos
+					local mDir = (hum.MoveDirection.Magnitude > 0.1) and hum.MoveDirection.Unit or horizVel.Unit
+					spawnWalkCrack(item, groundPos, mDir, crackScale)
+				end
+			end
+
+			local function updateList(list)
+				for i = #list, 1, -1 do
+					local c = list[i]
+					local age = now - c.spawnTime
+					if age >= c.duration then
+						pcall(function() c.folder:Destroy() end)
+						table.remove(list, i)
+					else
+						for _, seg in ipairs(c.segs) do updateCrackSeg(seg) end
+						if c.popup and c.popup.holder then
+							c.popup.holder.CFrame = CFrame.new(c.originPos + Vector3.new(0, 1.4 + age * 1.1, 0))
+							local fade = math.clamp((age - c.duration * 0.65) / (c.duration * 0.35), 0, 1)
+							c.popup.label.TextTransparency = fade
+							c.popup.label.TextStrokeTransparency = fade
+						end
+					end
+				end
+			end
+			updateList(item.walkCracks or {})
+			updateList(item.landingCracks or {})
+		end
+	end
+end
+
+-- ============================================================================
+-- SCREENGUIS & COLOR CIRCLE PICKER
 -- ============================================================================
 local sg = Instance.new("ScreenGui")
 sg.Name = "MortalEightHub"
@@ -983,6 +2330,298 @@ sg.IgnoreGuiInset = true
 sg.DisplayOrder = 100
 sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 sg.Parent = PlayerGui
+
+local wheelGui = Instance.new("ScreenGui")
+wheelGui.Name = "MortalAuraColorWheelGUI"
+wheelGui.ResetOnSpawn = false
+wheelGui.IgnoreGuiInset = true
+wheelGui.DisplayOrder = 105
+wheelGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+wheelGui.Enabled = false
+wheelGui.Parent = PlayerGui
+
+do
+	UI.wheelFrame = Instance.new("Frame")
+	UI.wheelFrame.Size = UDim2.new(0, 236, 0, 290)
+	UI.wheelFrame.Position = UDim2.new(0.5, 136, 0.2, 0)
+	UI.wheelFrame.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
+	UI.wheelFrame.BorderSizePixel = 0
+	UI.wheelFrame.Active = true
+	UI.wheelFrame.ZIndex = 62
+	UI.wheelFrame.Parent = wheelGui
+	Instance.new("UICorner", UI.wheelFrame).CornerRadius = UDim.new(0, 12)
+	addBorder(UI.wheelFrame, Color3.fromRGB(95, 95, 118), 1.6, 0.08)
+
+	UI.wheelTitle = Instance.new("TextLabel")
+	UI.wheelTitle.Size = UDim2.new(1, -44, 0, 24)
+	UI.wheelTitle.Position = UDim2.new(0, 10, 0, 4)
+	UI.wheelTitle.BackgroundTransparency = 1
+	UI.wheelTitle.TextXAlignment = Enum.TextXAlignment.Left
+	UI.wheelTitle.Text = "AURA COLOR CIRCLE"
+	UI.wheelTitle.TextColor3 = Color3.fromRGB(235, 235, 245)
+	UI.wheelTitle.Font = Enum.Font.GothamBold
+	UI.wheelTitle.TextSize = 11
+	UI.wheelTitle.ZIndex = 63
+	UI.wheelTitle.Parent = UI.wheelFrame
+
+	UI.closeWheelBtn = Instance.new("TextButton")
+	UI.closeWheelBtn.Size = UDim2.new(0, 26, 0, 22)
+	UI.closeWheelBtn.Position = UDim2.new(1, -34, 0, 5)
+	UI.closeWheelBtn.BackgroundColor3 = Color3.fromRGB(55, 16, 26)
+	UI.closeWheelBtn.BorderSizePixel = 0
+	UI.closeWheelBtn.Text = "X"
+	UI.closeWheelBtn.TextColor3 = Color3.fromRGB(255, 185, 185)
+	UI.closeWheelBtn.Font = Enum.Font.GothamBold
+	UI.closeWheelBtn.TextSize = 11
+	UI.closeWheelBtn.ZIndex = 64
+	UI.closeWheelBtn.Parent = UI.wheelFrame
+	Instance.new("UICorner", UI.closeWheelBtn).CornerRadius = UDim.new(0, 6)
+
+	UI.wheelPreviewBox = Instance.new("Frame")
+	UI.wheelPreviewBox.Size = UDim2.new(0, 46, 0, 28)
+	UI.wheelPreviewBox.Position = UDim2.new(0, 12, 0, 30)
+	UI.wheelPreviewBox.BackgroundColor3 = getPickedAuraColor()
+	UI.wheelPreviewBox.BorderSizePixel = 0
+	UI.wheelPreviewBox.ZIndex = 63
+	UI.wheelPreviewBox.Parent = UI.wheelFrame
+	Instance.new("UICorner", UI.wheelPreviewBox).CornerRadius = UDim.new(0, 6)
+	addBorder(UI.wheelPreviewBox, Color3.fromRGB(255, 255, 255), 1.4, 0.1)
+
+	UI.wheelPreviewInfo = Instance.new("TextLabel")
+	UI.wheelPreviewInfo.Size = UDim2.new(1, -72, 0, 28)
+	UI.wheelPreviewInfo.Position = UDim2.new(0, 64, 0, 30)
+	UI.wheelPreviewInfo.BackgroundTransparency = 1
+	UI.wheelPreviewInfo.TextXAlignment = Enum.TextXAlignment.Left
+	UI.wheelPreviewInfo.Text = "TAP CIRCLE OR SHADE BOX"
+	UI.wheelPreviewInfo.TextColor3 = Color3.fromRGB(225, 225, 238)
+	UI.wheelPreviewInfo.Font = Enum.Font.GothamBold
+	UI.wheelPreviewInfo.TextSize = 10
+	UI.wheelPreviewInfo.ZIndex = 63
+	UI.wheelPreviewInfo.Parent = UI.wheelFrame
+
+	UI.wheelCircleArea = Instance.new("Frame")
+	UI.wheelCircleArea.Size = UDim2.new(0, 184, 0, 184)
+	UI.wheelCircleArea.Position = UDim2.new(0.5, -92, 0, 64)
+	UI.wheelCircleArea.BackgroundTransparency = 1
+	UI.wheelCircleArea.ZIndex = 63
+	UI.wheelCircleArea.Parent = UI.wheelFrame
+
+	UI.wheelOuterCircle = Instance.new("Frame")
+	UI.wheelOuterCircle.Size = UDim2.new(1, 0, 1, 0)
+	UI.wheelOuterCircle.BackgroundColor3 = Color3.fromRGB(26, 26, 32)
+	UI.wheelOuterCircle.BorderSizePixel = 0
+	UI.wheelOuterCircle.ZIndex = 63
+	UI.wheelOuterCircle.Parent = UI.wheelCircleArea
+	Instance.new("UICorner", UI.wheelOuterCircle).CornerRadius = UDim.new(1, 0)
+
+	for i = 0, 35 do
+		local h = i / 36
+		local angleRad = (h * math.pi * 2) - (math.pi / 2)
+		local seg = Instance.new("Frame")
+		seg.Size = UDim2.new(0, 16, 0, 16)
+		seg.Position = UDim2.new(0.5 + math.cos(angleRad) * 0.425, -8, 0.5 + math.sin(angleRad) * 0.425, -8)
+		seg.BackgroundColor3 = Color3.fromHSV(h, 0.96, 1)
+		seg.BorderSizePixel = 0
+		seg.ZIndex = 64
+		seg.Parent = UI.wheelOuterCircle
+		Instance.new("UICorner", seg).CornerRadius = UDim.new(1, 0)
+	end
+
+	UI.wheelRingDot = Instance.new("Frame")
+	UI.wheelRingDot.Size = UDim2.new(0, 14, 0, 14)
+	UI.wheelRingDot.Position = UDim2.new(0.5, -7, 0.5, -7)
+	UI.wheelRingDot.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
+	UI.wheelRingDot.BorderSizePixel = 0
+	UI.wheelRingDot.ZIndex = 67
+	UI.wheelRingDot.Parent = UI.wheelOuterCircle
+	Instance.new("UICorner", UI.wheelRingDot).CornerRadius = UDim.new(1, 0)
+	addBorder(UI.wheelRingDot, Color3.fromRGB(255, 255, 255), 2.2, 0)
+
+	UI.wheelRingSurface = Instance.new("TextButton")
+	UI.wheelRingSurface.Size = UDim2.new(1, 0, 1, 0)
+	UI.wheelRingSurface.BackgroundTransparency = 1
+	UI.wheelRingSurface.Text = ""
+	UI.wheelRingSurface.ZIndex = 66
+	UI.wheelRingSurface.Parent = UI.wheelOuterCircle
+
+	UI.wheelShadeBox = Instance.new("Frame")
+	UI.wheelShadeBox.Size = UDim2.new(0, 96, 0, 96)
+	UI.wheelShadeBox.Position = UDim2.new(0.5, -48, 0.5, -48)
+	UI.wheelShadeBox.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
+	UI.wheelShadeBox.BorderSizePixel = 0
+	UI.wheelShadeBox.ClipsDescendants = true
+	UI.wheelShadeBox.ZIndex = 68
+	UI.wheelShadeBox.Parent = UI.wheelCircleArea
+	Instance.new("UICorner", UI.wheelShadeBox).CornerRadius = UDim.new(0, 8)
+	addBorder(UI.wheelShadeBox, Color3.fromRGB(235, 235, 245), 1.2, 0.1)
+
+	UI.wheelSatOverlay = Instance.new("Frame")
+	UI.wheelSatOverlay.Size = UDim2.new(1, 0, 1, 0)
+	UI.wheelSatOverlay.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	UI.wheelSatOverlay.BorderSizePixel = 0
+	UI.wheelSatOverlay.ZIndex = 69
+	UI.wheelSatOverlay.Parent = UI.wheelShadeBox
+	Instance.new("UICorner", UI.wheelSatOverlay).CornerRadius = UDim.new(0, 8)
+
+	UI.wheelSatGrad = Instance.new("UIGradient")
+	UI.wheelSatGrad.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.05), NumberSequenceKeypoint.new(1, 1.0),
+	})
+	UI.wheelSatGrad.Parent = UI.wheelSatOverlay
+
+	UI.wheelValOverlay = Instance.new("Frame")
+	UI.wheelValOverlay.Size = UDim2.new(1, 0, 1, 0)
+	UI.wheelValOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	UI.wheelValOverlay.BorderSizePixel = 0
+	UI.wheelValOverlay.ZIndex = 70
+	UI.wheelValOverlay.Parent = UI.wheelShadeBox
+	Instance.new("UICorner", UI.wheelValOverlay).CornerRadius = UDim.new(0, 8)
+
+	UI.wheelValGrad = Instance.new("UIGradient")
+	UI.wheelValGrad.Rotation = 90
+	UI.wheelValGrad.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1.0), NumberSequenceKeypoint.new(1, 0.12),
+	})
+	UI.wheelValGrad.Parent = UI.wheelValOverlay
+
+	UI.wheelPickerDot = Instance.new("Frame")
+	UI.wheelPickerDot.Size = UDim2.new(0, 14, 0, 14)
+	UI.wheelPickerDot.Position = UDim2.new(0.94, -7, 0.35, -7)
+	UI.wheelPickerDot.BackgroundColor3 = getPickedAuraColor()
+	UI.wheelPickerDot.BorderSizePixel = 0
+	UI.wheelPickerDot.ZIndex = 72
+	UI.wheelPickerDot.Parent = UI.wheelShadeBox
+	Instance.new("UICorner", UI.wheelPickerDot).CornerRadius = UDim.new(1, 0)
+	addBorder(UI.wheelPickerDot, Color3.fromRGB(255, 255, 255), 2.2, 0)
+
+	UI.wheelShadeSurface = Instance.new("TextButton")
+	UI.wheelShadeSurface.Size = UDim2.new(1, 0, 1, 0)
+	UI.wheelShadeSurface.BackgroundTransparency = 1
+	UI.wheelShadeSurface.Text = ""
+	UI.wheelShadeSurface.ZIndex = 71
+	UI.wheelShadeSurface.Parent = UI.wheelShadeBox
+
+	refreshAuraUI = function()
+		local modeName = AURA_MODES[Cfg.AuraModeIdx] or "COLUMN"
+		local modeLabel = AURA_MODE_LABELS[modeName] or modeName
+		local lvl = math.clamp(math.floor(tonumber(Cfg.AuraLevel) or 1), 1, MAX_AURA_LEVEL)
+		local picked = getPickedAuraColor()
+		if topAuraLvlLbl then topAuraLvlLbl.Text = "LV." .. tostring(lvl) end
+		if topAuraOnOffBtn then
+			topAuraOnOffBtn.Text = "AURA: " .. (Cfg.AuraEnabled and "ON" or "OFF")
+			topAuraOnOffBtn.BackgroundColor3 = Cfg.AuraEnabled and BTN_ON or BTN_OFF
+		end
+		if auraModeBtn then auraModeBtn.Text = "MODE: " .. modeLabel .. " (Tap)" end
+		if auraUltimateBtn then
+			auraUltimateBtn.Text = "ULTIMATE AURA SPREAD: " .. (Cfg.UltimateSpread and "ON" or "OFF")
+			auraUltimateBtn.BackgroundColor3 = Cfg.UltimateSpread and BTN_ON or BTN_OFF
+		end
+		local colorTag = Cfg.AuraCustomColor
+			and string.format("H:%d S:%d%% V:%d%%", math.floor(Cfg.AuraHue * 360), math.floor(Cfg.AuraSat * 100), math.floor(Cfg.AuraVal * 100))
+			or "DEFAULT"
+		if auraColorStatusLbl then auraColorStatusLbl.Text = "AURA COLOR: " .. colorTag .. " | LV." .. tostring(lvl) end
+		UI.wheelPreviewBox.BackgroundColor3 = picked
+		UI.wheelPickerDot.BackgroundColor3 = picked
+		UI.wheelShadeBox.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
+		UI.wheelPreviewInfo.Text = colorTag .. " | TAP OR DRAG"
+		local dotX = math.clamp(Cfg.AuraSat, 0, 1)
+		local dotY = math.clamp((1 - Cfg.AuraVal) / 0.82, 0, 1)
+		UI.wheelPickerDot.Position = UDim2.new(dotX, -7, dotY, -7)
+		local angleRad = (Cfg.AuraHue * math.pi * 2) - (math.pi / 2)
+		UI.wheelRingDot.Position = UDim2.new(0.5 + math.cos(angleRad) * 0.425, -7, 0.5 + math.sin(angleRad) * 0.425, -7)
+		UI.wheelRingDot.BackgroundColor3 = Color3.fromHSV(Cfg.AuraHue, 1, 1)
+	end
+
+	UI.wheelDragTarget = nil
+	local function updateAuraHueFromPos(posX, posY)
+		local cPos, cSize = UI.wheelOuterCircle.AbsolutePosition, UI.wheelOuterCircle.AbsoluteSize
+		if cSize.X <= 1 or cSize.Y <= 1 then return end
+		local angle = math.atan2(posY - (cPos.Y + cSize.Y * 0.5), posX - (cPos.X + cSize.X * 0.5)) + (math.pi / 2)
+		if angle < 0 then angle = angle + (math.pi * 2) end
+		Cfg.AuraCustomColor = true
+		Cfg.AuraHue = math.clamp(angle / (math.pi * 2), 0, 1)
+		applyLiveAuraColorOnly()
+		refreshAuraUI()
+		scheduleAuraSave(0.18)
+	end
+
+	local function updateAuraShadeFromPos(posX, posY)
+		local bPos, bSize = UI.wheelShadeBox.AbsolutePosition, UI.wheelShadeBox.AbsoluteSize
+		if bSize.X <= 1 or bSize.Y <= 1 then return end
+		Cfg.AuraCustomColor = true
+		Cfg.AuraSat = math.clamp((posX - bPos.X) / bSize.X, 0.02, 1)
+		Cfg.AuraVal = math.clamp(1 - (math.clamp((posY - bPos.Y) / bSize.Y, 0, 1) * 0.82), 0.18, 1)
+		applyLiveAuraColorOnly()
+		refreshAuraUI()
+		scheduleAuraSave(0.18)
+	end
+
+	UI.wheelRingSurface.InputBegan:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+			UI.wheelDragTarget = "ring"
+			updateAuraHueFromPos(inp.Position.X, inp.Position.Y)
+		end
+	end)
+	UI.wheelRingSurface.InputChanged:Connect(function(inp)
+		if UI.wheelDragTarget == "ring" and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+			updateAuraHueFromPos(inp.Position.X, inp.Position.Y)
+		end
+	end)
+	UI.wheelRingSurface.InputEnded:Connect(function(inp)
+		if (inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch) and UI.wheelDragTarget == "ring" then
+			UI.wheelDragTarget = nil
+			saveAuraConfigNow()
+		end
+	end)
+
+	UI.wheelShadeSurface.InputBegan:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+			UI.wheelDragTarget = "shade"
+			updateAuraShadeFromPos(inp.Position.X, inp.Position.Y)
+		end
+	end)
+	UI.wheelShadeSurface.InputChanged:Connect(function(inp)
+		if UI.wheelDragTarget == "shade" and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+			updateAuraShadeFromPos(inp.Position.X, inp.Position.Y)
+		end
+	end)
+	UI.wheelShadeSurface.InputEnded:Connect(function(inp)
+		if (inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch) and UI.wheelDragTarget == "shade" then
+			UI.wheelDragTarget = nil
+			saveAuraConfigNow()
+		end
+	end)
+
+	UI.resetAuraPurpleBtn = Instance.new("TextButton")
+	UI.resetAuraPurpleBtn.Size = UDim2.new(1, -24, 0, 24)
+	UI.resetAuraPurpleBtn.Position = UDim2.new(0, 12, 0, 256)
+	UI.resetAuraPurpleBtn.BackgroundColor3 = Color3.fromRGB(48, 10, 72)
+	UI.resetAuraPurpleBtn.BorderSizePixel = 0
+	UI.resetAuraPurpleBtn.Text = "RESET DEFAULT COLOR"
+	UI.resetAuraPurpleBtn.TextColor3 = Color3.fromRGB(238, 212, 255)
+	UI.resetAuraPurpleBtn.Font = Enum.Font.GothamBold
+	UI.resetAuraPurpleBtn.TextSize = 10
+	UI.resetAuraPurpleBtn.ZIndex = 64
+	UI.resetAuraPurpleBtn.Parent = UI.wheelFrame
+	Instance.new("UICorner", UI.resetAuraPurpleBtn).CornerRadius = UDim.new(0, 6)
+	UI.resetAuraPurpleBtn.MouseButton1Click:Connect(function()
+		Cfg.AuraCustomColor = false
+		Cfg.AuraHue = 0.77
+		Cfg.AuraSat = 0.94
+		Cfg.AuraVal = 0.65
+		applyLiveAuraColorOnly()
+		refreshAuraUI()
+		saveAuraConfigNow()
+		playClick(1.0)
+	end)
+
+	UI.closeWheelBtn.MouseButton1Click:Connect(function()
+		wheelGui.Enabled = false
+		playClick(0.9)
+	end)
+
+	makeDraggable(UI.wheelFrame, UI.wheelTitle, false, nil)
+end
 
 airGui = Instance.new("ScreenGui")
 airGui.Name = "MortalAirWalkPad"
@@ -1035,23 +2674,23 @@ do
 end
 
 -- ============================================================================
--- 1ST EYE, TOP EYE (WITH TAG ON/OFF) & MAIN WINDOW
+-- 1ST EYE, TOP EYE & MAIN WINDOW
 -- ============================================================================
 local pages = {}
 local tabButtons = {}
 local switchSection
 
-local function refreshTopPanelUI()
-	if topAuraLvlLbl then topAuraLvlLbl.Text = "LV." .. tostring(Cfg.AuraLevel) end
-	if topAuraOnOffBtn then
-		topAuraOnOffBtn.Text = "AURA: " .. (Cfg.AuraEnabled and "ON" or "OFF")
-		topAuraOnOffBtn.BackgroundColor3 = Cfg.AuraEnabled and BTN_ON or BTN_OFF
+local function toggleAuraFromTop()
+	Cfg.AuraEnabled = not Cfg.AuraEnabled
+	if Cfg.AuraEnabled then
+		local c, _, r = getRig()
+		if c and r then buildAura(c, r) end
+	else
+		clearAuraEffects()
 	end
-	if topSelfTagBtn then
-		local on = (Cfg.SelfTagVisible == true)
-		topSelfTagBtn.Text = "TAG: " .. (on and "ON" or "OFF")
-		topSelfTagBtn.BackgroundColor3 = on and BTN_ON or BTN_OFF
-	end
+	refreshAuraUI()
+	saveAuraConfigNow()
+	playClick(Cfg.AuraEnabled and 1.15 or 0.9)
 end
 
 do
@@ -1105,8 +2744,8 @@ do
 
 	topEyePanel = Instance.new("Frame")
 	topEyePanel.Name = "MortalThirdEyePanel"
-	topEyePanel.Size = UDim2.new(0, 344, 0, 32)
-	topEyePanel.Position = UDim2.new(1, -404, 0, 10)
+	topEyePanel.Size = UDim2.new(0, 292, 0, 32)
+	topEyePanel.Position = UDim2.new(1, -352, 0, 10)
 	topEyePanel.BackgroundColor3 = TAG_DARK_BAR
 	topEyePanel.BackgroundTransparency = 0.06
 	topEyePanel.Active = true
@@ -1117,7 +2756,7 @@ do
 	addBorder(topEyePanel, TAG_NEON_OUTLINE, 1.6, 0.08)
 
 	topStatsLbl = Instance.new("TextLabel")
-	topStatsLbl.Size = UDim2.new(0, 118, 1, 0)
+	topStatsLbl.Size = UDim2.new(0, 128, 1, 0)
 	topStatsLbl.Position = UDim2.new(0, 6, 0, 0)
 	topStatsLbl.BackgroundTransparency = 1
 	topStatsLbl.Font = Enum.Font.GothamBold
@@ -1128,29 +2767,9 @@ do
 	topStatsLbl.ZIndex = 23
 	topStatsLbl.Parent = topEyePanel
 
-	topSelfTagBtn = Instance.new("TextButton")
-	topSelfTagBtn.Size = UDim2.new(0, 52, 0, 22)
-	topSelfTagBtn.Position = UDim2.new(0, 126, 0.5, -11)
-	topSelfTagBtn.BackgroundColor3 = BTN_ON
-	topSelfTagBtn.Font = Enum.Font.GothamBlack
-	topSelfTagBtn.TextSize = 9
-	topSelfTagBtn.Text = "TAG: ON"
-	topSelfTagBtn.TextColor3 = TEXT_MAIN
-	topSelfTagBtn.Active = true
-	topSelfTagBtn.ZIndex = 26
-	topSelfTagBtn.Parent = topEyePanel
-	Instance.new("UICorner", topSelfTagBtn).CornerRadius = UDim.new(0, 6)
-	addBorder(topSelfTagBtn, NEON_RING, 1, 0.25)
-	topSelfTagBtn.Activated:Connect(function()
-		Cfg.SelfTagVisible = not Cfg.SelfTagVisible
-		if LocalPlayer then updateThirdEyeTag(LocalPlayer) end
-		refreshTopPanelUI()
-		playClick(Cfg.SelfTagVisible and 1.15 or 0.9)
-	end)
-
 	topAuraOnOffBtn = Instance.new("TextButton")
-	topAuraOnOffBtn.Size = UDim2.new(0, 66, 0, 22)
-	topAuraOnOffBtn.Position = UDim2.new(0, 181, 0.5, -11)
+	topAuraOnOffBtn.Size = UDim2.new(0, 72, 0, 22)
+	topAuraOnOffBtn.Position = UDim2.new(0, 136, 0.5, -11)
 	topAuraOnOffBtn.BackgroundColor3 = BTN_OFF
 	topAuraOnOffBtn.Font = Enum.Font.GothamBlack
 	topAuraOnOffBtn.TextSize = 9
@@ -1161,15 +2780,11 @@ do
 	topAuraOnOffBtn.Parent = topEyePanel
 	Instance.new("UICorner", topAuraOnOffBtn).CornerRadius = UDim.new(0, 6)
 	addBorder(topAuraOnOffBtn, NEON_RING, 1, 0.25)
-	topAuraOnOffBtn.Activated:Connect(function()
-		Cfg.AuraEnabled = not Cfg.AuraEnabled
-		refreshTopPanelUI()
-		playClick(Cfg.AuraEnabled and 1.15 or 0.9)
-	end)
+	topAuraOnOffBtn.Activated:Connect(toggleAuraFromTop)
 
 	UI.topMinusBtn = Instance.new("TextButton")
 	UI.topMinusBtn.Size = UDim2.new(0, 18, 0, 22)
-	UI.topMinusBtn.Position = UDim2.new(0, 250, 0.5, -11)
+	UI.topMinusBtn.Position = UDim2.new(0, 212, 0.5, -11)
 	UI.topMinusBtn.BackgroundColor3 = BTN_OFF
 	UI.topMinusBtn.Font = Enum.Font.GothamBlack
 	UI.topMinusBtn.TextSize = 11
@@ -1183,7 +2798,7 @@ do
 
 	topAuraLvlLbl = Instance.new("TextLabel")
 	topAuraLvlLbl.Size = UDim2.new(0, 34, 0, 22)
-	topAuraLvlLbl.Position = UDim2.new(0, 270, 0.5, -11)
+	topAuraLvlLbl.Position = UDim2.new(0, 232, 0.5, -11)
 	topAuraLvlLbl.BackgroundColor3 = VOID_BG
 	topAuraLvlLbl.Font = Enum.Font.GothamBlack
 	topAuraLvlLbl.TextSize = 10
@@ -1196,7 +2811,7 @@ do
 
 	UI.topPlusBtn = Instance.new("TextButton")
 	UI.topPlusBtn.Size = UDim2.new(0, 18, 0, 22)
-	UI.topPlusBtn.Position = UDim2.new(0, 306, 0.5, -11)
+	UI.topPlusBtn.Position = UDim2.new(0, 268, 0.5, -11)
 	UI.topPlusBtn.BackgroundColor3 = BTN_OFF
 	UI.topPlusBtn.Font = Enum.Font.GothamBlack
 	UI.topPlusBtn.TextSize = 11
@@ -1210,12 +2825,16 @@ do
 
 	UI.topMinusBtn.Activated:Connect(function()
 		Cfg.AuraLevel = math.max(1, Cfg.AuraLevel - 1)
-		refreshTopPanelUI()
+		builtAuraLevel = nil
+		refreshAuraUI()
+		saveAuraConfigNow()
 		playClick(0.95)
 	end)
 	UI.topPlusBtn.Activated:Connect(function()
-		Cfg.AuraLevel = math.min(5, Cfg.AuraLevel + 1)
-		refreshTopPanelUI()
+		Cfg.AuraLevel = math.min(MAX_AURA_LEVEL, Cfg.AuraLevel + 1)
+		builtAuraLevel = nil
+		refreshAuraUI()
+		saveAuraConfigNow()
 		playClick(1.1)
 	end)
 	topEyeBtn.Activated:Connect(function()
@@ -1760,34 +3379,16 @@ end
 function Modules.Player.Init(p3)
 	makeNumRow(p3, "SPEED", function() return Cfg.Speed end, function(on, v)
 		Cfg.Speed = on; Cfg.SpeedVal = v
-		local _, h = getRig()
-		if h then h.WalkSpeed = on and getAppliedSpeed(v) or 16 end
+		if not on then local _, h = getRig(); if h then h.WalkSpeed = 16 end end
 	end, function() return Cfg.SpeedVal end, function(v) Cfg.SpeedVal = v end, 0, nil, function(v)
-		if Cfg.Speed then
-			local _, h = getRig()
-			if h then h.WalkSpeed = getAppliedSpeed(v) end
-		end
+		if Cfg.Speed then local _, h = getRig(); if h then h.WalkSpeed = normalizeMovementSpeed(v) end end
 	end)
 
 	makeNumRow(p3, "JUMP POWER", function() return Cfg.Jump end, function(on, v)
 		Cfg.Jump = on; Cfg.JumpVal = v
-		local _, h = getRig()
-		if h then
-			pcall(function()
-				h.UseJumpPower = true
-				h.JumpPower = on and getAppliedJump(v) or 50
-			end)
-		end
+		if not on then local _, h = getRig(); if h then h.UseJumpPower = true; h.JumpPower = 50 end end
 	end, function() return Cfg.JumpVal end, function(v) Cfg.JumpVal = v end, 0, nil, function(v)
-		if Cfg.Jump then
-			local _, h = getRig()
-			if h then
-				pcall(function()
-					h.UseJumpPower = true
-					h.JumpPower = getAppliedJump(v)
-				end)
-			end
-		end
+		if Cfg.Jump then local _, h = getRig(); if h then h.UseJumpPower = true; h.JumpPower = normalizeJumpPower(v) end end
 	end)
 
 	makeNumRow(p3, "FLY", function() return Cfg.Fly end, function(on, v)
@@ -1807,26 +3408,378 @@ function Modules.Player.Init(p3)
 
 	makeNumRow(p3, "EMOTE SPEED", function() return Cfg.EmoteSpeed end, function(on, v)
 		Cfg.EmoteSpeed = on; Cfg.EmoteVal = v
-		local _, h = getRig()
-		if h then
-			applyEmoteSpeedToHum(h, on and getAppliedEmoteSpeed(v) or 1)
-		end
-	end, function() return Cfg.EmoteVal end, function(v) Cfg.EmoteVal = v end, nil, nil, function(v)
-		if Cfg.EmoteSpeed then
+		if not on then
 			local _, h = getRig()
-			if h then applyEmoteSpeedToHum(h, getAppliedEmoteSpeed(v)) end
+			if h then
+				for _, tr in ipairs(getAllActiveAnimTracks(h)) do pcall(function() tr:AdjustSpeed(1) end) end
+			end
 		end
+	end, function() return Cfg.EmoteVal end, function(v) Cfg.EmoteVal = v end, nil)
+end
+
+-- ============================================================================
+-- SECTION 4: EXPLOITS
+-- ============================================================================
+function Modules.Exploits.Init(p4)
+	makeToggle(p4, "ESP ALL", function() return Cfg.ESPAll end, function(v) Cfg.ESPAll = v; syncAllESP() end)
+	makeToggle(p4, "NOCLIP", function() return Cfg.Noclip end, function(v)
+		Cfg.Noclip = v
+		local c, h, r = getRig()
+		setNoclip(c, h, v)
+		noclipAnchorY = (v and r) and r.Position.Y or nil
+	end)
+	makeToggle(p4, "ANTI SIT", function() return Cfg.AntiSit end, function(v)
+		Cfg.AntiSit = v
+		local c, h = getRig()
+		setAntiSit(h, v)
+		if v then forceUnseatSeatParts(c) end
+	end)
+	makeToggle(p4, "CLICK TP", function() return Cfg.ClickTP end, function(v) Cfg.ClickTP = v end)
+end
+
+-- ============================================================================
+-- SECTION 5: TROLL
+-- ============================================================================
+local function resetSpectateCamera()
+	local cam = workspace.CurrentCamera
+	local _, myHum = getRig()
+	if cam and myHum then pcall(function() cam.CameraSubject = myHum end) end
+	lastSpectatedTargetHum = nil
+end
+
+local function closeTrollPlayerList()
+	Cfg.PlayerListOpen = false
+	if trollPlayerList then trollPlayerList.Visible = false end
+	if listToggleBtn then listToggleBtn.BackgroundColor3 = BTN_OFF end
+end
+
+local function rebuildTrollPlayerList()
+	if not trollPlayerList then return end
+	for _, ch in ipairs(trollPlayerList:GetChildren()) do
+		if not ch:IsA("UIListLayout") then ch:Destroy() end
+	end
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer then
+			local row = Instance.new("Frame")
+			row.Size = UDim2.new(0.98, 0, 0, 34)
+			row.BackgroundColor3 = VOID_BG
+			row.ZIndex = 33
+			row.Parent = trollPlayerList
+			Instance.new("UICorner", row).CornerRadius = UDim.new(0, 7)
+			addBorder(row, NEON_RING, 1, 0.3)
+
+			local av = Instance.new("ImageLabel")
+			av.Size = UDim2.new(0, 26, 0, 26)
+			av.Position = UDim2.new(0, 4, 0.5, -13)
+			av.BackgroundColor3 = BTN_OFF
+			av.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(plr.UserId) .. "&w=150&h=150"
+			av.ZIndex = 34
+			av.Parent = row
+			Instance.new("UICorner", av).CornerRadius = UDim.new(1, 0)
+
+			local nm = Instance.new("TextLabel")
+			nm.Size = UDim2.new(1, -92, 1, 0)
+			nm.Position = UDim2.new(0, 34, 0, 0)
+			nm.BackgroundTransparency = 1
+			nm.Font = Enum.Font.GothamBold
+			nm.TextSize = 10
+			nm.TextXAlignment = Enum.TextXAlignment.Left
+			nm.TextColor3 = TEXT_MAIN
+			nm.TextTruncate = Enum.TextTruncate.AtEnd
+			nm.ZIndex = 34
+			nm.Text = plr.DisplayName .. " (@" .. plr.Name .. ")"
+			nm.Parent = row
+
+			local tBtn = Instance.new("TextButton")
+			tBtn.Size = UDim2.new(0, 52, 0, 24)
+			tBtn.Position = UDim2.new(1, -56, 0.5, -12)
+			tBtn.BackgroundColor3 = (Cfg.Target == plr.Name) and BTN_ON or BTN_OFF
+			tBtn.Font = Enum.Font.GothamBlack
+			tBtn.TextSize = 9
+			tBtn.Text = "TROLL"
+			tBtn.TextColor3 = TEXT_MAIN
+			tBtn.ZIndex = 34
+			tBtn.Parent = row
+			Instance.new("UICorner", tBtn).CornerRadius = UDim.new(0, 6)
+			tBtn.MouseButton1Click:Connect(function()
+				Cfg.Target = plr.Name
+				if targetInputBox then targetInputBox.Text = plr.Name end
+				syncAllESP()
+				closeTrollPlayerList()
+				playClick(1.1)
+			end)
+		end
+	end
+end
+
+function Modules.Troll.Init(p5)
+	UI.targetRow = Instance.new("Frame")
+	UI.targetRow.Size = UDim2.new(0.96, 0, 0, 28)
+	UI.targetRow.BackgroundTransparency = 1
+	UI.targetRow.ZIndex = 33
+	UI.targetRow.Parent = p5
+
+	targetInputBox = Instance.new("TextBox")
+	targetInputBox.Size = UDim2.new(0.70, -3, 1, 0)
+	targetInputBox.BackgroundColor3 = VOID_BG
+	targetInputBox.Font = Enum.Font.GothamBold
+	targetInputBox.TextSize = 11
+	targetInputBox.PlaceholderText = "Target username / display..."
+	targetInputBox.Text = Cfg.Target
+	targetInputBox.TextColor3 = TEXT_MAIN
+	targetInputBox.ClearTextOnFocus = true
+	targetInputBox.ZIndex = 33
+	targetInputBox.Parent = UI.targetRow
+	Instance.new("UICorner", targetInputBox).CornerRadius = UDim.new(0, 7)
+	addBorder(targetInputBox, NEON_RING, 1, 0.35)
+
+	targetInputBox:GetPropertyChangedSignal("Text"):Connect(function()
+		Cfg.Target = targetInputBox.Text
+		syncAllESP()
+	end)
+	targetInputBox.FocusLost:Connect(function()
+		Cfg.Target = targetInputBox.Text
+		syncAllESP()
+	end)
+
+	listToggleBtn = Instance.new("TextButton")
+	listToggleBtn.Size = UDim2.new(0.30, -3, 1, 0)
+	listToggleBtn.Position = UDim2.new(0.70, 3, 0, 0)
+	listToggleBtn.BackgroundColor3 = Cfg.PlayerListOpen and BTN_ON or BTN_OFF
+	listToggleBtn.Font = Enum.Font.GothamBlack
+	listToggleBtn.TextSize = 9
+	listToggleBtn.Text = "PLAYERS"
+	listToggleBtn.TextColor3 = TEXT_MAIN
+	listToggleBtn.ZIndex = 33
+	listToggleBtn.Parent = UI.targetRow
+	Instance.new("UICorner", listToggleBtn).CornerRadius = UDim.new(0, 7)
+	addBorder(listToggleBtn, NEON_RING, 1, 0.35)
+
+	trollPlayerList = Instance.new("Frame")
+	trollPlayerList.Size = UDim2.new(0.96, 0, 0, 80)
+	trollPlayerList.BackgroundTransparency = 1
+	trollPlayerList.Visible = Cfg.PlayerListOpen
+	trollPlayerList.ZIndex = 33
+	trollPlayerList.Parent = p5
+	local tLay = Instance.new("UIListLayout", trollPlayerList)
+	tLay.Padding = UDim.new(0, 4)
+	tLay.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	tLay:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		trollPlayerList.Size = UDim2.new(0.96, 0, 0, math.max(36, tLay.AbsoluteContentSize.Y + 6))
+	end)
+
+	listToggleBtn.MouseButton1Click:Connect(function()
+		Cfg.PlayerListOpen = not Cfg.PlayerListOpen
+		trollPlayerList.Visible = Cfg.PlayerListOpen
+		listToggleBtn.BackgroundColor3 = Cfg.PlayerListOpen and BTN_ON or BTN_OFF
+		if Cfg.PlayerListOpen then rebuildTrollPlayerList() end
+		playClick(Cfg.PlayerListOpen and 1.15 or 0.9)
+	end)
+
+	refreshCallbacks[5] = function()
+		if Cfg.PlayerListOpen then rebuildTrollPlayerList() end
+	end
+
+	makeToggle(p5, "SPECTATE TARGET", function() return Cfg.SpectateTarget end, function(v)
+		Cfg.SpectateTarget = v
+		if not v then resetSpectateCamera() end
+	end)
+
+	makeBtn(p5, "TP ONCE", function()
+		local tp = findPlayer(getTargetQuery())
+		local _, _, myR = getRig()
+		local tR = tp and tp.Character and tp.Character:FindFirstChild("HumanoidRootPart")
+		if myR and tR then myR.CFrame = tR.CFrame * CFrame.new(0, 0, 3) end
+	end)
+
+	makeToggle(p5, "LOOP TP", function() return Cfg.LoopTP end, function(v) Cfg.LoopTP = v end)
+	makeToggle(p5, "ORBIT", function() return Cfg.Orbit end, function(v) Cfg.Orbit = v end)
+	makeToggle(p5, "FOLLOW TARGET", function() return Cfg.FollowTarget end, function(v) Cfg.FollowTarget = v end)
+	makeToggle(p5, "MIMIC", function() return Cfg.Mimic end, function(v)
+		Cfg.Mimic = v
+		if not v then clearMimic() end
+	end)
+	makeToggle(p5, "BANG", function() return Cfg.Bang end, function(v) Cfg.Bang = v end)
+	makeToggle(p5, "FACE BANG", function() return Cfg.FaceBang end, function(v) Cfg.FaceBang = v end)
+	makeToggle(p5, "FRONT BANG", function() return Cfg.FrontBang end, function(v) Cfg.FrontBang = v end)
+
+	makeNumRow(p5, "MULTI BANG", function() return Cfg.MultiBang end, function(on, v)
+		Cfg.MultiBang = on
+		Cfg.MultiBangSpeed = v
+		multiBangIndex = 1
+		lastMultiSwitchTick = os.clock()
+	end, function() return Cfg.MultiBangSpeed end, function(v)
+		Cfg.MultiBangSpeed = v
+	end, 0.1, nil, function(v)
+		Cfg.MultiBangSpeed = v
+	end)
+
+	makeToggle(p5, "HS (HEAD SIT)", function() return Cfg.HeadSit end, function(v)
+		Cfg.HeadSit = v
+		if not v then local _, h = getRig(); releaseHeadSit(h) end
 	end)
 end
 
 -- ============================================================================
--- INITIALIZE SECTIONS 1, 2 & 3 MODULES
+-- SECTION 6: PLAYERS TIME
+-- ============================================================================
+local playersTimeContainer = nil
+local playerTimeLabels = {}
+
+local function syncPlayersTimeStructure()
+	if not playersTimeContainer then return end
+	local activeSet = {}
+	for _, plr in ipairs(Players:GetPlayers()) do
+		activeSet[plr] = true
+		if not playerTimeLabels[plr] or not playerTimeLabels[plr].Parent then
+			local lbl = Instance.new("TextLabel")
+			lbl.Size = UDim2.new(0.98, 0, 0, 24)
+			lbl.BackgroundColor3 = VOID_BG
+			lbl.Font = Enum.Font.GothamBold
+			lbl.TextSize = 10
+			lbl.TextColor3 = TEXT_MAIN
+			lbl.ZIndex = 33
+			lbl.Parent = playersTimeContainer
+			Instance.new("UICorner", lbl).CornerRadius = UDim.new(0, 6)
+			addBorder(lbl, NEON_RING, 1, 0.35)
+			playerTimeLabels[plr] = lbl
+		end
+	end
+	for plr, lbl in pairs(playerTimeLabels) do
+		if not activeSet[plr] then
+			pcall(function() lbl:Destroy() end)
+			playerTimeLabels[plr] = nil
+		end
+	end
+end
+
+local function updatePlayersTimeTexts()
+	if not playersTimeContainer then return end
+	syncPlayersTimeStructure()
+	local now = os.clock()
+	for plr, lbl in pairs(playerTimeLabels) do
+		if lbl and lbl.Parent and plr and plr.Parent == Players then
+			local joinedAt = joinTimestamps[plr] or now
+			lbl.Text = plr.DisplayName .. " (@" .. plr.Name .. ") : " .. formatDuration(now - joinedAt)
+		end
+	end
+end
+
+function Modules.PlayersTime.Init(p6)
+	UI.sec6Header = Instance.new("TextLabel")
+	UI.sec6Header.Size = UDim2.new(0.96, 0, 0, 24)
+	UI.sec6Header.BackgroundColor3 = VOID_BG
+	UI.sec6Header.Font = Enum.Font.GothamBlack
+	UI.sec6Header.TextSize = 11
+	UI.sec6Header.TextColor3 = TAG_NEON_PURPLE
+	UI.sec6Header.Text = "PLAYERS TIME"
+	UI.sec6Header.ZIndex = 33
+	UI.sec6Header.Parent = p6
+	Instance.new("UICorner", UI.sec6Header).CornerRadius = UDim.new(0, 7)
+	addBorder(UI.sec6Header, NEON_RING, 1, 0.3)
+
+	playersTimeContainer = Instance.new("Frame")
+	playersTimeContainer.Size = UDim2.new(0.96, 0, 0, 120)
+	playersTimeContainer.BackgroundTransparency = 1
+	playersTimeContainer.ZIndex = 33
+	playersTimeContainer.Parent = p6
+	local sLay = Instance.new("UIListLayout", playersTimeContainer)
+	sLay.Padding = UDim.new(0, 4)
+	sLay.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	sLay:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		playersTimeContainer.Size = UDim2.new(0.96, 0, 0, math.max(30, sLay.AbsoluteContentSize.Y + 6))
+	end)
+	refreshCallbacks[6] = updatePlayersTimeTexts
+end
+
+-- ============================================================================
+-- SECTION 7: AURA
+-- ============================================================================
+function Modules.Aura.Init(p7)
+	auraModeBtn = makeBtn(p7, "MODE: COLUMN (Tap)", function()
+		Cfg.AuraModeIdx = (Cfg.AuraModeIdx % #AURA_MODES) + 1
+		builtAuraMode = nil
+		if Cfg.AuraEnabled then
+			local c, _, r = getRig()
+			if c and r then buildAura(c, r) else clearAuraEffects() end
+		else
+			clearAuraEffects()
+		end
+		refreshAuraUI()
+		saveAuraConfigNow()
+	end)
+
+	auraUltimateBtn = makeBtn(p7, "ULTIMATE AURA SPREAD: OFF", function()
+		Cfg.UltimateSpread = not Cfg.UltimateSpread
+		builtAuraUltimate = nil
+		if Cfg.AuraEnabled then
+			local c, _, r = getRig()
+			if c and r then buildAura(c, r) end
+		end
+		refreshAuraUI()
+		saveAuraConfigNow()
+	end)
+
+	auraWheelOpenBtn = makeBtn(p7, "COLOR CIRCLE PICKER (TAP)", function()
+		wheelGui.Enabled = not wheelGui.Enabled
+		refreshAuraUI()
+	end)
+
+	auraColorStatusLbl = Instance.new("TextLabel")
+	auraColorStatusLbl.Size = UDim2.new(0.96, 0, 0, 28)
+	auraColorStatusLbl.BackgroundColor3 = VOID_BG
+	auraColorStatusLbl.Font = Enum.Font.GothamBold
+	auraColorStatusLbl.TextSize = 10
+	auraColorStatusLbl.TextColor3 = TEXT_DIM
+	auraColorStatusLbl.ZIndex = 33
+	auraColorStatusLbl.Text = "AURA COLOR: DEFAULT | LV.1"
+	auraColorStatusLbl.Parent = p7
+	Instance.new("UICorner", auraColorStatusLbl).CornerRadius = UDim.new(0, 7)
+	addBorder(auraColorStatusLbl, NEON_RING, 1, 0.35)
+
+	refreshAuraUI()
+end
+
+-- ============================================================================
+-- SECTION 8: SPAMS
+-- ============================================================================
+function Modules.Spams.Init(p8)
+	UI.spamBox = Instance.new("TextBox")
+	UI.spamBox.Size = UDim2.new(0.96, 0, 0, 28)
+	UI.spamBox.BackgroundColor3 = VOID_BG
+	UI.spamBox.Font = Enum.Font.GothamBold
+	UI.spamBox.TextSize = 11
+	UI.spamBox.PlaceholderText = "Spam message..."
+	UI.spamBox.Text = Cfg.SpamText
+	UI.spamBox.TextColor3 = TEXT_MAIN
+	UI.spamBox.ClearTextOnFocus = true
+	UI.spamBox.ZIndex = 33
+	UI.spamBox.Parent = p8
+	Instance.new("UICorner", UI.spamBox).CornerRadius = UDim.new(0, 7)
+	addBorder(UI.spamBox, NEON_RING, 1, 0.35)
+	UI.spamBox.FocusLost:Connect(function()
+		if UI.spamBox.Text ~= "" then Cfg.SpamText = UI.spamBox.Text end
+	end)
+
+	makeToggle(p8, "CHAT SPAM", function() return Cfg.ChatSpam end, function(v)
+		Cfg.ChatSpam = v
+		lastSpamTick = 0
+	end)
+end
+
+-- ============================================================================
+-- INITIALIZE ALL 8 MODULES SAFELY
 -- ============================================================================
 do
 	local orderedInits = {
 		{ fn = Modules.Info.Init, page = pages[1] },
 		{ fn = Modules.Friends.Init, page = pages[2] },
 		{ fn = Modules.Player.Init, page = pages[3] },
+		{ fn = Modules.Exploits.Init, page = pages[4] },
+		{ fn = Modules.Troll.Init, page = pages[5] },
+		{ fn = Modules.PlayersTime.Init, page = pages[6] },
+		{ fn = Modules.Aura.Init, page = pages[7] },
+		{ fn = Modules.Spams.Init, page = pages[8] },
 	}
 	for _, entry in ipairs(orderedInits) do
 		if type(entry.fn) == "function" and entry.page then
@@ -1849,6 +3802,11 @@ do
 	if UI.header then makeDraggable(mainFrame, UI.header, false, nil) end
 end
 
+pcall(loadAuraConfig)
+pcall(function()
+	if refreshAuraUI then refreshAuraUI() end
+end)
+
 if VirtualUser and LocalPlayer then
 	pcall(function()
 		LocalPlayer.Idled:Connect(function()
@@ -1860,7 +3818,38 @@ if VirtualUser and LocalPlayer then
 	end)
 end
 
+UserInputService.InputBegan:Connect(function(inp, gp)
+	if inp.KeyCode == Enum.KeyCode.Space then
+		noclipJumpEndTick = os.clock() + 0.55
+	end
+	if Cfg.ClickTP and not gp and (inp.UserInputType == Enum.UserInputType.Touch or inp.UserInputType == Enum.UserInputType.MouseButton1) then
+		local cam = workspace.CurrentCamera
+		local _, _, r = getRig()
+		if cam and r then
+			local ray = cam:ViewportPointToRay(inp.Position.X, inp.Position.Y)
+			local rp = RaycastParams.new()
+			rp.FilterType = Enum.RaycastFilterType.Exclude
+			local excl = {}
+			if LocalPlayer and LocalPlayer.Character then table.insert(excl, LocalPlayer.Character) end
+			if auraWorldFolder then table.insert(excl, auraWorldFolder) end
+			if crackRootFolder then table.insert(excl, crackRootFolder) end
+			rp.FilterDescendantsInstances = excl
+			local hit = workspace:Raycast(ray.Origin, ray.Direction * 1000, rp)
+			if hit and hit.Position then
+				local rotOnly = r.CFrame - r.Position
+				r.AssemblyLinearVelocity = Vector3.zero
+				r.CFrame = CFrame.new(hit.Position + Vector3.new(0, 3.2, 0)) * rotOnly
+			end
+		end
+	end
+end)
+
+UserInputService.JumpRequest:Connect(function()
+	noclipJumpEndTick = os.clock() + 0.55
+end)
+
 local function registerPlayer(plr)
+	if not joinTimestamps[plr] then joinTimestamps[plr] = os.clock() end
 	if plr ~= LocalPlayer then
 		if showFriendJoinNotify then pcall(showFriendJoinNotify, plr) end
 		plr.CharacterAdded:Connect(function()
@@ -1872,32 +3861,52 @@ local function registerPlayer(plr)
 	end
 	updateThirdEyeTag(plr)
 	syncAllESP()
+	syncPlayersTimeStructure()
 end
 
 Players.PlayerAdded:Connect(function(plr)
 	registerPlayer(plr)
 	if pages[2] and pages[2].Visible and rebuildFriendsList then pcall(rebuildFriendsList) end
+	if pages[5] and pages[5].Visible and Cfg.PlayerListOpen then pcall(rebuildTrollPlayerList) end
+	if pages[6] and pages[6].Visible then pcall(updatePlayersTimeTexts) end
 end)
 
 Players.PlayerRemoving:Connect(function(plr)
+	joinTimestamps[plr] = nil
 	friendEspSet[plr] = nil
 	targetEspSet[plr] = nil
 	clearESP(plr)
 	clearThirdEyeTag(plr)
+	if playerTimeLabels[plr] then
+		pcall(function() playerTimeLabels[plr]:Destroy() end)
+		playerTimeLabels[plr] = nil
+	end
 	if spectatedFriend == plr then spectatedFriend = nil end
+	if lastMimicTarget == plr then lastMimicTarget = nil; clearMimic() end
 end)
 
 if LocalPlayer then
 	LocalPlayer.CharacterAdded:Connect(function(char)
 		stopFly()
+		releaseHeadSit(char:FindFirstChildOfClass("Humanoid"))
+		noclipAnchorY = nil
+		noclipJumpEndTick = 0
 		airMoveDir = 0
+		airWalkWasMoving = false
 		if Cfg.AirWalk then airY = nil end
+		table.clear(ncStore)
+		clearMimic()
 		markSelfScriptPresence(char)
 		task.defer(function()
 			updateThirdEyeTag(LocalPlayer)
-			syncAllESP()
+			if Cfg.SpectateTarget then resetSpectateCamera() end
+			if Cfg.AuraEnabled then
+				local hrp = char:FindFirstChild("HumanoidRootPart")
+				if hrp then buildAura(char, hrp) end
+			end
 		end)
 	end)
+
 	if LocalPlayer.Character then markSelfScriptPresence(LocalPlayer.Character) end
 end
 
@@ -1905,9 +3914,40 @@ for _, plr in ipairs(Players:GetPlayers()) do registerPlayer(plr) end
 
 do
 	local lastStatsRefresh = 0
+	local lastTimeTextRefresh = 0
 	local lastVisualSyncRefresh = 0
 	local fpsAccumTime = 0
 	local fpsAccumFrames = 0
+
+	RunService.Stepped:Connect(function()
+		pcall(function()
+			local char, hum, hrp = getRig()
+			if Cfg.Noclip then
+				setNoclip(char, hum, true)
+				applyNoclipHorizontalLock(char, hum, hrp)
+			elseif next(ncStore) ~= nil or (hum and not Cfg.AirWalk) then
+				setNoclip(char, hum, false)
+			end
+			if hum then
+				setAntiSit(hum, Cfg.AntiSit)
+				if Cfg.AntiSit and not Cfg.HeadSit and (hum.Sit or hum.SeatPart) then
+					hum.Sit = false
+					hum.SeatPart = nil
+					forceUnseatSeatParts(char)
+				end
+			end
+			if Cfg.HeadSit and char and hum and hrp then
+				local tgtPlr = findPlayer(getTargetQuery())
+				local tgtChar = tgtPlr and tgtPlr.Character
+				local tgtRoot = tgtChar and tgtChar:FindFirstChild("HumanoidRootPart")
+				local tgtHead = tgtChar and tgtChar:FindFirstChild("Head")
+				if tgtRoot then
+					headSitActiveLastFrame = true
+					applyHeadSitLock(char, hum, hrp, tgtChar, tgtRoot, tgtHead)
+				end
+			end
+		end)
+	end)
 
 	RunService.RenderStepped:Connect(function(dt)
 		pcall(function()
@@ -1937,53 +3977,182 @@ do
 				end
 			end
 
-			if now - lastVisualSyncRefresh >= 0.2 then
+			if now - lastVisualSyncRefresh >= 0.25 then
 				lastVisualSyncRefresh = now
 				for _, plr in ipairs(Players:GetPlayers()) do updateThirdEyeTag(plr) end
 				syncAllESP()
 			end
 
+			if pages[6] and pages[6].Visible and (now - lastTimeTextRefresh >= 1) then
+				lastTimeTextRefresh = now
+				updatePlayersTimeTexts()
+			end
+
+			if Cfg.ChatSpam and (now - lastSpamTick >= 1.4) then
+				lastSpamTick = now
+				sendChatMessage(Cfg.SpamText ~= "" and Cfg.SpamText or "MORTAL On Top!")
+			end
+
 			local char, hum, hrp = getRig()
-			if char and hum and hrp then
-				local targetSpeed = Cfg.Speed and getAppliedSpeed(Cfg.SpeedVal) or 16
-				if Cfg.Speed then
+			if not char or not hum or not hrp then return end
+
+			stepAura(now, char, hum, hrp)
+
+			if Cfg.Noclip then
+				setNoclip(char, hum, true)
+				applyNoclipHorizontalLock(char, hum, hrp)
+			end
+
+			if Cfg.AntiSit and not Cfg.HeadSit and (hum.Sit or hum.SeatPart) then
+				hum.Sit = false
+				hum.SeatPart = nil
+				forceUnseatSeatParts(char)
+				pcall(function() hum:ChangeState(Enum.HumanoidStateType.Running) end)
+			end
+
+			local targetSpeed = Cfg.Speed and normalizeMovementSpeed(Cfg.SpeedVal) or 16
+			if Cfg.Speed then hum.WalkSpeed = targetSpeed end
+			if Cfg.Jump then
+				hum.UseJumpPower = true
+				hum.JumpPower = normalizeJumpPower(Cfg.JumpVal)
+			end
+
+			if Cfg.EmoteSpeed then
+				local safeSpd = normalizeEmoteSpeed(Cfg.EmoteVal)
+				for _, tr in ipairs(getAllActiveAnimTracks(hum)) do
+					pcall(function()
+						if math.abs(tr.Speed - safeSpd) > 0.01 then
+							tr:AdjustSpeed(safeSpd)
+						end
+					end)
+				end
+			end
+
+			if Cfg.AirWalk then
+				sanitizeAirWalkAnim(hum)
+				enforceAirWalkStates(hum)
+				if airY == nil then airY = hrp.Position.Y end
+				if airMoveDir ~= 0 then
+					airY = airY + (airMoveDir * Cfg.AirStep * math.clamp(dt * 60, 0.25, 2.5))
+				end
+				local movingNow = hum.MoveDirection.Magnitude > 0.05
+				if movingNow then
+					airWalkWasMoving = true
 					hum.WalkSpeed = targetSpeed
-				end
-
-				if Cfg.Jump then
-					hum.UseJumpPower = true
-					hum.JumpPower = getAppliedJump(Cfg.JumpVal)
-				end
-
-				if Cfg.EmoteSpeed then
-					applyEmoteSpeedToHum(hum, getAppliedEmoteSpeed(Cfg.EmoteVal))
-				end
-
-				if Cfg.AirWalk then
-					if airY == nil then airY = hrp.Position.Y end
-					if airMoveDir ~= 0 then
-						airY = airY + (airMoveDir * Cfg.AirStep * math.clamp(dt * 60, 0.25, 2.5))
+				else
+					if airWalkWasMoving then
+						airWalkWasMoving = false
+						hum.WalkSpeed = 0
+						task.defer(function()
+							if Cfg.AirWalk and hum and hum.Parent then
+								hum.WalkSpeed = Cfg.Speed and targetSpeed or 16
+							end
+						end)
 					end
-					hum.WalkSpeed = targetSpeed
-					local pos = hrp.Position
-					local moveVec = hum.MoveDirection
-					local nextX, nextZ = pos.X, pos.Z
-					if moveVec.Magnitude > 0.05 then
-						local horizStep = moveVec.Unit * hum.WalkSpeed * safeDt
-						nextX = pos.X + horizStep.X
-						nextZ = pos.Z + horizStep.Z
-					end
-					syncAirWalkMovementAnimations(hum, moveVec)
-					hrp.CFrame = CFrame.new(nextX, airY, nextZ) * (hrp.CFrame - hrp.Position)
-				end
-
-				if Cfg.Spin then
-					local angDelta = math.rad(getAppliedSpin(Cfg.SpinVal) * 6 * safeDt)
-					local pos = hrp.Position
-					local rotOnly = (hrp.CFrame - pos) * CFrame.Angles(0, angDelta, 0)
 					hrp.AssemblyLinearVelocity = Vector3.zero
-					hrp.CFrame = CFrame.new(pos) * rotOnly
 				end
+				local pos = hrp.Position
+				hrp.AssemblyLinearVelocity = Vector3.zero
+				hrp.CFrame = CFrame.new(pos.X, airY, pos.Z) * (hrp.CFrame - hrp.Position)
+			else
+				airWalkWasMoving = false
+			end
+
+			local tgtPlr = findPlayer(getTargetQuery())
+			local tgtChar = tgtPlr and tgtPlr.Character
+			local tgtRoot = tgtChar and tgtChar:FindFirstChild("HumanoidRootPart")
+			local tgtHead = tgtChar and tgtChar:FindFirstChild("Head")
+			local tgtHum = tgtChar and tgtChar:FindFirstChildOfClass("Humanoid")
+
+			if Cfg.SpectateTarget then
+				local cam = workspace.CurrentCamera
+				if cam and tgtHum then
+					if cam.CameraSubject ~= tgtHum or lastSpectatedTargetHum ~= tgtHum then
+						pcall(function() cam.CameraSubject = tgtHum end)
+						lastSpectatedTargetHum = tgtHum
+					end
+				elseif lastSpectatedTargetHum ~= nil then
+					resetSpectateCamera()
+				end
+			elseif lastSpectatedTargetHum ~= nil then
+				resetSpectateCamera()
+			end
+
+			if Cfg.Mimic and tgtPlr then
+				runMimic(char, hum, tgtPlr)
+			elseif next(mimicTracks) ~= nil then
+				clearMimic()
+			end
+
+			local didHeadSit = false
+
+			if tgtRoot then
+				local hRatio = getAvatarHeightRatio(tgtChar, tgtHead)
+				local lookDir = tgtRoot.CFrame.LookVector
+				local flatLook = Vector3.new(lookDir.X, 0, lookDir.Z)
+				flatLook = (flatLook.Magnitude < 1e-4) and Vector3.new(0, 0, -1) or flatLook.Unit
+
+				if Cfg.LoopTP then
+					hrp.CFrame = tgtRoot.CFrame * CFrame.new(0, 0, 3)
+				elseif Cfg.FollowTarget then
+					local gY = raycastAuraGroundY(tgtRoot.Position, tgtRoot.Position.Y)
+					local followY = math.min(tgtRoot.Position.Y, gY + (2.5 * getAvatarHeightRatio(char, char:FindFirstChild("Head"))))
+					local backPos = tgtRoot.Position - (flatLook * 3.5)
+					local goalPos = Vector3.new(backPos.X, followY, backPos.Z)
+					local lookTarget = Vector3.new(tgtRoot.Position.X, followY, tgtRoot.Position.Z)
+					hrp.CFrame = CFrame.lookAt(hrp.Position:Lerp(goalPos, math.clamp(safeDt * 10, 0, 1)), lookTarget)
+				elseif Cfg.Orbit then
+					orbitAngle = orbitAngle + (3.5 * safeDt)
+					local rad = 5
+					local ox = tgtRoot.Position.X + math.cos(orbitAngle) * rad
+					local oz = tgtRoot.Position.Z + math.sin(orbitAngle) * rad
+					hrp.CFrame = CFrame.new(Vector3.new(ox, tgtRoot.Position.Y, oz), tgtRoot.Position)
+				elseif Cfg.HeadSit then
+					didHeadSit = true
+					headSitActiveLastFrame = true
+					applyHeadSitLock(char, hum, hrp, tgtChar, tgtRoot, tgtHead)
+				else
+					local mode = nil
+					local mbSpeed = normalizeMultiBangSpeed(Cfg.MultiBangSpeed)
+					if Cfg.MultiBang then
+						if now - lastMultiSwitchTick >= (1 / mbSpeed) then
+							lastMultiSwitchTick = now
+							multiBangIndex = (multiBangIndex % 3) + 1
+						end
+						mode = (multiBangIndex == 1 and "FaceBang") or (multiBangIndex == 2 and "Bang") or "FrontBang"
+					elseif Cfg.FaceBang then mode = "FaceBang"
+					elseif Cfg.FrontBang then mode = "FrontBang"
+					elseif Cfg.Bang then mode = "Bang" end
+
+					if mode then
+						local activeSpeed = (mode == "FaceBang" or Cfg.MultiBang) and mbSpeed or 3.5
+						local clampedOsc = math.min(activeSpeed, 40)
+						local pulse = math.sin(now * (clampedOsc * 3.2)) * (0.42 * hRatio)
+						if mode == "FaceBang" then
+							local faceCenter = tgtHead and tgtHead.Position or (tgtRoot.Position + Vector3.new(0, 1.5 * hRatio, 0))
+							local headRadius = (tgtHead and math.max(tgtHead.Size.Z, tgtHead.Size.X) * 0.5) or (0.6 * hRatio)
+							local posAtFace = faceCenter + (flatLook * (headRadius + (1.05 * hRatio) + pulse))
+							hrp.AssemblyLinearVelocity = Vector3.zero
+							hrp.AssemblyAngularVelocity = Vector3.zero
+							hrp.CFrame = CFrame.lookAt(posAtFace, faceCenter)
+						elseif mode == "FrontBang" then
+							local frontPos = tgtRoot.Position + (flatLook * (2.2 + pulse))
+							hrp.CFrame = CFrame.lookAt(frontPos, Vector3.new(tgtRoot.Position.X, frontPos.Y, tgtRoot.Position.Z))
+						else
+							hrp.CFrame = tgtRoot.CFrame * CFrame.new(0, 0, 2.2 + pulse)
+						end
+					end
+				end
+			end
+
+			if not didHeadSit and headSitActiveLastFrame then releaseHeadSit(hum) end
+
+			if Cfg.Spin then
+				local angDelta = math.rad(normalizeSpinSpeed(Cfg.SpinVal) * 6 * safeDt)
+				local pos = hrp.Position
+				local rotOnly = (hrp.CFrame - pos) * CFrame.Angles(0, angDelta, 0)
+				hrp.AssemblyLinearVelocity = Vector3.zero
+				hrp.CFrame = CFrame.new(pos) * rotOnly
 			end
 		end)
 	end)
