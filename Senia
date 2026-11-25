@@ -1,36 +1,102 @@
 -- ============================================================================
--- MORTAL HUB - GANG 3RD EYE SYNC + SEC 1 (INFO) & SEC 2 (FRIENDS)
+-- MORTAL HUB (SECTION 1: INFO + SECTION 2: FRIENDS WITH GLOWING BROWN ESP & DIST)
 -- ============================================================================
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Stats = game:GetService("Stats")
-
-local lp = Players.LocalPlayer
-if not lp then
-	repeat task.wait() until Players.LocalPlayer
-	lp = Players.LocalPlayer
+local function safeGetService(name)
+	local ok, svc = pcall(function()
+		return game:GetService(name)
+	end)
+	return ok and svc or nil
 end
 
-local guiParent = lp:FindFirstChildOfClass("PlayerGui")
-if not guiParent then
-	pcall(function() guiParent = lp:WaitForChild("PlayerGui", 5) end)
-end
-if not guiParent then
-	pcall(function() guiParent = game:GetService("CoreGui") end)
-end
-if not guiParent then return end
+local Players = safeGetService("Players") or game:GetService("Players")
+local RunService = safeGetService("RunService") or game:GetService("RunService")
+local UserInputService = safeGetService("UserInputService") or game:GetService("UserInputService")
+local TextChatService = safeGetService("TextChatService")
+local ReplicatedStorage = safeGetService("ReplicatedStorage")
+local SoundService = safeGetService("SoundService")
+local TeleportService = safeGetService("TeleportService")
+local HttpService = safeGetService("HttpService")
+local VirtualUser = safeGetService("VirtualUser")
+local Stats = safeGetService("Stats")
 
-for _, name in ipairs({ "MortalEightHub", "MortalAuraColorWheelGUI", "MortalAirWalkPad" }) do
+local LocalPlayer = Players.LocalPlayer
+if not LocalPlayer then
 	pcall(function()
-		local old = guiParent:FindFirstChild(name)
-		if old then old:Destroy() end
+		if Players.GetPropertyChangedSignal then
+			Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
+		end
+		LocalPlayer = Players.LocalPlayer
 	end)
 end
 
--- Colours
+local function getSafeGuiParent()
+	local parent = nil
+	if LocalPlayer then
+		pcall(function()
+			parent = LocalPlayer:FindFirstChildOfClass("PlayerGui")
+				or LocalPlayer:WaitForChild("PlayerGui", 5)
+		end)
+		if not parent then
+			pcall(function()
+				local pg = Instance.new("PlayerGui")
+				pg.Name = "PlayerGui"
+				pg.Parent = LocalPlayer
+				parent = pg
+			end)
+		end
+	end
+	if not parent then
+		pcall(function()
+			parent = safeGetService("CoreGui")
+		end)
+	end
+	return parent
+end
+
+local PlayerGui = getSafeGuiParent()
+if not PlayerGui then return end
+
+-- ============================================================================
+-- CONSTANTS & CLEANUP
+-- ============================================================================
+local CREATOR_NAME = "MORTAL"
+local GANG_NAME = "MORTALS"
+local SFX_ID = "rbxassetid://12221967"
+
+local LEGACY_GUI_NAMES = {
+	"MortalDeltaRecodeV4", "MortalDeltaRecodeV3", "MortalDeltaRecodeV2",
+	"MortalDeltaRecodeV1", "MortalNewCompleteHub", "MortalFreshRecodeV4",
+	"MortalFreshRecodeV3", "MortalHyperCoolHubV5", "MortalGodTierHubV6",
+	"MortalCyberDeckV7", "MortalApexCoreV8", "MortalVioletNexusV9",
+	"MortalDarkNeonV10", "MortalDarkNeonV11", "MortalDarkNeonV12",
+	"MortalCosmicRiftV13", "MortalCosmicRiftV14", "MortalCosmicRiftV15",
+	"MortalCosmicRiftV16", "MortalCosmicRiftV17", "MortalCosmicRiftV18",
+	"MortalCosmicRiftV19", "MortalCosmicRiftCombinedV19", "MortalDualEyeV19",
+	"MortalVoidSigilV19", "MortalV19FixedDual", "MortalV19VideoSync",
+	"MortalV20CosmicRift", "MortalV21CosmicRift", "MortalV22CosmicRift",
+	"MortalV23CosmicRift", "MortalV24CosmicRift", "MortalV25CosmicRift",
+	"MortalV26CosmicRift", "MortalV27CosmicRift", "MortalV28CosmicRift",
+	"MortalV29CosmicRift", "MortalV30CosmicRift", "MortalV31CosmicRift",
+	"MortalV32CosmicRift", "MortalV33CosmicRift", "MortalV34CosmicRift",
+	"MortalV35CosmicRift", "MortalV36CosmicRift", "MortalV37CosmicRift",
+	"MortalV38CosmicRift", "MortalV39CosmicRift", "MortalV40CosmicRift",
+	"MortalV41CosmicRift", "MortalV42CosmicRift", "MortalV43CosmicRift",
+	"MortalV44CosmicRift", "MortalV45CosmicRift", "MortalV46CosmicRift",
+	"MortalV47CosmicRift", "MortalV48CosmicRift", "MortalV48CosmicRiftFixed",
+	"MortalV48CosmicRiftRecoded", "MortalCompactHub", "MortalEightHub",
+	"MortalAuraColorWheelGUI", "MortalAirWalkPad"
+}
+
+for _, guiName in ipairs(LEGACY_GUI_NAMES) do
+	pcall(function()
+		local existing = PlayerGui:FindFirstChild(guiName)
+		if existing then existing:Destroy() end
+	end)
+end
+
+-- ============================================================================
+-- THEME PALETTE
+-- ============================================================================
 local VOID_BG = Color3.fromRGB(5, 1, 13)
 local CARD_BG = Color3.fromRGB(12, 2, 29)
 local BTN_OFF = Color3.fromRGB(16, 3, 38)
@@ -43,22 +109,176 @@ local TAG_DARK_BAR = Color3.fromRGB(4, 1, 9)
 local TAG_NEON_PURPLE = Color3.fromRGB(148, 35, 255)
 local TAG_NEON_OUTLINE = Color3.fromRGB(112, 0, 218)
 
-local CREATOR_NAME = "MORTAL"
-local GANG_NAME = "MORTALS"
-local userIdStr = tostring(lp.UserId or 0)
+local FRIEND_BODY_BLUE = Color3.fromRGB(30, 110, 255)
+local FRIEND_NAME_BROWN = Color3.fromRGB(165, 95, 35)
+local FRIEND_GLOW_BROWN = Color3.fromRGB(215, 125, 45)
+local TARGET_BODY_RED = Color3.fromRGB(255, 25, 25)
+local TARGET_NAME_YELLOW = Color3.fromRGB(255, 235, 30)
+local ALL_BODY_PURPLE = Color3.fromRGB(145, 25, 255)
+local ALL_NAME_GREEN = Color3.fromRGB(45, 245, 95)
 
+local userIdStr = tostring((LocalPlayer and LocalPlayer.UserId) or 0)
+
+-- ============================================================================
+-- STATE & MODULES TABLE
+-- ============================================================================
 local Cfg = {
 	EyeLocked = false,
 	TopEyeOpen = true,
 	AuraEnabled = false,
 	AuraLevel = 1,
+	Target = "",
+	ESPAll = false,
 }
 
--- Gang / Script User registry (only players running script / in MORTALS gang get 3rd Eye tag)
-local GangUsers = {
-	[lp.UserId] = true,
+local Modules = {
+	Info = {},
+	Friends = {},
 }
 
+local UI = {}
+local friendEspSet = {}
+local targetEspSet = {}
+local espStore = {}
+local thirdEyeTagStore = {}
+local verifiedScriptUsers = LocalPlayer and { [LocalPlayer.UserId] = true } or {}
+local notifiedFriends = {}
+local spectatedFriend = nil
+
+local mainFrame = nil
+local eye1Holder = nil
+local eye1TapBtn = nil
+local eye1FpsLbl = nil
+local eye1Pupil = nil
+local topEyePanel = nil
+local topEyeBtn = nil
+local topEyePupil = nil
+local topAuraLvlLbl = nil
+local topAuraOnOffBtn = nil
+local topStatsLbl = nil
+local refreshCallbacks = {}
+
+-- ============================================================================
+-- GENERAL UTILITIES & SERVER ACTIONS
+-- ============================================================================
+local uiSound = nil
+local function ensureUiSound()
+	if uiSound then return uiSound end
+	pcall(function()
+		local s = Instance.new("Sound")
+		s.Name = "MortalHubSound"
+		s.SoundId = SFX_ID
+		s.Volume = 0.65
+		if SoundService then s.Parent = SoundService end
+		uiSound = s
+	end)
+	return uiSound
+end
+
+local function playClick(pitch)
+	local s = ensureUiSound()
+	if not s then return end
+	pcall(function()
+		s.PlaybackSpeed = pitch or 1
+		s.TimePosition = 0
+		s:Play()
+	end)
+end
+
+local function getRig()
+	if not LocalPlayer then return nil, nil, nil, nil end
+	local char = LocalPlayer.Character
+	if not char or not char.Parent then return nil, nil, nil, nil end
+	return char, char:FindFirstChildOfClass("Humanoid"), char:FindFirstChild("HumanoidRootPart"), char:FindFirstChild("Head")
+end
+
+local function findPlayer(query)
+	if not query then return nil end
+	local q = string.lower((tostring(query):gsub("^%s+", ""):gsub("%s+$", "")))
+	if q == "" then return nil end
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer then
+			local u = string.lower(plr.Name)
+			local d = string.lower(plr.DisplayName or "")
+			if u == q or d == q or string.find(u, q, 1, true) or (d ~= "" and string.find(d, q, 1, true)) then
+				return plr
+			end
+		end
+	end
+	return nil
+end
+
+local function getPing()
+	local ms = 0
+	if Stats then
+		pcall(function()
+			local net = Stats.Network and Stats.Network:FindFirstChild("ServerStatsItem")
+			local dp = net and net:FindFirstChild("Data Ping")
+			if dp and type(dp.GetValue) == "function" then
+				ms = math.floor(dp:GetValue())
+			end
+		end)
+	end
+	if ms == 0 and LocalPlayer then
+		pcall(function()
+			if LocalPlayer.GetNetworkPing then
+				ms = math.floor(LocalPlayer:GetNetworkPing() * 1000)
+			end
+		end)
+	end
+	return ms
+end
+
+local function isFriend(plr)
+	if not plr or not LocalPlayer or plr == LocalPlayer then return false end
+	local ok, res = pcall(function() return LocalPlayer:IsFriendsWith(plr.UserId) end)
+	return ok and res == true
+end
+
+local function rejoinServer()
+	if not TeleportService or not LocalPlayer then return end
+	pcall(function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end)
+	task.delay(1.5, function()
+		pcall(function() TeleportService:Teleport(game.PlaceId, LocalPlayer) end)
+	end)
+end
+
+local function hopServer()
+	if not TeleportService or not HttpService or not LocalPlayer then return end
+	task.spawn(function()
+		local cursor = ""
+		local servers = {}
+		for _ = 1, 5 do
+			local url = "https://games.roblox.com/v1/games/" .. tostring(game.PlaceId) .. "/servers/Public?sortOrder=Asc&limit=100"
+			if cursor ~= "" then url = url .. "&cursor=" .. HttpService:UrlEncode(cursor) end
+			local ok, raw = pcall(function() return game:HttpGet(url) end)
+			if not ok or not raw then break end
+			local decOk, data = pcall(function() return HttpService:JSONDecode(raw) end)
+			if not decOk or type(data) ~= "table" or type(data.data) ~= "table" then break end
+			for _, srv in ipairs(data.data) do
+				if type(srv) == "table" and srv.id and srv.id ~= game.JobId then
+					local playing = tonumber(srv.playing) or 0
+					local maxPlayers = tonumber(srv.maxPlayers) or 0
+					if maxPlayers > 0 and playing < maxPlayers then
+						table.insert(servers, srv.id)
+					end
+				end
+			end
+			if #servers > 0 or not data.nextPageCursor or data.nextPageCursor == "" then break end
+			cursor = data.nextPageCursor
+		end
+		if #servers > 0 then
+			local chosen = servers[math.random(1, #servers)]
+			pcall(function() TeleportService:TeleportToPlaceInstance(game.PlaceId, chosen, LocalPlayer) end)
+		else
+			pcall(function() TeleportService:Teleport(game.PlaceId, LocalPlayer) end)
+		end
+	end)
+end
+
+-- ============================================================================
+-- UI BUILD HELPERS
+-- ============================================================================
 local function addBorder(inst, col, thick, trans)
 	local st = Instance.new("UIStroke")
 	st.Color = col
@@ -67,6 +287,87 @@ local function addBorder(inst, col, thick, trans)
 	st.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	st.Parent = inst
 	return st
+end
+
+local activeDragResetters = {}
+
+local function makeDraggable(frame, handle, holdMode, lockedFn)
+	local dragHandle = handle or frame
+	local pressed = false
+	local activeDrag = false
+	local moved = false
+	local startPos = nil
+	local frameStart = nil
+	local token = 0
+
+	local function resetDrag()
+		pressed = false
+		activeDrag = false
+		token = token + 1
+	end
+	table.insert(activeDragResetters, resetDrag)
+
+	dragHandle.InputBegan:Connect(function(inp)
+		if lockedFn and lockedFn() then
+			resetDrag()
+			return
+		end
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+			pressed = true
+			activeDrag = not holdMode
+			moved = false
+			startPos = inp.Position
+			frameStart = frame.Position
+			token = token + 1
+			local myToken = token
+			if holdMode then
+				task.delay(0.22, function()
+					if lockedFn and lockedFn() then
+						resetDrag()
+						return
+					end
+					if pressed and token == myToken then
+						activeDrag = true
+					end
+				end)
+			end
+		end
+	end)
+
+	dragHandle.InputChanged:Connect(function(inp)
+		if lockedFn and lockedFn() then
+			resetDrag()
+			return
+		end
+		if not pressed then return end
+		if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
+			local delta = inp.Position - startPos
+			if not activeDrag and holdMode and delta.Magnitude > 14 then
+				activeDrag = true
+			end
+			if activeDrag then
+				if delta.Magnitude > 8 then moved = true end
+				frame.Position = UDim2.new(
+					frameStart.X.Scale,
+					frameStart.X.Offset + delta.X,
+					frameStart.Y.Scale,
+					frameStart.Y.Offset + delta.Y
+				)
+			end
+		end
+	end)
+
+	dragHandle.InputEnded:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+			resetDrag()
+		end
+	end)
+
+	return function()
+		local wasMove = moved
+		moved = false
+		return wasMove
+	end
 end
 
 local function createEyeGraphic(parentFrame, eyeW, eyeH, irisSize, pupilSize, zBase)
@@ -100,646 +401,63 @@ local function createEyeGraphic(parentFrame, eyeW, eyeH, irisSize, pupilSize, zB
 	return ePupil
 end
 
-local function makeDraggable(frame, handle, lockedFn)
-	local dragHandle = handle or frame
-	local dragging = false
-	local moved = false
-	local startPos = nil
-	local frameStart = nil
-
-	dragHandle.InputBegan:Connect(function(inp)
-		if lockedFn and lockedFn() then return end
-		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-			dragging = true
-			moved = false
-			startPos = inp.Position
-			frameStart = frame.Position
-		end
-	end)
-
-	dragHandle.InputChanged:Connect(function(inp)
-		if not dragging or (lockedFn and lockedFn()) then return end
-		if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
-			local delta = inp.Position - startPos
-			if delta.Magnitude > 6 then moved = true end
-			frame.Position = UDim2.new(
-				frameStart.X.Scale, frameStart.X.Offset + delta.X,
-				frameStart.Y.Scale, frameStart.Y.Offset + delta.Y
-			)
-		end
-	end)
-
-	dragHandle.InputEnded:Connect(function(inp)
-		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-			dragging = false
-		end
-	end)
-
-	return function()
-		local m = moved
-		moved = false
-		return m
-	end
-end
-
-local function rejoinServer()
-	pcall(function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, lp) end)
-	task.delay(1.5, function()
-		pcall(function() TeleportService:Teleport(game.PlaceId, lp) end)
-	end)
-end
-
-local function hopServer()
-	task.spawn(function()
-		local cursor = ""
-		local servers = {}
-		for _ = 1, 5 do
-			local url = "https://games.roblox.com/v1/games/" .. tostring(game.PlaceId) .. "/servers/Public?sortOrder=Asc&limit=100"
-			if cursor ~= "" then url = url .. "&cursor=" .. HttpService:UrlEncode(cursor) end
-			local ok, raw = pcall(function() return game:HttpGet(url) end)
-			if not ok or not raw then break end
-			local decOk, data = pcall(function() return HttpService:JSONDecode(raw) end)
-			if not decOk or type(data) ~= "table" or type(data.data) ~= "table" then break end
-			for _, srv in ipairs(data.data) do
-				if type(srv) == "table" and srv.id and srv.id ~= game.JobId then
-					local playing = tonumber(srv.playing) or 0
-					local maxPlayers = tonumber(srv.maxPlayers) or 0
-					if maxPlayers > 0 and playing < maxPlayers then
-						table.insert(servers, srv.id)
-					end
-				end
-			end
-			if #servers > 0 or not data.nextPageCursor or data.nextPageCursor == "" then break end
-			cursor = data.nextPageCursor
-		end
-		if #servers > 0 then
-			local chosen = servers[math.random(1, #servers)]
-			pcall(function() TeleportService:TeleportToPlaceInstance(game.PlaceId, chosen, lp) end)
-		else
-			pcall(function() TeleportService:Teleport(game.PlaceId, lp) end)
-		end
-	end)
-end
-
-local sg = Instance.new("ScreenGui")
-sg.Name = "MortalEightHub"
-sg.ResetOnSpawn = false
-sg.IgnoreGuiInset = true
-sg.DisplayOrder = 100
-sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-sg.Parent = guiParent
-
--- 1st Eye
-local eye1Holder = Instance.new("Frame")
-eye1Holder.Name = "MortalFirstEyeHolder"
-eye1Holder.Size = UDim2.new(0, 62, 0, 62)
-eye1Holder.Position = UDim2.new(0.03, 0, 0.25, 0)
-eye1Holder.BackgroundColor3 = CARD_BG
-eye1Holder.Active = true
-eye1Holder.Parent = sg
-Instance.new("UICorner", eye1Holder).CornerRadius = UDim.new(1, 0)
-addBorder(eye1Holder, NEON_RING, 2, 0.05)
-
-local eye1Pupil = createEyeGraphic(eye1Holder, 32, 19, 12, 5, 10)
-
-local eye1FpsLbl = Instance.new("TextLabel")
-eye1FpsLbl.Size = UDim2.new(1, 14, 0, 15)
-eye1FpsLbl.Position = UDim2.new(0, -7, 1, 2)
-eye1FpsLbl.BackgroundColor3 = TAG_DARK_BAR
-eye1FpsLbl.BackgroundTransparency = 0.08
-eye1FpsLbl.Font = Enum.Font.GothamBlack
-eye1FpsLbl.TextSize = 10
-eye1FpsLbl.Text = "60 FPS"
-eye1FpsLbl.TextColor3 = TAG_NEON_PURPLE
-eye1FpsLbl.ZIndex = 12
-eye1FpsLbl.Parent = eye1Holder
-Instance.new("UICorner", eye1FpsLbl).CornerRadius = UDim.new(0, 6)
-addBorder(eye1FpsLbl, TAG_NEON_OUTLINE, 1.1, 0.15)
-
-local eye1TapBtn = Instance.new("TextButton")
-eye1TapBtn.Size = UDim2.new(1, 0, 1, 0)
-eye1TapBtn.BackgroundTransparency = 1
-eye1TapBtn.Text = ""
-eye1TapBtn.ZIndex = 20
-eye1TapBtn.Active = true
-eye1TapBtn.Parent = eye1Holder
-
--- Top Eye
-local topEyeBtn = Instance.new("TextButton")
-topEyeBtn.Name = "MortalThirdEyeCornerBtn"
-topEyeBtn.Size = UDim2.new(0, 44, 0, 32)
-topEyeBtn.Position = UDim2.new(1, -54, 0, 10)
-topEyeBtn.BackgroundColor3 = CARD_BG
-topEyeBtn.Text = ""
-topEyeBtn.Active = true
-topEyeBtn.ZIndex = 25
-topEyeBtn.Parent = sg
-Instance.new("UICorner", topEyeBtn).CornerRadius = UDim.new(0, 10)
-addBorder(topEyeBtn, NEON_RIFT, 1.5, 0.1)
-
-local topEyePupil = createEyeGraphic(topEyeBtn, 26, 15, 10, 4, 26)
-
-local topEyePanel = Instance.new("Frame")
-topEyePanel.Name = "MortalThirdEyePanel"
-topEyePanel.Size = UDim2.new(0, 292, 0, 32)
-topEyePanel.Position = UDim2.new(1, -352, 0, 10)
-topEyePanel.BackgroundColor3 = TAG_DARK_BAR
-topEyePanel.BackgroundTransparency = 0.06
-topEyePanel.Active = true
-topEyePanel.Visible = Cfg.TopEyeOpen
-topEyePanel.ZIndex = 22
-topEyePanel.Parent = sg
-Instance.new("UICorner", topEyePanel).CornerRadius = UDim.new(0, 10)
-addBorder(topEyePanel, TAG_NEON_OUTLINE, 1.6, 0.08)
-
-local topStatsLbl = Instance.new("TextLabel")
-topStatsLbl.Size = UDim2.new(0, 128, 1, 0)
-topStatsLbl.Position = UDim2.new(0, 6, 0, 0)
-topStatsLbl.BackgroundTransparency = 1
-topStatsLbl.Font = Enum.Font.GothamBold
-topStatsLbl.TextSize = 9
-topStatsLbl.Text = "PLAYERS: 1 | PING: 0ms"
-topStatsLbl.TextColor3 = TEXT_MAIN
-topStatsLbl.TextXAlignment = Enum.TextXAlignment.Left
-topStatsLbl.ZIndex = 23
-topStatsLbl.Parent = topEyePanel
-
-local topAuraOnOffBtn = Instance.new("TextButton")
-topAuraOnOffBtn.Size = UDim2.new(0, 72, 0, 22)
-topAuraOnOffBtn.Position = UDim2.new(0, 136, 0.5, -11)
-topAuraOnOffBtn.BackgroundColor3 = BTN_OFF
-topAuraOnOffBtn.Font = Enum.Font.GothamBlack
-topAuraOnOffBtn.TextSize = 9
-topAuraOnOffBtn.Text = "AURA: OFF"
-topAuraOnOffBtn.TextColor3 = TEXT_MAIN
-topAuraOnOffBtn.Active = true
-topAuraOnOffBtn.ZIndex = 26
-topAuraOnOffBtn.Parent = topEyePanel
-Instance.new("UICorner", topAuraOnOffBtn).CornerRadius = UDim.new(0, 6)
-addBorder(topAuraOnOffBtn, NEON_RING, 1, 0.25)
-
-local topMinusBtn = Instance.new("TextButton")
-topMinusBtn.Size = UDim2.new(0, 18, 0, 22)
-topMinusBtn.Position = UDim2.new(0, 212, 0.5, -11)
-topMinusBtn.BackgroundColor3 = BTN_OFF
-topMinusBtn.Font = Enum.Font.GothamBlack
-topMinusBtn.TextSize = 11
-topMinusBtn.Text = "-"
-topMinusBtn.TextColor3 = TEXT_MAIN
-topMinusBtn.Active = true
-topMinusBtn.ZIndex = 26
-topMinusBtn.Parent = topEyePanel
-Instance.new("UICorner", topMinusBtn).CornerRadius = UDim.new(0, 6)
-addBorder(topMinusBtn, NEON_RING, 1, 0.25)
-
-local topAuraLvlLbl = Instance.new("TextLabel")
-topAuraLvlLbl.Size = UDim2.new(0, 34, 0, 22)
-topAuraLvlLbl.Position = UDim2.new(0, 232, 0.5, -11)
-topAuraLvlLbl.BackgroundColor3 = VOID_BG
-topAuraLvlLbl.Font = Enum.Font.GothamBlack
-topAuraLvlLbl.TextSize = 10
-topAuraLvlLbl.Text = "LV.1"
-topAuraLvlLbl.TextColor3 = TAG_NEON_PURPLE
-topAuraLvlLbl.ZIndex = 23
-topAuraLvlLbl.Parent = topEyePanel
-Instance.new("UICorner", topAuraLvlLbl).CornerRadius = UDim.new(0, 6)
-addBorder(topAuraLvlLbl, NEON_RING, 1, 0.25)
-
-local topPlusBtn = Instance.new("TextButton")
-topPlusBtn.Size = UDim2.new(0, 18, 0, 22)
-topPlusBtn.Position = UDim2.new(0, 268, 0.5, -11)
-topPlusBtn.BackgroundColor3 = BTN_OFF
-topPlusBtn.Font = Enum.Font.GothamBlack
-topPlusBtn.TextSize = 11
-topPlusBtn.Text = "+"
-topPlusBtn.TextColor3 = TEXT_MAIN
-topPlusBtn.Active = true
-topPlusBtn.ZIndex = 26
-topPlusBtn.Parent = topEyePanel
-Instance.new("UICorner", topPlusBtn).CornerRadius = UDim.new(0, 6)
-addBorder(topPlusBtn, NEON_RING, 1, 0.25)
-
-topAuraOnOffBtn.Activated:Connect(function()
-	Cfg.AuraEnabled = not Cfg.AuraEnabled
-	topAuraOnOffBtn.Text = "AURA: " .. (Cfg.AuraEnabled and "ON" or "OFF")
-	topAuraOnOffBtn.BackgroundColor3 = Cfg.AuraEnabled and BTN_ON or BTN_OFF
-end)
-
-topMinusBtn.Activated:Connect(function()
-	Cfg.AuraLevel = math.max(1, Cfg.AuraLevel - 1)
-	topAuraLvlLbl.Text = "LV." .. tostring(Cfg.AuraLevel)
-end)
-
-topPlusBtn.Activated:Connect(function()
-	Cfg.AuraLevel = math.min(5, Cfg.AuraLevel + 1)
-	topAuraLvlLbl.Text = "LV." .. tostring(Cfg.AuraLevel)
-end)
-
-topEyeBtn.Activated:Connect(function()
-	Cfg.TopEyeOpen = not Cfg.TopEyeOpen
-	topEyePanel.Visible = Cfg.TopEyeOpen
-end)
-
--- Main Window (8 Sections)
-local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MortalMainWindow"
-mainFrame.Size = UDim2.new(0, 440, 0, 320)
-mainFrame.Position = UDim2.new(0.5, -220, 0.5, -160)
-mainFrame.BackgroundColor3 = VOID_BG
-mainFrame.Visible = false
-mainFrame.Active = true
-mainFrame.ZIndex = 30
-mainFrame.Parent = sg
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 14)
-addBorder(mainFrame, NEON_RING, 2, 0.06)
-
-local header = Instance.new("Frame")
-header.Size = UDim2.new(1, 0, 0, 34)
-header.BackgroundColor3 = CARD_BG
-header.Active = true
-header.ZIndex = 31
-header.Parent = mainFrame
-Instance.new("UICorner", header).CornerRadius = UDim.new(0, 14)
-
-local titleLbl = Instance.new("TextLabel")
-titleLbl.Size = UDim2.new(1, -80, 1, 0)
-titleLbl.Position = UDim2.new(0, 12, 0, 0)
-titleLbl.BackgroundTransparency = 1
-titleLbl.Font = Enum.Font.GothamBlack
-titleLbl.TextSize = 13
-titleLbl.Text = GANG_NAME .. " HUB | BY " .. CREATOR_NAME
-titleLbl.TextColor3 = TEXT_MAIN
-titleLbl.TextXAlignment = Enum.TextXAlignment.Left
-titleLbl.ZIndex = 32
-titleLbl.Parent = header
-
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 26, 0, 26)
-closeBtn.Position = UDim2.new(1, -32, 0, 4)
-closeBtn.BackgroundColor3 = BTN_ON
-closeBtn.Font = Enum.Font.GothamBlack
-closeBtn.TextSize = 12
-closeBtn.Text = "X"
-closeBtn.TextColor3 = TEXT_MAIN
-closeBtn.ZIndex = 33
-closeBtn.Parent = header
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 7)
-closeBtn.MouseButton1Click:Connect(function() mainFrame.Visible = false end)
-
-local sideScroll = Instance.new("ScrollingFrame")
-sideScroll.Size = UDim2.new(0, 114, 1, -42)
-sideScroll.Position = UDim2.new(0, 6, 0, 38)
-sideScroll.BackgroundColor3 = CARD_BG
-sideScroll.ScrollBarThickness = 2
-sideScroll.ZIndex = 31
-sideScroll.Parent = mainFrame
-Instance.new("UICorner", sideScroll).CornerRadius = UDim.new(0, 10)
-addBorder(sideScroll, NEON_RING, 1.2, 0.25)
-
-local sideList = Instance.new("UIListLayout", sideScroll)
-sideList.Padding = UDim.new(0, 4)
-sideList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-sideList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	sideScroll.CanvasSize = UDim2.new(0, 0, 0, sideList.AbsoluteContentSize.Y + 8)
-end)
-
-local contentHolder = Instance.new("Frame")
-contentHolder.Size = UDim2.new(1, -130, 1, -42)
-contentHolder.Position = UDim2.new(0, 124, 0, 38)
-contentHolder.BackgroundColor3 = CARD_BG
-contentHolder.ZIndex = 31
-contentHolder.Parent = mainFrame
-Instance.new("UICorner", contentHolder).CornerRadius = UDim.new(0, 10)
-addBorder(contentHolder, NEON_RING, 1.2, 0.25)
-
-local sections = {
-	"Info",
-	"Friends",
-	"Player",
-	"Exploits",
-	"Troll",
-	"Players Time",
-	"Aura",
-	"Spams",
-}
-local pages, tabs = {}, {}
-
-for i, sec in ipairs(sections) do
-	local pg = Instance.new("ScrollingFrame")
-	pg.Size = UDim2.new(1, -8, 1, -8)
-	pg.Position = UDim2.new(0, 4, 0, 4)
-	pg.BackgroundTransparency = 1
-	pg.ScrollBarThickness = 3
-	pg.Visible = (i == 1)
-	pg.ZIndex = 32
-	pg.Parent = contentHolder
-	pages[i] = pg
-
-	local tb = Instance.new("TextButton")
-	tb.Size = UDim2.new(0.92, 0, 0, 28)
-	tb.BackgroundColor3 = (i == 1) and BTN_ON or BTN_OFF
-	tb.Font = Enum.Font.GothamBold
-	tb.TextSize = 10
-	tb.Text = tostring(i) .. ". " .. sec
-	tb.TextColor3 = (i == 1) and TEXT_MAIN or TEXT_DIM
-	tb.ZIndex = 32
-	tb.Parent = sideScroll
-	Instance.new("UICorner", tb).CornerRadius = UDim.new(0, 7)
-	tabs[i] = tb
-
-	tb.MouseButton1Click:Connect(function()
-		for k, p in ipairs(pages) do p.Visible = (k == i) end
-		for k, b in ipairs(tabs) do
-			b.BackgroundColor3 = (k == i) and BTN_ON or BTN_OFF
-			b.TextColor3 = (k == i) and TEXT_MAIN or TEXT_DIM
-		end
-	end)
-end
-
--- Section 1 (Info) features
-do
-	local p1 = pages[1]
-	local lay1 = Instance.new("UIListLayout", p1)
-	lay1.Padding = UDim.new(0, 6)
-	lay1.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	lay1:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		p1.CanvasSize = UDim2.new(0, 0, 0, lay1.AbsoluteContentSize.Y + 10)
-	end)
-
-	local gangBox = Instance.new("Frame")
-	gangBox.Size = UDim2.new(0.96, 0, 0, 56)
-	gangBox.BackgroundColor3 = VOID_BG
-	gangBox.ZIndex = 33
-	gangBox.Parent = p1
-	Instance.new("UICorner", gangBox).CornerRadius = UDim.new(0, 8)
-	addBorder(gangBox, NEON_RING, 1.2, 0.25)
-
-	local gangLbl = Instance.new("TextLabel")
-	gangLbl.Size = UDim2.new(1, -12, 1, -6)
-	gangLbl.Position = UDim2.new(0, 6, 0, 3)
-	gangLbl.BackgroundTransparency = 1
-	gangLbl.Font = Enum.Font.GothamBold
-	gangLbl.TextSize = 11
-	gangLbl.TextColor3 = TAG_NEON_PURPLE
-	gangLbl.TextWrapped = true
-	gangLbl.ZIndex = 34
-	gangLbl.Text = "Creator: " .. CREATOR_NAME .. "\n" .. GANG_NAME .. " — Loyalty, brotherhood, and shadow dominance.\nMembers stand united across every server."
-	gangLbl.Parent = gangBox
-
-	local infoCard = Instance.new("Frame")
-	infoCard.Size = UDim2.new(0.96, 0, 0, 62)
-	infoCard.BackgroundColor3 = VOID_BG
-	infoCard.ZIndex = 33
-	infoCard.Parent = p1
-	Instance.new("UICorner", infoCard).CornerRadius = UDim.new(0, 8)
-	addBorder(infoCard, NEON_RING, 1.2, 0.25)
-
-	local avImg = Instance.new("ImageLabel")
-	avImg.Size = UDim2.new(0, 48, 0, 48)
-	avImg.Position = UDim2.new(0, 8, 0, 7)
-	avImg.BackgroundColor3 = BTN_OFF
-	avImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. userIdStr .. "&w=150&h=150"
-	avImg.ZIndex = 34
-	avImg.Parent = infoCard
-	Instance.new("UICorner", avImg).CornerRadius = UDim.new(1, 0)
-	addBorder(avImg, NEON_RIFT, 1.4, 0.1)
-
-	local infoTxt = Instance.new("TextLabel")
-	infoTxt.Size = UDim2.new(1, -66, 1, -6)
-	infoTxt.Position = UDim2.new(0, 62, 0, 3)
-	infoTxt.BackgroundTransparency = 1
-	infoTxt.Font = Enum.Font.GothamBold
-	infoTxt.TextSize = 11
-	infoTxt.TextXAlignment = Enum.TextXAlignment.Left
-	infoTxt.TextYAlignment = Enum.TextYAlignment.Center
-	infoTxt.TextColor3 = TEXT_MAIN
-	infoTxt.ZIndex = 34
-	infoTxt.Text = "User ID: " .. userIdStr .. "\nUser: @" .. tostring(lp.Name or "Player")
-	infoTxt.Parent = infoCard
-
-	local infoBtnRow = Instance.new("Frame")
-	infoBtnRow.Size = UDim2.new(0.96, 0, 0, 28)
-	infoBtnRow.BackgroundTransparency = 1
-	infoBtnRow.ZIndex = 33
-	infoBtnRow.Parent = p1
-
-	local rejBtn = Instance.new("TextButton")
-	rejBtn.Size = UDim2.new(0.5, -3, 1, 0)
-	rejBtn.BackgroundColor3 = BTN_OFF
-	rejBtn.Font = Enum.Font.GothamBold
-	rejBtn.TextSize = 11
-	rejBtn.Text = "REJOIN"
-	rejBtn.TextColor3 = TEXT_MAIN
-	rejBtn.ZIndex = 33
-	rejBtn.Parent = infoBtnRow
-	Instance.new("UICorner", rejBtn).CornerRadius = UDim.new(0, 7)
-	addBorder(rejBtn, NEON_RING, 1, 0.3)
-	rejBtn.MouseButton1Click:Connect(rejoinServer)
-
-	local hopBtn = Instance.new("TextButton")
-	hopBtn.Size = UDim2.new(0.5, -3, 1, 0)
-	hopBtn.Position = UDim2.new(0.5, 3, 0, 0)
-	hopBtn.BackgroundColor3 = BTN_OFF
-	hopBtn.Font = Enum.Font.GothamBold
-	hopBtn.TextSize = 11
-	hopBtn.Text = "SERVER HOP"
-	hopBtn.TextColor3 = TEXT_MAIN
-	hopBtn.ZIndex = 33
-	hopBtn.Parent = infoBtnRow
-	Instance.new("UICorner", hopBtn).CornerRadius = UDim.new(0, 7)
-	addBorder(hopBtn, NEON_RING, 1, 0.3)
-	hopBtn.MouseButton1Click:Connect(hopServer)
-
-	local lockEyeBtn = Instance.new("TextButton")
-	lockEyeBtn.Size = UDim2.new(0.96, 0, 0, 28)
-	lockEyeBtn.BackgroundColor3 = BTN_OFF
-	lockEyeBtn.Font = Enum.Font.GothamBold
-	lockEyeBtn.TextSize = 11
-	lockEyeBtn.Text = "LOCK 1ST EYE: OFF"
-	lockEyeBtn.TextColor3 = TEXT_MAIN
-	lockEyeBtn.ZIndex = 33
-	lockEyeBtn.Parent = p1
-	Instance.new("UICorner", lockEyeBtn).CornerRadius = UDim.new(0, 7)
-	addBorder(lockEyeBtn, NEON_RING, 1, 0.35)
-	lockEyeBtn.MouseButton1Click:Connect(function()
-		Cfg.EyeLocked = not Cfg.EyeLocked
-		lockEyeBtn.Text = "LOCK 1ST EYE: " .. (Cfg.EyeLocked and "ON" or "OFF")
-		lockEyeBtn.BackgroundColor3 = Cfg.EyeLocked and BTN_ON or BTN_OFF
-	end)
-end
-
--- Section 2 (Friends) features + Gang 3rd Eye Sync list
-local refreshFriendsUI
-do
-	local p2 = pages[2]
-	local lay2 = Instance.new("UIListLayout", p2)
-	lay2.Padding = UDim.new(0, 6)
-	lay2.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	lay2:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		p2.CanvasSize = UDim2.new(0, 0, 0, lay2.AbsoluteContentSize.Y + 10)
-	end)
-
-	local gangStatusLbl = Instance.new("TextLabel")
-	gangStatusLbl.Size = UDim2.new(0.96, 0, 0, 24)
-	gangStatusLbl.BackgroundColor3 = VOID_BG
-	gangStatusLbl.Font = Enum.Font.GothamBold
-	gangStatusLbl.TextSize = 10
-	gangStatusLbl.TextColor3 = TAG_NEON_PURPLE
-	gangStatusLbl.Text = GANG_NAME .. " 3RD EYE USERS IN SERVER: 1"
-	gangStatusLbl.ZIndex = 33
-	gangStatusLbl.Parent = p2
-	Instance.new("UICorner", gangStatusLbl).CornerRadius = UDim.new(0, 7)
-	addBorder(gangStatusLbl, NEON_RING, 1, 0.3)
-
-	local listHolder = Instance.new("Frame")
-	listHolder.Size = UDim2.new(0.96, 0, 0, 175)
-	listHolder.BackgroundColor3 = VOID_BG
-	listHolder.ZIndex = 33
-	listHolder.Parent = p2
-	Instance.new("UICorner", listHolder).CornerRadius = UDim.new(0, 8)
-	addBorder(listHolder, NEON_RING, 1, 0.3)
-
-	local innerLay = Instance.new("UIListLayout", listHolder)
-	innerLay.Padding = UDim.new(0, 4)
-	innerLay.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
-	local function isFriendSafe(plr)
-		local ok, res = pcall(function() return lp:IsFriendsWith(plr.UserId) end)
-		return ok and res == true
-	end
-
-	refreshFriendsUI = function()
-		for _, ch in ipairs(listHolder:GetChildren()) do
-			if ch:IsA("Frame") or ch:IsA("TextLabel") then
-				ch:Destroy()
-			end
-		end
-
-		local gangCount = 0
-		for _, plr in ipairs(Players:GetPlayers()) do
-			if GangUsers[plr.UserId] then
-				gangCount = gangCount + 1
-			end
-		end
-		gangStatusLbl.Text = GANG_NAME .. " 3RD EYE USERS IN SERVER: " .. tostring(gangCount)
-
-		local added = 0
-		for _, plr in ipairs(Players:GetPlayers()) do
-			if plr ~= lp and isFriendSafe(plr) then
-				added = added + 1
-				local row = Instance.new("Frame")
-				row.Size = UDim2.new(0.96, 0, 0, 28)
-				row.BackgroundColor3 = CARD_BG
-				row.ZIndex = 34
-				row.Parent = listHolder
-				Instance.new("UICorner", row).CornerRadius = UDim.new(0, 6)
-				addBorder(row, NEON_RING, 1, 0.35)
-
-				local nameLbl = Instance.new("TextLabel")
-				nameLbl.Size = UDim2.new(0.62, -6, 1, 0)
-				nameLbl.Position = UDim2.new(0, 6, 0, 0)
-				nameLbl.BackgroundTransparency = 1
-				nameLbl.Font = Enum.Font.GothamBold
-				nameLbl.TextSize = 10
-				nameLbl.TextXAlignment = Enum.TextXAlignment.Left
-				nameLbl.TextColor3 = GangUsers[plr.UserId] and TAG_NEON_PURPLE or TEXT_MAIN
-				nameLbl.Text = plr.DisplayName .. (GangUsers[plr.UserId] and " [3RD EYE]" or " [FRIEND]")
-				nameLbl.ZIndex = 35
-				nameLbl.Parent = row
-
-				local tpBtn = Instance.new("TextButton")
-				tpBtn.Size = UDim2.new(0.34, 0, 0, 20)
-				tpBtn.Position = UDim2.new(0.64, 0, 0.5, -10)
-				tpBtn.BackgroundColor3 = BTN_OFF
-				tpBtn.Font = Enum.Font.GothamBold
-				tpBtn.TextSize = 9
-				tpBtn.Text = "TP TO FRIEND"
-				tpBtn.TextColor3 = TEXT_MAIN
-				tpBtn.ZIndex = 35
-				tpBtn.Parent = row
-				Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0, 5)
-				tpBtn.MouseButton1Click:Connect(function()
-					pcall(function()
-						local myRoot = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
-						local tRoot = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
-						if myRoot and tRoot then
-							myRoot.CFrame = tRoot.CFrame * CFrame.new(0, 0, 3)
-						end
-					end)
-				end)
-			end
-		end
-
-		if added == 0 then
-			local emptyLbl = Instance.new("TextLabel")
-			emptyLbl.Size = UDim2.new(0.94, 0, 0, 28)
-			emptyLbl.BackgroundTransparency = 1
-			emptyLbl.Font = Enum.Font.GothamBold
-			emptyLbl.TextSize = 10
-			emptyLbl.TextColor3 = TEXT_DIM
-			emptyLbl.Text = "No friends currently in this server."
-			emptyLbl.ZIndex = 34
-			emptyLbl.Parent = listHolder
-		end
-	end
-
-	local refBtn = Instance.new("TextButton")
-	refBtn.Size = UDim2.new(0.96, 0, 0, 28)
-	refBtn.BackgroundColor3 = BTN_OFF
-	refBtn.Font = Enum.Font.GothamBold
-	refBtn.TextSize = 11
-	refBtn.Text = "REFRESH FRIENDS & GANG LIST"
-	refBtn.TextColor3 = TEXT_MAIN
-	refBtn.ZIndex = 33
-	refBtn.Parent = p2
-	Instance.new("UICorner", refBtn).CornerRadius = UDim.new(0, 7)
-	addBorder(refBtn, NEON_RING, 1, 0.35)
-	refBtn.MouseButton1Click:Connect(function()
-		if refreshFriendsUI then pcall(refreshFriendsUI) end
-	end)
-end
-
 -- ============================================================================
--- 3RD EYE OVERHEAD TAG (ONLY FOR GANG / SCRIPT USERS)
+-- 3RD EYE OVERHEAD TAG & ESP ENGINE
 -- ============================================================================
-local thirdEyeTagStore = {}
-
 local function clearThirdEyeTag(plr)
 	if thirdEyeTagStore[plr] then
 		pcall(function()
-			if thirdEyeTagStore[plr].Billboard then
-				thirdEyeTagStore[plr].Billboard:Destroy()
-			end
+			if thirdEyeTagStore[plr].Billboard then thirdEyeTagStore[plr].Billboard:Destroy() end
 		end)
 		thirdEyeTagStore[plr] = nil
 	end
 end
 
+local function isVerifiedMortalUser(plr)
+	if not plr then return false end
+	if (LocalPlayer and plr == LocalPlayer) or verifiedScriptUsers[plr.UserId] == true then return true end
+	local pChar = plr.Character
+	if pChar and (pChar:FindFirstChild("MortalHubMarker") or pChar:FindFirstChild("MortalsAuraFX", true)) then
+		verifiedScriptUsers[plr.UserId] = true
+		return true
+	end
+	return false
+end
+
+local function markSelfScriptPresence(char)
+	if not char then return end
+	pcall(function()
+		if not char:FindFirstChild("MortalHubMarker") then
+			local f = Instance.new("Folder")
+			f.Name = "MortalHubMarker"
+			f.Parent = char
+		end
+	end)
+end
+
 local function updateThirdEyeTag(plr)
-	if not plr or not plr.Parent or not GangUsers[plr.UserId] then
+	if not isVerifiedMortalUser(plr) then
 		clearThirdEyeTag(plr)
 		return
 	end
 	local pChar = plr.Character
 	local head = pChar and pChar:FindFirstChild("Head")
-	if not pChar or not head or not head:IsA("BasePart") then
+	if not pChar or not head then
 		clearThirdEyeTag(plr)
 		return
 	end
-
 	local entry = thirdEyeTagStore[plr]
 	if not entry or entry.Char ~= pChar or not entry.Billboard or not entry.Billboard.Parent then
 		clearThirdEyeTag(plr)
 		pcall(function()
 			local dispName = plr.DisplayName
 			local barW = math.clamp(#dispName * 7.2 + 40, 108, 175)
-
 			local bb = Instance.new("BillboardGui")
 			bb.Name = "MortalMemberTag"
 			bb.Size = UDim2.new(0, barW, 0, 24)
 			bb.StudsOffset = Vector3.new(0, 2.8, 0)
 			bb.AlwaysOnTop = true
-			bb.MaxDistance = 9999
+			bb.MaxDistance = math.huge
 			bb.Parent = head
 
 			local bar = Instance.new("Frame")
@@ -779,162 +497,909 @@ local function updateThirdEyeTag(plr)
 			thirdEyeTagStore[plr] = { Char = pChar, Billboard = bb, Pupil = pupil }
 		end)
 	elseif entry.Pupil then
+		local t = os.clock()
+		entry.Pupil.Position = UDim2.new(0.5 + math.cos(t * 2.2) * 0.12, -1.5, 0.5 + math.sin(t * 1.7) * 0.1, -1.5)
+	end
+end
+
+local function clearESP(plr)
+	if espStore[plr] then
 		pcall(function()
-			local t = os.clock()
-			entry.Pupil.Position = UDim2.new(0.5 + math.cos(t * 2.2) * 0.12, -1.5, 0.5 + math.sin(t * 1.7) * 0.1, -1.5)
+			if espStore[plr].Highlight then espStore[plr].Highlight:Destroy() end
+			if espStore[plr].Billboard then espStore[plr].Billboard:Destroy() end
 		end)
+		espStore[plr] = nil
 	end
 end
 
-local function registerGangPlayer(uid)
-	local numId = tonumber(uid)
-	if not numId then return end
-	if not GangUsers[numId] then
-		GangUsers[numId] = true
-		local plr = Players:GetPlayerByUserId(numId)
-		if plr then
-			pcall(updateThirdEyeTag, plr)
-		end
-		if refreshFriendsUI then
-			pcall(refreshFriendsUI)
-		end
+local function getDistanceMeters(plr)
+	local _, _, myR = getRig()
+	local tChar = plr and plr.Character
+	local tR = tChar and (tChar:FindFirstChild("HumanoidRootPart") or tChar:FindFirstChild("Head"))
+	if myR and tR then
+		return math.floor((myR.Position - tR.Position).Magnitude + 0.5)
 	end
+	return nil
 end
 
--- Live Gang Presence Sync via ReplicatedStorage / Player Attributes
-local gangFolder = ReplicatedStorage:FindFirstChild("MortalGangSync")
-if not gangFolder then
-	pcall(function()
-		gangFolder = Instance.new("Folder")
-		gangFolder.Name = "MortalGangSync"
-		gangFolder.Parent = ReplicatedStorage
-	end)
-end
-
-local function announceSelfInGang()
-	pcall(function()
-		lp:SetAttribute("MortalGangActive", true)
-	end)
-	if gangFolder then
+local function drawESP(plr, bodyCol, nameCol, mode)
+	local pChar = plr and plr.Character
+	local head = pChar and pChar:FindFirstChild("Head")
+	if not pChar or not head then
+		clearESP(plr)
+		return
+	end
+	local entry = espStore[plr]
+	if not entry or entry.Char ~= pChar or entry.Mode ~= mode then
+		clearESP(plr)
 		pcall(function()
-			local marker = gangFolder:FindFirstChild("U_" .. userIdStr)
-			if not marker then
-				marker = Instance.new("BoolValue")
-				marker.Name = "U_" .. userIdStr
-				marker.Value = true
-				marker.Parent = gangFolder
-			end
-		end)
-	end
-end
+			local hl = Instance.new("Highlight")
+			hl.Name = "MortalESP_HL"
+			hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+			hl.FillTransparency = 0.42
+			hl.OutlineTransparency = 0.05
+			hl.FillColor = bodyCol
+			hl.OutlineColor = bodyCol
+			hl.Parent = pChar
 
-local function scanGangUsers()
-	for _, plr in ipairs(Players:GetPlayers()) do
-		if plr == lp or plr:GetAttribute("MortalGangActive") == true then
-			registerGangPlayer(plr.UserId)
-		end
-	end
-	if gangFolder then
-		for _, ch in ipairs(gangFolder:GetChildren()) do
-			local uidPart = string.match(ch.Name, "^U_(%d+)$")
-			if uidPart then
-				registerGangPlayer(uidPart)
-			end
-		end
-	end
-end
+			local isFriendMode = (mode == "FRIEND")
+			local bb = Instance.new("BillboardGui")
+			bb.Name = "MortalESP_BB"
+			bb.Size = UDim2.new(0, 210, 0, mode == "TARGET" and 46 or 30)
+			bb.StudsOffset = Vector3.new(0, mode == "TARGET" and 3.5 or 2.8, 0)
+			bb.AlwaysOnTop = true
+			bb.MaxDistance = math.huge
+			bb.Parent = head
 
-announceSelfInGang()
-scanGangUsers()
+			local nameLbl = nil
+			if mode == "TARGET" then
+				local badge = Instance.new("TextLabel")
+				badge.Size = UDim2.new(0, 96, 0, 18)
+				badge.Position = UDim2.new(0.5, -48, 0, 0)
+				badge.BackgroundColor3 = Color3.fromRGB(255, 240, 40)
+				badge.BackgroundTransparency = 0.05
+				badge.Font = Enum.Font.GothamBlack
+				badge.TextSize = 11
+				badge.Text = "TARGET"
+				badge.TextColor3 = Color3.fromRGB(0, 0, 0)
+				badge.TextStrokeTransparency = 1
+				badge.Parent = bb
+				Instance.new("UICorner", badge).CornerRadius = UDim.new(0, 5)
 
-if gangFolder then
-	gangFolder.ChildAdded:Connect(function(ch)
-		local uidPart = string.match(ch.Name, "^U_(%d+)$")
-		if uidPart then
-			registerGangPlayer(uidPart)
-		end
-	end)
-end
+				local glowStroke = Instance.new("UIStroke")
+				glowStroke.Color = Color3.fromRGB(255, 230, 0)
+				glowStroke.Thickness = 2.2
+				glowStroke.Transparency = 0
+				glowStroke.Parent = badge
 
-local function hookPlayer(plr)
-	pcall(function()
-		if plr == lp or plr:GetAttribute("MortalGangActive") == true then
-			registerGangPlayer(plr.UserId)
-		end
-		plr:GetAttributeChangedSignal("MortalGangActive"):Connect(function()
-			if plr:GetAttribute("MortalGangActive") == true then
-				registerGangPlayer(plr.UserId)
-			end
-		end)
-		plr.CharacterAdded:Connect(function()
-			task.spawn(function()
-				local char = plr.Character or plr.CharacterAdded:Wait()
-				if char then
-					char:WaitForChild("Head", 5)
-					task.wait(0.1)
-					pcall(updateThirdEyeTag, plr)
+				nameLbl = Instance.new("TextLabel")
+				nameLbl.Size = UDim2.new(1, 0, 0, 22)
+				nameLbl.Position = UDim2.new(0, 0, 0, 20)
+				nameLbl.BackgroundTransparency = 1
+				nameLbl.Font = Enum.Font.GothamBold
+				nameLbl.TextSize = 12
+				nameLbl.Text = plr.DisplayName .. " (@" .. plr.Name .. ")"
+				nameLbl.TextColor3 = nameCol
+				nameLbl.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+				nameLbl.TextStrokeTransparency = 0.15
+				nameLbl.Parent = bb
+			else
+				nameLbl = Instance.new("TextLabel")
+				nameLbl.Size = UDim2.new(1, 0, 1, 0)
+				nameLbl.BackgroundTransparency = 1
+				nameLbl.Font = isFriendMode and Enum.Font.GothamBlack or Enum.Font.GothamBold
+				nameLbl.TextSize = isFriendMode and 13 or 12
+				nameLbl.Text = plr.DisplayName .. " (@" .. plr.Name .. ")"
+				nameLbl.TextColor3 = nameCol
+				nameLbl.TextStrokeColor3 = isFriendMode and Color3.fromRGB(35, 14, 4) or Color3.fromRGB(0, 0, 0)
+				nameLbl.TextStrokeTransparency = 0
+				nameLbl.Parent = bb
+
+				if isFriendMode then
+					local glow = Instance.new("UIStroke")
+					glow.Color = FRIEND_GLOW_BROWN
+					glow.Thickness = 2.0
+					glow.Transparency = 0.1
+					glow.Parent = nameLbl
 				end
+			end
+
+			entry = { Char = pChar, Mode = mode, Highlight = hl, Billboard = bb, NameLabel = nameLbl }
+			espStore[plr] = entry
+		end)
+	end
+
+	if entry and entry.NameLabel then
+		local dist = getDistanceMeters(plr)
+		local distSuffix = dist and (" [" .. tostring(dist) .. "m]") or ""
+		entry.NameLabel.Text = plr.DisplayName .. " (@" .. plr.Name .. ")" .. distSuffix
+	end
+end
+
+local function getActiveTargetPlayer()
+	local direct = findPlayer(Cfg.Target)
+	if direct then return direct end
+	for plr, active in pairs(targetEspSet) do
+		if active and plr and plr.Parent == Players then return plr end
+	end
+	return nil
+end
+
+local function syncAllESP()
+	local targetPlr = getActiveTargetPlayer()
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer then
+			local isTgt = (targetPlr == plr) or (targetEspSet[plr] == true)
+			local isFrd = (friendEspSet[plr] == true)
+			local isAll = (Cfg.ESPAll == true)
+			if isTgt then
+				drawESP(plr, TARGET_BODY_RED, TARGET_NAME_YELLOW, "TARGET")
+			elseif isFrd then
+				drawESP(plr, FRIEND_BODY_BLUE, FRIEND_NAME_BROWN, "FRIEND")
+			elseif isAll then
+				drawESP(plr, ALL_BODY_PURPLE, ALL_NAME_GREEN, "ALL")
+			else
+				clearESP(plr)
+			end
+		end
+	end
+end
+
+-- ============================================================================
+-- SCREENGUI & 1ST EYE / TOP EYE / MAIN WINDOW
+-- ============================================================================
+local sg = Instance.new("ScreenGui")
+sg.Name = "MortalEightHub"
+sg.ResetOnSpawn = false
+sg.IgnoreGuiInset = true
+sg.DisplayOrder = 100
+sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+sg.Parent = PlayerGui
+
+local pages = {}
+local tabButtons = {}
+local switchSection
+
+local function refreshTopAuraUI()
+	if topAuraLvlLbl then topAuraLvlLbl.Text = "LV." .. tostring(Cfg.AuraLevel) end
+	if topAuraOnOffBtn then
+		topAuraOnOffBtn.Text = "AURA: " .. (Cfg.AuraEnabled and "ON" or "OFF")
+		topAuraOnOffBtn.BackgroundColor3 = Cfg.AuraEnabled and BTN_ON or BTN_OFF
+	end
+end
+
+do
+	eye1Holder = Instance.new("Frame")
+	eye1Holder.Name = "MortalFirstEyeHolder"
+	eye1Holder.Size = UDim2.new(0, 62, 0, 62)
+	eye1Holder.Position = UDim2.new(0.03, 0, 0.25, 0)
+	eye1Holder.BackgroundColor3 = CARD_BG
+	eye1Holder.Active = true
+	eye1Holder.Parent = sg
+	Instance.new("UICorner", eye1Holder).CornerRadius = UDim.new(1, 0)
+	addBorder(eye1Holder, NEON_RING, 2, 0.05)
+
+	eye1Pupil = createEyeGraphic(eye1Holder, 32, 19, 12, 5, 10)
+
+	eye1FpsLbl = Instance.new("TextLabel")
+	eye1FpsLbl.Size = UDim2.new(1, 14, 0, 15)
+	eye1FpsLbl.Position = UDim2.new(0, -7, 1, 2)
+	eye1FpsLbl.BackgroundColor3 = TAG_DARK_BAR
+	eye1FpsLbl.BackgroundTransparency = 0.08
+	eye1FpsLbl.Font = Enum.Font.GothamBlack
+	eye1FpsLbl.TextSize = 10
+	eye1FpsLbl.Text = "60 FPS"
+	eye1FpsLbl.TextColor3 = TAG_NEON_PURPLE
+	eye1FpsLbl.ZIndex = 12
+	eye1FpsLbl.Parent = eye1Holder
+	Instance.new("UICorner", eye1FpsLbl).CornerRadius = UDim.new(0, 6)
+	addBorder(eye1FpsLbl, TAG_NEON_OUTLINE, 1.1, 0.15)
+
+	eye1TapBtn = Instance.new("TextButton")
+	eye1TapBtn.Size = UDim2.new(1, 0, 1, 0)
+	eye1TapBtn.BackgroundTransparency = 1
+	eye1TapBtn.Text = ""
+	eye1TapBtn.ZIndex = 20
+	eye1TapBtn.Active = true
+	eye1TapBtn.Parent = eye1Holder
+
+	topEyeBtn = Instance.new("TextButton")
+	topEyeBtn.Name = "MortalThirdEyeCornerBtn"
+	topEyeBtn.Size = UDim2.new(0, 44, 0, 32)
+	topEyeBtn.Position = UDim2.new(1, -54, 0, 10)
+	topEyeBtn.BackgroundColor3 = CARD_BG
+	topEyeBtn.Text = ""
+	topEyeBtn.Active = true
+	topEyeBtn.ZIndex = 25
+	topEyeBtn.Parent = sg
+	Instance.new("UICorner", topEyeBtn).CornerRadius = UDim.new(0, 10)
+	addBorder(topEyeBtn, NEON_RIFT, 1.5, 0.1)
+
+	topEyePupil = createEyeGraphic(topEyeBtn, 26, 15, 10, 4, 26)
+
+	topEyePanel = Instance.new("Frame")
+	topEyePanel.Name = "MortalThirdEyePanel"
+	topEyePanel.Size = UDim2.new(0, 292, 0, 32)
+	topEyePanel.Position = UDim2.new(1, -352, 0, 10)
+	topEyePanel.BackgroundColor3 = TAG_DARK_BAR
+	topEyePanel.BackgroundTransparency = 0.06
+	topEyePanel.Active = true
+	topEyePanel.Visible = Cfg.TopEyeOpen
+	topEyePanel.ZIndex = 22
+	topEyePanel.Parent = sg
+	Instance.new("UICorner", topEyePanel).CornerRadius = UDim.new(0, 10)
+	addBorder(topEyePanel, TAG_NEON_OUTLINE, 1.6, 0.08)
+
+	topStatsLbl = Instance.new("TextLabel")
+	topStatsLbl.Size = UDim2.new(0, 128, 1, 0)
+	topStatsLbl.Position = UDim2.new(0, 6, 0, 0)
+	topStatsLbl.BackgroundTransparency = 1
+	topStatsLbl.Font = Enum.Font.GothamBold
+	topStatsLbl.TextSize = 9
+	topStatsLbl.Text = "PLAYERS: 1 | PING: 0ms"
+	topStatsLbl.TextColor3 = TEXT_MAIN
+	topStatsLbl.TextXAlignment = Enum.TextXAlignment.Left
+	topStatsLbl.ZIndex = 23
+	topStatsLbl.Parent = topEyePanel
+
+	topAuraOnOffBtn = Instance.new("TextButton")
+	topAuraOnOffBtn.Size = UDim2.new(0, 72, 0, 22)
+	topAuraOnOffBtn.Position = UDim2.new(0, 136, 0.5, -11)
+	topAuraOnOffBtn.BackgroundColor3 = BTN_OFF
+	topAuraOnOffBtn.Font = Enum.Font.GothamBlack
+	topAuraOnOffBtn.TextSize = 9
+	topAuraOnOffBtn.Text = "AURA: OFF"
+	topAuraOnOffBtn.TextColor3 = TEXT_MAIN
+	topAuraOnOffBtn.Active = true
+	topAuraOnOffBtn.ZIndex = 26
+	topAuraOnOffBtn.Parent = topEyePanel
+	Instance.new("UICorner", topAuraOnOffBtn).CornerRadius = UDim.new(0, 6)
+	addBorder(topAuraOnOffBtn, NEON_RING, 1, 0.25)
+	topAuraOnOffBtn.Activated:Connect(function()
+		Cfg.AuraEnabled = not Cfg.AuraEnabled
+		refreshTopAuraUI()
+		playClick(Cfg.AuraEnabled and 1.15 or 0.9)
+	end)
+
+	UI.topMinusBtn = Instance.new("TextButton")
+	UI.topMinusBtn.Size = UDim2.new(0, 18, 0, 22)
+	UI.topMinusBtn.Position = UDim2.new(0, 212, 0.5, -11)
+	UI.topMinusBtn.BackgroundColor3 = BTN_OFF
+	UI.topMinusBtn.Font = Enum.Font.GothamBlack
+	UI.topMinusBtn.TextSize = 11
+	UI.topMinusBtn.Text = "-"
+	UI.topMinusBtn.TextColor3 = TEXT_MAIN
+	UI.topMinusBtn.Active = true
+	UI.topMinusBtn.ZIndex = 26
+	UI.topMinusBtn.Parent = topEyePanel
+	Instance.new("UICorner", UI.topMinusBtn).CornerRadius = UDim.new(0, 6)
+	addBorder(UI.topMinusBtn, NEON_RING, 1, 0.25)
+
+	topAuraLvlLbl = Instance.new("TextLabel")
+	topAuraLvlLbl.Size = UDim2.new(0, 34, 0, 22)
+	topAuraLvlLbl.Position = UDim2.new(0, 232, 0.5, -11)
+	topAuraLvlLbl.BackgroundColor3 = VOID_BG
+	topAuraLvlLbl.Font = Enum.Font.GothamBlack
+	topAuraLvlLbl.TextSize = 10
+	topAuraLvlLbl.Text = "LV.1"
+	topAuraLvlLbl.TextColor3 = TAG_NEON_PURPLE
+	topAuraLvlLbl.ZIndex = 23
+	topAuraLvlLbl.Parent = topEyePanel
+	Instance.new("UICorner", topAuraLvlLbl).CornerRadius = UDim.new(0, 6)
+	addBorder(topAuraLvlLbl, NEON_RING, 1, 0.25)
+
+	UI.topPlusBtn = Instance.new("TextButton")
+	UI.topPlusBtn.Size = UDim2.new(0, 18, 0, 22)
+	UI.topPlusBtn.Position = UDim2.new(0, 268, 0.5, -11)
+	UI.topPlusBtn.BackgroundColor3 = BTN_OFF
+	UI.topPlusBtn.Font = Enum.Font.GothamBlack
+	UI.topPlusBtn.TextSize = 11
+	UI.topPlusBtn.Text = "+"
+	UI.topPlusBtn.TextColor3 = TEXT_MAIN
+	UI.topPlusBtn.Active = true
+	UI.topPlusBtn.ZIndex = 26
+	UI.topPlusBtn.Parent = topEyePanel
+	Instance.new("UICorner", UI.topPlusBtn).CornerRadius = UDim.new(0, 6)
+	addBorder(UI.topPlusBtn, NEON_RING, 1, 0.25)
+
+	UI.topMinusBtn.Activated:Connect(function()
+		Cfg.AuraLevel = math.max(1, Cfg.AuraLevel - 1)
+		refreshTopAuraUI()
+		playClick(0.95)
+	end)
+	UI.topPlusBtn.Activated:Connect(function()
+		Cfg.AuraLevel = math.min(5, Cfg.AuraLevel + 1)
+		refreshTopAuraUI()
+		playClick(1.1)
+	end)
+	topEyeBtn.Activated:Connect(function()
+		Cfg.TopEyeOpen = not Cfg.TopEyeOpen
+		topEyePanel.Visible = Cfg.TopEyeOpen
+		playClick(Cfg.TopEyeOpen and 1.15 or 0.9)
+	end)
+
+	mainFrame = Instance.new("Frame")
+	mainFrame.Name = "MortalMainWindow"
+	mainFrame.Size = UDim2.new(0, 440, 0, 320)
+	mainFrame.Position = UDim2.new(0.5, -220, 0.5, -160)
+	mainFrame.BackgroundColor3 = VOID_BG
+	mainFrame.Visible = false
+	mainFrame.Active = true
+	mainFrame.ZIndex = 30
+	mainFrame.Parent = sg
+	Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 14)
+	addBorder(mainFrame, NEON_RING, 2, 0.06)
+
+	UI.header = Instance.new("Frame")
+	UI.header.Size = UDim2.new(1, 0, 0, 34)
+	UI.header.BackgroundColor3 = CARD_BG
+	UI.header.Active = true
+	UI.header.ZIndex = 31
+	UI.header.Parent = mainFrame
+	Instance.new("UICorner", UI.header).CornerRadius = UDim.new(0, 14)
+
+	UI.titleLbl = Instance.new("TextLabel")
+	UI.titleLbl.Size = UDim2.new(1, -80, 1, 0)
+	UI.titleLbl.Position = UDim2.new(0, 12, 0, 0)
+	UI.titleLbl.BackgroundTransparency = 1
+	UI.titleLbl.Font = Enum.Font.GothamBlack
+	UI.titleLbl.TextSize = 13
+	UI.titleLbl.Text = GANG_NAME .. " HUB | BY " .. CREATOR_NAME
+	UI.titleLbl.TextColor3 = TEXT_MAIN
+	UI.titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+	UI.titleLbl.ZIndex = 32
+	UI.titleLbl.Parent = UI.header
+
+	UI.closeBtn = Instance.new("TextButton")
+	UI.closeBtn.Size = UDim2.new(0, 26, 0, 26)
+	UI.closeBtn.Position = UDim2.new(1, -32, 0, 4)
+	UI.closeBtn.BackgroundColor3 = BTN_ON
+	UI.closeBtn.Font = Enum.Font.GothamBlack
+	UI.closeBtn.TextSize = 12
+	UI.closeBtn.Text = "X"
+	UI.closeBtn.TextColor3 = TEXT_MAIN
+	UI.closeBtn.ZIndex = 33
+	UI.closeBtn.Parent = UI.header
+	Instance.new("UICorner", UI.closeBtn).CornerRadius = UDim.new(0, 7)
+	UI.closeBtn.MouseButton1Click:Connect(function()
+		mainFrame.Visible = false
+		playClick(0.9)
+	end)
+
+	UI.sideScroll = Instance.new("ScrollingFrame")
+	UI.sideScroll.Size = UDim2.new(0, 114, 1, -42)
+	UI.sideScroll.Position = UDim2.new(0, 6, 0, 38)
+	UI.sideScroll.BackgroundColor3 = CARD_BG
+	UI.sideScroll.ScrollBarThickness = 2
+	UI.sideScroll.ZIndex = 31
+	UI.sideScroll.Parent = mainFrame
+	Instance.new("UICorner", UI.sideScroll).CornerRadius = UDim.new(0, 10)
+	addBorder(UI.sideScroll, NEON_RING, 1.2, 0.25)
+
+	UI.sideList = Instance.new("UIListLayout", UI.sideScroll)
+	UI.sideList.Padding = UDim.new(0, 4)
+	UI.sideList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	UI.sideList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		UI.sideScroll.CanvasSize = UDim2.new(0, 0, 0, UI.sideList.AbsoluteContentSize.Y + 8)
+	end)
+
+	UI.contentHolder = Instance.new("Frame")
+	UI.contentHolder.Size = UDim2.new(1, -130, 1, -42)
+	UI.contentHolder.Position = UDim2.new(0, 124, 0, 38)
+	UI.contentHolder.BackgroundColor3 = CARD_BG
+	UI.contentHolder.ZIndex = 31
+	UI.contentHolder.Parent = mainFrame
+	Instance.new("UICorner", UI.contentHolder).CornerRadius = UDim.new(0, 10)
+	addBorder(UI.contentHolder, NEON_RING, 1.2, 0.25)
+
+	local sectionNames = {
+		"Info", "Friends", "Player", "Exploits",
+		"Troll", "Players Time", "Aura", "Spams",
+	}
+
+	switchSection = function(idx)
+		for i, page in ipairs(pages) do page.Visible = (i == idx) end
+		for i, btn in ipairs(tabButtons) do
+			btn.BackgroundColor3 = (i == idx) and BTN_ON or BTN_OFF
+			btn.TextColor3 = (i == idx) and TEXT_MAIN or TEXT_DIM
+		end
+		local cb = refreshCallbacks[idx]
+		if cb then pcall(cb) end
+		playClick(1.05)
+	end
+
+	for idx, secName in ipairs(sectionNames) do
+		local page = Instance.new("ScrollingFrame")
+		page.Name = "Section_" .. tostring(idx) .. "_" .. secName:gsub("%s+", "_")
+		page.Size = UDim2.new(1, -8, 1, -8)
+		page.Position = UDim2.new(0, 4, 0, 4)
+		page.BackgroundTransparency = 1
+		page.ScrollBarThickness = 3
+		page.Visible = (idx == 1)
+		page.ZIndex = 32
+		page.Parent = UI.contentHolder
+
+		local lay = Instance.new("UIListLayout", page)
+		lay.Padding = UDim.new(0, 6)
+		lay.HorizontalAlignment = Enum.HorizontalAlignment.Center
+		lay:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+			page.CanvasSize = UDim2.new(0, 0, 0, lay.AbsoluteContentSize.Y + 10)
+		end)
+		pages[idx] = page
+
+		local tBtn = Instance.new("TextButton")
+		tBtn.Size = UDim2.new(0.92, 0, 0, 28)
+		tBtn.BackgroundColor3 = (idx == 1) and BTN_ON or BTN_OFF
+		tBtn.Font = Enum.Font.GothamBold
+		tBtn.TextSize = 10
+		tBtn.Text = tostring(idx) .. ". " .. secName
+		tBtn.TextColor3 = (idx == 1) and TEXT_MAIN or TEXT_DIM
+		tBtn.ZIndex = 32
+		tBtn.Parent = UI.sideScroll
+		Instance.new("UICorner", tBtn).CornerRadius = UDim.new(0, 7)
+		tBtn.MouseButton1Click:Connect(function() switchSection(idx) end)
+		tabButtons[idx] = tBtn
+	end
+end
+
+local function makeBtn(parent, txt, onClick)
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.new(0.96, 0, 0, 28)
+	b.BackgroundColor3 = BTN_OFF
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 11
+	b.Text = txt
+	b.TextColor3 = TEXT_MAIN
+	b.ZIndex = 33
+	b.Parent = parent
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0, 7)
+	addBorder(b, NEON_RING, 1, 0.35)
+	b.MouseButton1Click:Connect(function()
+		playClick(1.0)
+		if onClick then onClick(b) end
+	end)
+	return b
+end
+
+local function makeToggle(parent, label, getState, setState)
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.new(0.96, 0, 0, 28)
+	local function sync()
+		local on = getState() == true
+		b.Text = label .. ": " .. (on and "ON" or "OFF")
+		b.BackgroundColor3 = on and BTN_ON or BTN_OFF
+	end
+	sync()
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 11
+	b.TextColor3 = TEXT_MAIN
+	b.ZIndex = 33
+	b.Parent = parent
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0, 7)
+	addBorder(b, NEON_RING, 1, 0.35)
+	b.MouseButton1Click:Connect(function()
+		local nextState = not (getState() == true)
+		setState(nextState)
+		sync()
+		playClick(nextState and 1.15 or 0.9)
+	end)
+	return b, sync
+end
+
+-- ============================================================================
+-- SECTION 1: INFO
+-- ============================================================================
+function Modules.Info.Init(p1)
+	UI.gangBox = Instance.new("Frame")
+	UI.gangBox.Size = UDim2.new(0.96, 0, 0, 56)
+	UI.gangBox.BackgroundColor3 = VOID_BG
+	UI.gangBox.ZIndex = 33
+	UI.gangBox.Parent = p1
+	Instance.new("UICorner", UI.gangBox).CornerRadius = UDim.new(0, 8)
+	addBorder(UI.gangBox, NEON_RING, 1.2, 0.25)
+
+	UI.gangLbl = Instance.new("TextLabel")
+	UI.gangLbl.Size = UDim2.new(1, -12, 1, -6)
+	UI.gangLbl.Position = UDim2.new(0, 6, 0, 3)
+	UI.gangLbl.BackgroundTransparency = 1
+	UI.gangLbl.Font = Enum.Font.GothamBold
+	UI.gangLbl.TextSize = 11
+	UI.gangLbl.TextColor3 = TAG_NEON_PURPLE
+	UI.gangLbl.TextWrapped = true
+	UI.gangLbl.ZIndex = 34
+	UI.gangLbl.Text = "Creator: " .. CREATOR_NAME .. "\n" .. GANG_NAME .. " — Loyalty, brotherhood, and shadow dominance.\nMembers stand united across every server."
+	UI.gangLbl.Parent = UI.gangBox
+
+	UI.infoCard = Instance.new("Frame")
+	UI.infoCard.Size = UDim2.new(0.96, 0, 0, 62)
+	UI.infoCard.BackgroundColor3 = VOID_BG
+	UI.infoCard.ZIndex = 33
+	UI.infoCard.Parent = p1
+	Instance.new("UICorner", UI.infoCard).CornerRadius = UDim.new(0, 8)
+	addBorder(UI.infoCard, NEON_RING, 1.2, 0.25)
+
+	UI.avImg = Instance.new("ImageLabel")
+	UI.avImg.Size = UDim2.new(0, 48, 0, 48)
+	UI.avImg.Position = UDim2.new(0, 8, 0, 7)
+	UI.avImg.BackgroundColor3 = BTN_OFF
+	UI.avImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. userIdStr .. "&w=150&h=150"
+	UI.avImg.ZIndex = 34
+	UI.avImg.Parent = UI.infoCard
+	Instance.new("UICorner", UI.avImg).CornerRadius = UDim.new(1, 0)
+	addBorder(UI.avImg, NEON_RIFT, 1.4, 0.1)
+
+	UI.infoTxt = Instance.new("TextLabel")
+	UI.infoTxt.Size = UDim2.new(1, -66, 1, -6)
+	UI.infoTxt.Position = UDim2.new(0, 62, 0, 3)
+	UI.infoTxt.BackgroundTransparency = 1
+	UI.infoTxt.Font = Enum.Font.GothamBold
+	UI.infoTxt.TextSize = 11
+	UI.infoTxt.TextXAlignment = Enum.TextXAlignment.Left
+	UI.infoTxt.TextYAlignment = Enum.TextYAlignment.Center
+	UI.infoTxt.TextColor3 = TEXT_MAIN
+	UI.infoTxt.ZIndex = 34
+	UI.infoTxt.Text = "User ID: " .. userIdStr .. "\nUser: @" .. tostring(LocalPlayer and LocalPlayer.Name or "Player")
+	UI.infoTxt.Parent = UI.infoCard
+
+	UI.infoBtnRow = Instance.new("Frame")
+	UI.infoBtnRow.Size = UDim2.new(0.96, 0, 0, 28)
+	UI.infoBtnRow.BackgroundTransparency = 1
+	UI.infoBtnRow.ZIndex = 33
+	UI.infoBtnRow.Parent = p1
+
+	UI.rejBtn = Instance.new("TextButton")
+	UI.rejBtn.Size = UDim2.new(0.5, -3, 1, 0)
+	UI.rejBtn.BackgroundColor3 = BTN_OFF
+	UI.rejBtn.Font = Enum.Font.GothamBold
+	UI.rejBtn.TextSize = 11
+	UI.rejBtn.Text = "REJOIN"
+	UI.rejBtn.TextColor3 = TEXT_MAIN
+	UI.rejBtn.ZIndex = 33
+	UI.rejBtn.Parent = UI.infoBtnRow
+	Instance.new("UICorner", UI.rejBtn).CornerRadius = UDim.new(0, 7)
+	addBorder(UI.rejBtn, NEON_RING, 1, 0.3)
+	UI.rejBtn.MouseButton1Click:Connect(function() playClick(1.0); rejoinServer() end)
+
+	UI.hopBtn = Instance.new("TextButton")
+	UI.hopBtn.Size = UDim2.new(0.5, -3, 1, 0)
+	UI.hopBtn.Position = UDim2.new(0.5, 3, 0, 0)
+	UI.hopBtn.BackgroundColor3 = BTN_OFF
+	UI.hopBtn.Font = Enum.Font.GothamBold
+	UI.hopBtn.TextSize = 11
+	UI.hopBtn.Text = "SERVER HOP"
+	UI.hopBtn.TextColor3 = TEXT_MAIN
+	UI.hopBtn.ZIndex = 33
+	UI.hopBtn.Parent = UI.infoBtnRow
+	Instance.new("UICorner", UI.hopBtn).CornerRadius = UDim.new(0, 7)
+	addBorder(UI.hopBtn, NEON_RING, 1, 0.3)
+	UI.hopBtn.MouseButton1Click:Connect(function() playClick(1.0); hopServer() end)
+
+	makeToggle(p1, "LOCK 1ST EYE", function() return Cfg.EyeLocked end, function(v)
+		Cfg.EyeLocked = v
+		if v then
+			for _, fn in ipairs(activeDragResetters) do pcall(fn) end
+		end
+	end)
+end
+
+-- ============================================================================
+-- SECTION 2: FRIENDS
+-- ============================================================================
+local friendsListFrame = nil
+local rebuildFriendsList
+local showFriendJoinNotify
+
+function Modules.Friends.Init(p2)
+	local p2Layout = p2:FindFirstChildOfClass("UIListLayout")
+	if p2Layout then p2Layout.SortOrder = Enum.SortOrder.LayoutOrder end
+
+	local refreshBtn = makeBtn(p2, "REFRESH FRIENDS LIST", function() rebuildFriendsList() end)
+	refreshBtn.LayoutOrder = -100
+
+	friendsListFrame = Instance.new("Frame")
+	friendsListFrame.LayoutOrder = 1
+	friendsListFrame.Size = UDim2.new(0.96, 0, 0, 170)
+	friendsListFrame.BackgroundTransparency = 1
+	friendsListFrame.ZIndex = 33
+	friendsListFrame.Parent = p2
+	local fLay = Instance.new("UIListLayout", friendsListFrame)
+	fLay.Padding = UDim.new(0, 4)
+	fLay.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	fLay:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		friendsListFrame.Size = UDim2.new(0.96, 0, 0, math.max(36, fLay.AbsoluteContentSize.Y + 6))
+	end)
+	refreshCallbacks[2] = function() rebuildFriendsList() end
+
+	rebuildFriendsList = function()
+		if not friendsListFrame then return end
+		for _, ch in ipairs(friendsListFrame:GetChildren()) do
+			if not ch:IsA("UIListLayout") then ch:Destroy() end
+		end
+		local count = 0
+		for _, plr in ipairs(Players:GetPlayers()) do
+			if plr ~= LocalPlayer and isFriend(plr) then
+				count = count + 1
+				local row = Instance.new("Frame")
+				row.Size = UDim2.new(0.98, 0, 0, 38)
+				row.BackgroundColor3 = VOID_BG
+				row.ZIndex = 33
+				row.Parent = friendsListFrame
+				Instance.new("UICorner", row).CornerRadius = UDim.new(0, 7)
+				addBorder(row, NEON_RING, 1, 0.3)
+
+				local pic = Instance.new("ImageLabel")
+				pic.Size = UDim2.new(0, 28, 0, 28)
+				pic.Position = UDim2.new(0, 5, 0.5, -14)
+				pic.BackgroundColor3 = BTN_OFF
+				pic.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(plr.UserId) .. "&w=150&h=150"
+				pic.ZIndex = 34
+				pic.Parent = row
+				Instance.new("UICorner", pic).CornerRadius = UDim.new(1, 0)
+
+				local nLbl = Instance.new("TextLabel")
+				nLbl.Size = UDim2.new(1, -148, 1, 0)
+				nLbl.Position = UDim2.new(0, 38, 0, 0)
+				nLbl.BackgroundTransparency = 1
+				nLbl.Font = Enum.Font.GothamBold
+				nLbl.TextSize = 10
+				nLbl.TextXAlignment = Enum.TextXAlignment.Left
+				nLbl.TextColor3 = TEXT_MAIN
+				nLbl.TextTruncate = Enum.TextTruncate.AtEnd
+				nLbl.ZIndex = 34
+				nLbl.Text = plr.DisplayName .. " (@" .. plr.Name .. ")"
+				nLbl.Parent = row
+
+				local function mkMini(txt, xOff, colorOff, fn)
+					local b = Instance.new("TextButton")
+					b.Size = UDim2.new(0, 34, 0, 24)
+					b.Position = UDim2.new(1, xOff, 0.5, -12)
+					b.BackgroundColor3 = colorOff
+					b.Font = Enum.Font.GothamBlack
+					b.TextSize = 9
+					b.Text = txt
+					b.TextColor3 = TEXT_MAIN
+					b.ZIndex = 34
+					b.Parent = row
+					Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
+					b.MouseButton1Click:Connect(function() playClick(1.0); fn(b) end)
+					return b
+				end
+
+				mkMini("TP", -110, BTN_OFF, function()
+					local _, _, myR = getRig()
+					local tR = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+					if myR and tR then myR.CFrame = tR.CFrame * CFrame.new(0, 0, 3) end
+				end)
+
+				mkMini("SPEC", -74, spectatedFriend == plr and BTN_ON or BTN_OFF, function(b)
+					local cam = workspace.CurrentCamera
+					if spectatedFriend == plr then
+						spectatedFriend = nil
+						b.BackgroundColor3 = BTN_OFF
+						local _, myHum = getRig()
+						if cam and myHum then cam.CameraSubject = myHum end
+					else
+						spectatedFriend = plr
+						b.BackgroundColor3 = BTN_ON
+						local tHum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+						if cam and tHum then cam.CameraSubject = tHum end
+					end
+				end)
+
+				mkMini("ESP", -38, friendEspSet[plr] and BTN_ON or BTN_OFF, function(b)
+					friendEspSet[plr] = not friendEspSet[plr]
+					b.BackgroundColor3 = friendEspSet[plr] and BTN_ON or BTN_OFF
+					syncAllESP()
+				end)
+			end
+		end
+		if count == 0 then
+			local emptyLbl = Instance.new("TextLabel")
+			emptyLbl.Size = UDim2.new(0.96, 0, 0, 30)
+			emptyLbl.BackgroundTransparency = 1
+			emptyLbl.Font = Enum.Font.GothamBold
+			emptyLbl.TextSize = 11
+			emptyLbl.TextColor3 = TEXT_DIM
+			emptyLbl.ZIndex = 34
+			emptyLbl.Text = "No friends in this server right now."
+			emptyLbl.Parent = friendsListFrame
+		end
+	end
+
+	UI.joinBanner = Instance.new("Frame")
+	UI.joinBanner.Name = "MortalFriendJoinBanner"
+	UI.joinBanner.Size = UDim2.new(0, 272, 0, 48)
+	UI.joinBanner.Position = UDim2.new(0.5, -136, 0, 14)
+	UI.joinBanner.BackgroundColor3 = TAG_DARK_BAR
+	UI.joinBanner.Active = true
+	UI.joinBanner.Visible = false
+	UI.joinBanner.ZIndex = 65
+	UI.joinBanner.Parent = sg
+	Instance.new("UICorner", UI.joinBanner).CornerRadius = UDim.new(0, 10)
+	addBorder(UI.joinBanner, NEON_RIFT, 1.6, 0.08)
+
+	UI.joinBannerLbl = Instance.new("TextLabel")
+	UI.joinBannerLbl.Size = UDim2.new(1, -16, 1, -6)
+	UI.joinBannerLbl.Position = UDim2.new(0, 8, 0, 3)
+	UI.joinBannerLbl.BackgroundTransparency = 1
+	UI.joinBannerLbl.Font = Enum.Font.GothamBlack
+	UI.joinBannerLbl.TextSize = 10
+	UI.joinBannerLbl.TextColor3 = TAG_NEON_PURPLE
+	UI.joinBannerLbl.TextWrapped = true
+	UI.joinBannerLbl.ZIndex = 66
+	UI.joinBannerLbl.Parent = UI.joinBanner
+
+	UI.bannerToken = 0
+	UI.swipeStartY = nil
+	UI.bannerBaseY = 14
+
+	local function dismissBannerUp()
+		UI.bannerToken = UI.bannerToken + 1
+		UI.swipeStartY = nil
+		UI.joinBanner.Position = UDim2.new(0.5, -136, 0, -64)
+		UI.joinBanner.Visible = false
+	end
+
+	UI.joinBanner.InputBegan:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.Touch or inp.UserInputType == Enum.UserInputType.MouseButton1 then
+			UI.swipeStartY = inp.Position.Y
+		end
+	end)
+	UI.joinBanner.InputChanged:Connect(function(inp)
+		if not UI.joinBanner.Visible or UI.swipeStartY == nil then return end
+		if inp.UserInputType == Enum.UserInputType.Touch or inp.UserInputType == Enum.UserInputType.MouseMovement then
+			local dy = inp.Position.Y - UI.swipeStartY
+			if dy < 0 then
+				UI.joinBanner.Position = UDim2.new(0.5, -136, 0, UI.bannerBaseY + dy)
+				if dy <= -24 then dismissBannerUp() end
+			end
+		end
+	end)
+	UI.joinBanner.InputEnded:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.Touch or inp.UserInputType == Enum.UserInputType.MouseButton1 then
+			if UI.joinBanner.Visible and UI.swipeStartY ~= nil then
+				UI.joinBanner.Position = UDim2.new(0.5, -136, 0, UI.bannerBaseY)
+			end
+			UI.swipeStartY = nil
+		end
+	end)
+
+	showFriendJoinNotify = function(plr)
+		if not plr or notifiedFriends[plr.UserId] or not isFriend(plr) then return end
+		notifiedFriends[plr.UserId] = true
+		UI.bannerToken = UI.bannerToken + 1
+		local myToken = UI.bannerToken
+		UI.swipeStartY = nil
+		UI.joinBannerLbl.Text = "FRIEND JOINED: " .. plr.DisplayName .. " (@" .. plr.Name .. ")\nSwipe UP to dismiss"
+		UI.joinBanner.Position = UDim2.new(0.5, -136, 0, UI.bannerBaseY)
+		UI.joinBanner.Visible = true
+		playClick(1.25)
+		task.delay(5.0, function()
+			if UI.bannerToken == myToken and UI.joinBanner and UI.joinBanner.Parent then
+				dismissBannerUp()
+			end
+		end)
+	end
+end
+
+-- ============================================================================
+-- INITIALIZE SECTION 1 & SECTION 2 MODULES
+-- ============================================================================
+do
+	local orderedInits = {
+		{ fn = Modules.Info.Init, page = pages[1] },
+		{ fn = Modules.Friends.Init, page = pages[2] },
+	}
+	for _, entry in ipairs(orderedInits) do
+		if type(entry.fn) == "function" and entry.page then
+			pcall(entry.fn, entry.page)
+		end
+	end
+end
+
+-- ============================================================================
+-- DRAG BINDINGS, EVENTS & MAIN LOOPS
+-- ============================================================================
+do
+	local consumeFirstEyeMoved = makeDraggable(eye1Holder, eye1TapBtn, false, function() return Cfg.EyeLocked end)
+	eye1TapBtn.MouseButton1Click:Connect(function()
+		if not consumeFirstEyeMoved() then
+			mainFrame.Visible = not mainFrame.Visible
+			playClick(mainFrame.Visible and 1.15 or 0.9)
+		end
+	end)
+	if UI.header then makeDraggable(mainFrame, UI.header, false, nil) end
+end
+
+if VirtualUser and LocalPlayer then
+	pcall(function()
+		LocalPlayer.Idled:Connect(function()
+			pcall(function()
+				VirtualUser:CaptureController()
+				VirtualUser:ClickButton2(Vector2.zero)
 			end)
 		end)
-		if refreshFriendsUI then
-			pcall(refreshFriendsUI)
-		end
 	end)
 end
 
-for _, plr in ipairs(Players:GetPlayers()) do
-	hookPlayer(plr)
+local function registerPlayer(plr)
+	if plr ~= LocalPlayer then
+		if showFriendJoinNotify then pcall(showFriendJoinNotify, plr) end
+		plr.CharacterAdded:Connect(function()
+			task.defer(function()
+				updateThirdEyeTag(plr)
+				syncAllESP()
+			end)
+		end)
+	end
+	updateThirdEyeTag(plr)
+	syncAllESP()
 end
 
-Players.PlayerAdded:Connect(hookPlayer)
+Players.PlayerAdded:Connect(function(plr)
+	registerPlayer(plr)
+	if pages[2] and pages[2].Visible and rebuildFriendsList then pcall(rebuildFriendsList) end
+end)
+
 Players.PlayerRemoving:Connect(function(plr)
+	friendEspSet[plr] = nil
+	targetEspSet[plr] = nil
+	clearESP(plr)
 	clearThirdEyeTag(plr)
-	if refreshFriendsUI then
-		pcall(refreshFriendsUI)
-	end
+	if spectatedFriend == plr then spectatedFriend = nil end
 end)
 
--- Drag & Main Loop
-local consumeMove = makeDraggable(eye1Holder, eye1TapBtn, function() return Cfg.EyeLocked end)
-eye1TapBtn.MouseButton1Click:Connect(function()
-	if not consumeMove() then
-		mainFrame.Visible = not mainFrame.Visible
-	end
-end)
-makeDraggable(mainFrame, header, nil)
-
-local fpsAccum, fpsFrames, lastStat, lastTagTick, lastAnnounce = 0, 0, 0, 0, 0
-RunService.RenderStepped:Connect(function(dt)
-	local now = os.clock()
-	fpsAccum = fpsAccum + dt
-	fpsFrames = fpsFrames + 1
-	if fpsAccum >= 0.4 then
-		eye1FpsLbl.Text = tostring(math.clamp(math.floor((fpsFrames / fpsAccum) + 0.5), 1, 240)) .. " FPS"
-		fpsAccum, fpsFrames = 0, 0
-	end
-	eye1Pupil.Position = UDim2.new(0.5 + math.cos(now * 2.0) * 0.14, -2.5, 0.5 + math.sin(now * 1.5) * 0.12, -2.5)
-	topEyePupil.Position = UDim2.new(0.5 + math.cos(now * 2.2) * 0.12, -2, 0.5 + math.sin(now * 1.8) * 0.1, -2)
-
-	if now - lastAnnounce >= 3.0 then
-		lastAnnounce = now
-		announceSelfInGang()
-		scanGangUsers()
-	end
-
-	if now - lastTagTick >= 0.15 then
-		lastTagTick = now
-		for _, plr in ipairs(Players:GetPlayers()) do
-			pcall(updateThirdEyeTag, plr)
-		end
-	end
-
-	if now - lastStat >= 0.7 then
-		lastStat = now
-		local pingMs = 0
-		pcall(function()
-			local dp = Stats.Network.ServerStatsItem["Data Ping"]
-			if dp and dp.GetValue then pingMs = math.floor(dp:GetValue()) end
+if LocalPlayer then
+	LocalPlayer.CharacterAdded:Connect(function(char)
+		markSelfScriptPresence(char)
+		task.defer(function()
+			updateThirdEyeTag(LocalPlayer)
+			syncAllESP()
 		end)
-		topStatsLbl.Text = "PLAYERS: " .. tostring(#Players:GetPlayers()) .. " | PING: " .. tostring(pingMs) .. "ms"
-	end
-end)
+	end)
+	if LocalPlayer.Character then markSelfScriptPresence(LocalPlayer.Character) end
+end
+
+for _, plr in ipairs(Players:GetPlayers()) do registerPlayer(plr) end
+
+do
+	local lastStatsRefresh = 0
+	local lastVisualSyncRefresh = 0
+	local fpsAccumTime = 0
+	local fpsAccumFrames = 0
+
+	RunService.RenderStepped:Connect(function(dt)
+		pcall(function()
+			local now = os.clock()
+
+			fpsAccumTime = fpsAccumTime + dt
+			fpsAccumFrames = fpsAccumFrames + 1
+			if eye1FpsLbl and fpsAccumTime >= 0.35 then
+				local avgFps = math.clamp(math.floor((fpsAccumFrames / fpsAccumTime) + 0.5), 1, 240)
+				eye1FpsLbl.Text = tostring(avgFps) .. " FPS"
+				fpsAccumTime = 0
+				fpsAccumFrames = 0
+			end
+
+			if eye1Pupil then
+				eye1Pupil.Position = UDim2.new(0.5 + math.cos(now * 2.0) * 0.14, -2.5, 0.5 + math.sin(now * 1.5) * 0.12, -2.5)
+			end
+			if topEyePupil then
+				topEyePupil.Position = UDim2.new(0.5 + math.cos(now * 2.2) * 0.12, -2, 0.5 + math.sin(now * 1.8) * 0.1, -2)
+			end
+
+			if now - lastStatsRefresh >= 0.6 then
+				lastStatsRefresh = now
+				if topStatsLbl then
+					topStatsLbl.Text = "PLAYERS: " .. tostring(#Players:GetPlayers()) .. " | PING: " .. tostring(getPing()) .. "ms"
+				end
+			end
+
+			if now - lastVisualSyncRefresh >= 0.2 then
+				lastVisualSyncRefresh = now
+				for _, plr in ipairs(Players:GetPlayers()) do updateThirdEyeTag(plr) end
+				syncAllESP()
+			end
+		end)
+	end)
+end
