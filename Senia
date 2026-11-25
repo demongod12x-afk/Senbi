@@ -1,10 +1,11 @@
 -- ============================================================================
--- MORTAL HUB - CLEAN BUILD (1ST EYE + TOP EYE + 3RD EYE TAG + 8 SECTIONS / SEC 1)
+-- MORTAL HUB - GANG 3RD EYE SYNC + SEC 1 (INFO) & SEC 2 (FRIENDS)
 -- ============================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Stats = game:GetService("Stats")
 
 local lp = Players.LocalPlayer
@@ -51,6 +52,11 @@ local Cfg = {
 	TopEyeOpen = true,
 	AuraEnabled = false,
 	AuraLevel = 1,
+}
+
+-- Gang / Script User registry (only players running script / in MORTALS gang get 3rd Eye tag)
+local GangUsers = {
+	[lp.UserId] = true,
 }
 
 local function addBorder(inst, col, thick, trans)
@@ -218,7 +224,7 @@ eye1TapBtn.ZIndex = 20
 eye1TapBtn.Active = true
 eye1TapBtn.Parent = eye1Holder
 
--- Top Eye (top-right corner eye + top bar)
+-- Top Eye
 local topEyeBtn = Instance.new("TextButton")
 topEyeBtn.Name = "MortalThirdEyeCornerBtn"
 topEyeBtn.Size = UDim2.new(0, 44, 0, 32)
@@ -562,8 +568,139 @@ do
 	end)
 end
 
+-- Section 2 (Friends) features + Gang 3rd Eye Sync list
+local refreshFriendsUI
+do
+	local p2 = pages[2]
+	local lay2 = Instance.new("UIListLayout", p2)
+	lay2.Padding = UDim.new(0, 6)
+	lay2.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	lay2:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		p2.CanvasSize = UDim2.new(0, 0, 0, lay2.AbsoluteContentSize.Y + 10)
+	end)
+
+	local gangStatusLbl = Instance.new("TextLabel")
+	gangStatusLbl.Size = UDim2.new(0.96, 0, 0, 24)
+	gangStatusLbl.BackgroundColor3 = VOID_BG
+	gangStatusLbl.Font = Enum.Font.GothamBold
+	gangStatusLbl.TextSize = 10
+	gangStatusLbl.TextColor3 = TAG_NEON_PURPLE
+	gangStatusLbl.Text = GANG_NAME .. " 3RD EYE USERS IN SERVER: 1"
+	gangStatusLbl.ZIndex = 33
+	gangStatusLbl.Parent = p2
+	Instance.new("UICorner", gangStatusLbl).CornerRadius = UDim.new(0, 7)
+	addBorder(gangStatusLbl, NEON_RING, 1, 0.3)
+
+	local listHolder = Instance.new("Frame")
+	listHolder.Size = UDim2.new(0.96, 0, 0, 175)
+	listHolder.BackgroundColor3 = VOID_BG
+	listHolder.ZIndex = 33
+	listHolder.Parent = p2
+	Instance.new("UICorner", listHolder).CornerRadius = UDim.new(0, 8)
+	addBorder(listHolder, NEON_RING, 1, 0.3)
+
+	local innerLay = Instance.new("UIListLayout", listHolder)
+	innerLay.Padding = UDim.new(0, 4)
+	innerLay.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+	local function isFriendSafe(plr)
+		local ok, res = pcall(function() return lp:IsFriendsWith(plr.UserId) end)
+		return ok and res == true
+	end
+
+	refreshFriendsUI = function()
+		for _, ch in ipairs(listHolder:GetChildren()) do
+			if ch:IsA("Frame") or ch:IsA("TextLabel") then
+				ch:Destroy()
+			end
+		end
+
+		local gangCount = 0
+		for _, plr in ipairs(Players:GetPlayers()) do
+			if GangUsers[plr.UserId] then
+				gangCount = gangCount + 1
+			end
+		end
+		gangStatusLbl.Text = GANG_NAME .. " 3RD EYE USERS IN SERVER: " .. tostring(gangCount)
+
+		local added = 0
+		for _, plr in ipairs(Players:GetPlayers()) do
+			if plr ~= lp and isFriendSafe(plr) then
+				added = added + 1
+				local row = Instance.new("Frame")
+				row.Size = UDim2.new(0.96, 0, 0, 28)
+				row.BackgroundColor3 = CARD_BG
+				row.ZIndex = 34
+				row.Parent = listHolder
+				Instance.new("UICorner", row).CornerRadius = UDim.new(0, 6)
+				addBorder(row, NEON_RING, 1, 0.35)
+
+				local nameLbl = Instance.new("TextLabel")
+				nameLbl.Size = UDim2.new(0.62, -6, 1, 0)
+				nameLbl.Position = UDim2.new(0, 6, 0, 0)
+				nameLbl.BackgroundTransparency = 1
+				nameLbl.Font = Enum.Font.GothamBold
+				nameLbl.TextSize = 10
+				nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+				nameLbl.TextColor3 = GangUsers[plr.UserId] and TAG_NEON_PURPLE or TEXT_MAIN
+				nameLbl.Text = plr.DisplayName .. (GangUsers[plr.UserId] and " [3RD EYE]" or " [FRIEND]")
+				nameLbl.ZIndex = 35
+				nameLbl.Parent = row
+
+				local tpBtn = Instance.new("TextButton")
+				tpBtn.Size = UDim2.new(0.34, 0, 0, 20)
+				tpBtn.Position = UDim2.new(0.64, 0, 0.5, -10)
+				tpBtn.BackgroundColor3 = BTN_OFF
+				tpBtn.Font = Enum.Font.GothamBold
+				tpBtn.TextSize = 9
+				tpBtn.Text = "TP TO FRIEND"
+				tpBtn.TextColor3 = TEXT_MAIN
+				tpBtn.ZIndex = 35
+				tpBtn.Parent = row
+				Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0, 5)
+				tpBtn.MouseButton1Click:Connect(function()
+					pcall(function()
+						local myRoot = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+						local tRoot = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+						if myRoot and tRoot then
+							myRoot.CFrame = tRoot.CFrame * CFrame.new(0, 0, 3)
+						end
+					end)
+				end)
+			end
+		end
+
+		if added == 0 then
+			local emptyLbl = Instance.new("TextLabel")
+			emptyLbl.Size = UDim2.new(0.94, 0, 0, 28)
+			emptyLbl.BackgroundTransparency = 1
+			emptyLbl.Font = Enum.Font.GothamBold
+			emptyLbl.TextSize = 10
+			emptyLbl.TextColor3 = TEXT_DIM
+			emptyLbl.Text = "No friends currently in this server."
+			emptyLbl.ZIndex = 34
+			emptyLbl.Parent = listHolder
+		end
+	end
+
+	local refBtn = Instance.new("TextButton")
+	refBtn.Size = UDim2.new(0.96, 0, 0, 28)
+	refBtn.BackgroundColor3 = BTN_OFF
+	refBtn.Font = Enum.Font.GothamBold
+	refBtn.TextSize = 11
+	refBtn.Text = "REFRESH FRIENDS & GANG LIST"
+	refBtn.TextColor3 = TEXT_MAIN
+	refBtn.ZIndex = 33
+	refBtn.Parent = p2
+	Instance.new("UICorner", refBtn).CornerRadius = UDim.new(0, 7)
+	addBorder(refBtn, NEON_RING, 1, 0.35)
+	refBtn.MouseButton1Click:Connect(function()
+		if refreshFriendsUI then pcall(refreshFriendsUI) end
+	end)
+end
+
 -- ============================================================================
--- 3RD EYE OVERHEAD TAG (CHARACTER HEAD)
+-- 3RD EYE OVERHEAD TAG (ONLY FOR GANG / SCRIPT USERS)
 -- ============================================================================
 local thirdEyeTagStore = {}
 
@@ -579,7 +716,7 @@ local function clearThirdEyeTag(plr)
 end
 
 local function updateThirdEyeTag(plr)
-	if not plr or not plr.Parent then
+	if not plr or not plr.Parent or not GangUsers[plr.UserId] then
 		clearThirdEyeTag(plr)
 		return
 	end
@@ -649,9 +786,86 @@ local function updateThirdEyeTag(plr)
 	end
 end
 
-local function hookPlayerTag(plr)
+local function registerGangPlayer(uid)
+	local numId = tonumber(uid)
+	if not numId then return end
+	if not GangUsers[numId] then
+		GangUsers[numId] = true
+		local plr = Players:GetPlayerByUserId(numId)
+		if plr then
+			pcall(updateThirdEyeTag, plr)
+		end
+		if refreshFriendsUI then
+			pcall(refreshFriendsUI)
+		end
+	end
+end
+
+-- Live Gang Presence Sync via ReplicatedStorage / Player Attributes
+local gangFolder = ReplicatedStorage:FindFirstChild("MortalGangSync")
+if not gangFolder then
 	pcall(function()
-		updateThirdEyeTag(plr)
+		gangFolder = Instance.new("Folder")
+		gangFolder.Name = "MortalGangSync"
+		gangFolder.Parent = ReplicatedStorage
+	end)
+end
+
+local function announceSelfInGang()
+	pcall(function()
+		lp:SetAttribute("MortalGangActive", true)
+	end)
+	if gangFolder then
+		pcall(function()
+			local marker = gangFolder:FindFirstChild("U_" .. userIdStr)
+			if not marker then
+				marker = Instance.new("BoolValue")
+				marker.Name = "U_" .. userIdStr
+				marker.Value = true
+				marker.Parent = gangFolder
+			end
+		end)
+	end
+end
+
+local function scanGangUsers()
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr == lp or plr:GetAttribute("MortalGangActive") == true then
+			registerGangPlayer(plr.UserId)
+		end
+	end
+	if gangFolder then
+		for _, ch in ipairs(gangFolder:GetChildren()) do
+			local uidPart = string.match(ch.Name, "^U_(%d+)$")
+			if uidPart then
+				registerGangPlayer(uidPart)
+			end
+		end
+	end
+end
+
+announceSelfInGang()
+scanGangUsers()
+
+if gangFolder then
+	gangFolder.ChildAdded:Connect(function(ch)
+		local uidPart = string.match(ch.Name, "^U_(%d+)$")
+		if uidPart then
+			registerGangPlayer(uidPart)
+		end
+	end)
+end
+
+local function hookPlayer(plr)
+	pcall(function()
+		if plr == lp or plr:GetAttribute("MortalGangActive") == true then
+			registerGangPlayer(plr.UserId)
+		end
+		plr:GetAttributeChangedSignal("MortalGangActive"):Connect(function()
+			if plr:GetAttribute("MortalGangActive") == true then
+				registerGangPlayer(plr.UserId)
+			end
+		end)
 		plr.CharacterAdded:Connect(function()
 			task.spawn(function()
 				local char = plr.Character or plr.CharacterAdded:Wait()
@@ -662,15 +876,23 @@ local function hookPlayerTag(plr)
 				end
 			end)
 		end)
+		if refreshFriendsUI then
+			pcall(refreshFriendsUI)
+		end
 	end)
 end
 
 for _, plr in ipairs(Players:GetPlayers()) do
-	hookPlayerTag(plr)
+	hookPlayer(plr)
 end
 
-Players.PlayerAdded:Connect(hookPlayerTag)
-Players.PlayerRemoving:Connect(clearThirdEyeTag)
+Players.PlayerAdded:Connect(hookPlayer)
+Players.PlayerRemoving:Connect(function(plr)
+	clearThirdEyeTag(plr)
+	if refreshFriendsUI then
+		pcall(refreshFriendsUI)
+	end
+end)
 
 -- Drag & Main Loop
 local consumeMove = makeDraggable(eye1Holder, eye1TapBtn, function() return Cfg.EyeLocked end)
@@ -681,7 +903,7 @@ eye1TapBtn.MouseButton1Click:Connect(function()
 end)
 makeDraggable(mainFrame, header, nil)
 
-local fpsAccum, fpsFrames, lastStat, lastTagTick = 0, 0, 0, 0
+local fpsAccum, fpsFrames, lastStat, lastTagTick, lastAnnounce = 0, 0, 0, 0, 0
 RunService.RenderStepped:Connect(function(dt)
 	local now = os.clock()
 	fpsAccum = fpsAccum + dt
@@ -692,6 +914,12 @@ RunService.RenderStepped:Connect(function(dt)
 	end
 	eye1Pupil.Position = UDim2.new(0.5 + math.cos(now * 2.0) * 0.14, -2.5, 0.5 + math.sin(now * 1.5) * 0.12, -2.5)
 	topEyePupil.Position = UDim2.new(0.5 + math.cos(now * 2.2) * 0.12, -2, 0.5 + math.sin(now * 1.8) * 0.1, -2)
+
+	if now - lastAnnounce >= 3.0 then
+		lastAnnounce = now
+		announceSelfInGang()
+		scanGangUsers()
+	end
 
 	if now - lastTagTick >= 0.15 then
 		lastTagTick = now
