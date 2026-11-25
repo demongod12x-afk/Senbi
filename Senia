@@ -1,5 +1,5 @@
 -- ============================================================================
--- MORTAL HUB (SECTIONS 1, 2 & 3 - DYNAMIC BIG NUMBERS, AIR WALK & FLY)
+-- MORTAL HUB (SECTIONS 1, 2 & 3 - FULL WORKING SPEED, AIR WALK & FLY)
 -- ============================================================================
 local function safeGetService(name)
 	local ok, svc = pcall(function()
@@ -131,7 +131,7 @@ local Cfg = {
 	Speed = false, SpeedVal = 16,
 	Jump = false, JumpVal = 50,
 	Fly = false, FlyVal = 50,
-	AirWalk = false, AirY = nil, AirStep = 1.15,
+	AirWalk = false, AirY = nil, AirStep = 1.25,
 	Spin = false, SpinVal = 50,
 	EmoteSpeed = false, EmoteVal = 1,
 	Target = "",
@@ -156,6 +156,7 @@ local spectatedFriend = nil
 
 local airY = nil
 local airMoveDir = 0
+local flyMoveDir = 0
 local flyConnection = nil
 local flyVelocity = nil
 local flyGyro = nil
@@ -175,9 +176,10 @@ local topAuraOnOffBtn = nil
 local topStatsLbl = nil
 local refreshCallbacks = {}
 local airGui = nil
+local flyPadGui = nil
 
 -- ============================================================================
--- HUGE NUMBER PARSER & PROPORTIONAL VALUE SCALER (NO FIXED CAP)
+-- NUMERIC & HUGE VALUE PARSER (FAST, DISTINCT & RESPONSIVE)
 -- ============================================================================
 local function parseHugeNum(raw, defaultVal, minVal)
 	local str = tostring(raw or ""):gsub("[%s_,]", "")
@@ -203,10 +205,11 @@ local function parseHugeNum(raw, defaultVal, minVal)
 	return n
 end
 
--- Computes a unique, smoothly varying value for any input (including 100+ digit numbers)
--- without fixed caps or NaN/Inf issues.
-local function computeDynamicValue(rawOrNum, baseVal, factor, minVal, allowNegative)
-	local n = parseHugeNum(rawOrNum, baseVal, allowNegative and nil or 0)
+-- Maps normal numbers directly and converts huge multi-digit inputs into
+-- high, distinct values without ever collapsing to a single constant or slowing down.
+local function computeDynamicValue(rawOrNum, baseVal, bigBase, minVal, allowNegative)
+	local rawStr = tostring(rawOrNum or ""):gsub("[%s_,]", "")
+	local n = parseHugeNum(rawStr, baseVal, allowNegative and nil or 0)
 	if n == nil or n ~= n then return baseVal end
 	if n == 0 then return allowNegative and 0 or (minVal or 0) end
 
@@ -216,46 +219,47 @@ local function computeDynamicValue(rawOrNum, baseVal, factor, minVal, allowNegat
 		n = math.abs(n)
 	end
 
-	local scaled
-	if n <= 10000 then
-		scaled = n
+	local outVal
+	if n <= 50000 then
+		outVal = n
 	else
-		local logVal = math.log10(n) -- ~200-308 for huge numbers
-		local digitSum = 0
-		local s = tostring(rawOrNum or ""):gsub("[^%d]", "")
-		for i = 1, math.min(#s, 64) do
-			digitSum = digitSum + (tonumber(s:sub(i, i)) or 0)
-		end
-		scaled = (logVal * factor) + (digitSum * (factor * 0.05))
+		local digits = rawStr:gsub("[^%d]", "")
+		local lenBonus = #digits * 12
+		local headNum = tonumber(digits:sub(1, math.min(6, #digits))) or 100
+		local tailNum = tonumber(digits:sub(math.max(1, #digits - 5), #digits)) or 1
+		local mix = (headNum % 500) + (tailNum % 500)
+		outVal = bigBase + lenBonus + mix
 	end
 
-	scaled = scaled * sign
-	if minVal and scaled < minVal then scaled = minVal end
-	return scaled
+	outVal = outVal * sign
+	if minVal and outVal < minVal then outVal = minVal end
+	return outVal
 end
 
 local function getAppliedSpeed(val)
-	return computeDynamicValue(val, 16, 1.35, 0, false)
+	return computeDynamicValue(val, 16, 450, 0, false)
 end
 
 local function getAppliedJump(val)
-	return computeDynamicValue(val, 50, 2.2, 0, false)
+	return computeDynamicValue(val, 50, 550, 0, false)
 end
 
 local function getAppliedFlySpeed(val)
-	return computeDynamicValue(val, 50, 1.6, 0, false)
+	return computeDynamicValue(val, 50, 420, 0, false)
 end
 
 local function getAppliedSpin(val)
-	return computeDynamicValue(val, 50, 1.4, nil, true)
+	return computeDynamicValue(val, 50, 360, nil, true)
 end
 
 local function getAppliedEmoteSpeed(val)
-	local n = parseHugeNum(val, 1, 0)
+	local rawStr = tostring(val or ""):gsub("[%s_,]", "")
+	local n = parseHugeNum(rawStr, 1, 0)
 	if n <= 0 then return 0.1 end
-	if n <= 20 then return n end
-	local logVal = math.log10(n)
-	return math.max(0.2, (logVal * 0.045) + ((n % 10) * 0.03))
+	if n <= 25 then return n end
+	local digits = rawStr:gsub("[^%d]", "")
+	local tailMod = (tonumber(digits:sub(math.max(1, #digits - 2), #digits)) or 1) % 10
+	return 2.5 + ((#digits % 8) * 0.6) + (tailMod * 0.25)
 end
 
 local uiSound = nil
@@ -499,26 +503,28 @@ local function createEyeGraphic(parentFrame, eyeW, eyeH, irisSize, pupilSize, zB
 end
 
 -- ============================================================================
--- FLY (EXACT USER CODE LOGIC) & AIR WALK (IDLE + WALK + RUN ONLY)
+-- FLY (CAMERA + JOYSTICK + UP/DOWN) & AIR WALK (IDLE/WALK/RUN PRESERVED)
 -- ============================================================================
 local function stopFly()
 	Cfg.Fly = false
+	flyMoveDir = 0
+	if flyPadGui then flyPadGui.Enabled = false end
 	if flyConnection then
 		flyConnection:Disconnect()
 		flyConnection = nil
 	end
 	if flyVelocity then
-		flyVelocity:Destroy()
+		pcall(function() flyVelocity:Destroy() end)
 		flyVelocity = nil
 	end
 	if flyGyro then
-		flyGyro:Destroy()
+		pcall(function() flyGyro:Destroy() end)
 		flyGyro = nil
 	end
 
 	local _, hum = getRig()
 	if hum then
-		hum.PlatformStand = false
+		pcall(function() hum.PlatformStand = false end)
 	end
 	if syncFlyUI then
 		pcall(syncFlyUI)
@@ -531,16 +537,21 @@ local function startFly()
 	if not hum or not root then return end
 
 	Cfg.Fly = true
-	hum.PlatformStand = true
+	if flyPadGui then flyPadGui.Enabled = true end
 
-	local velocity = Instance.new("BodyVelocity")
-	velocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-	velocity.Velocity = Vector3.zero
-	velocity.Parent = root
-	flyVelocity = velocity
+	pcall(function()
+		hum.PlatformStand = true
+		root.CFrame = root.CFrame + Vector3.new(0, 3.5, 0)
+	end)
+
+	local vel = Instance.new("BodyVelocity")
+	vel.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+	vel.Velocity = Vector3.zero
+	vel.Parent = root
+	flyVelocity = vel
 
 	local gyro = Instance.new("BodyGyro")
-	gyro.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+	gyro.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
 	gyro.P = 1e4
 	gyro.Parent = root
 	flyGyro = gyro
@@ -550,15 +561,15 @@ local function startFly()
 	end
 
 	flyConnection = RunService.RenderStepped:Connect(function()
-		if not Cfg.Fly or not root.Parent then
+		if not Cfg.Fly or not root or not root.Parent then
 			stopFly()
 			return
 		end
 
 		local camera = workspace.CurrentCamera
 		local move = hum.MoveDirection
-		local vertical = 0
-		local speed = getAppliedFlySpeed(Cfg.FlyVal)
+		local spd = getAppliedFlySpeed(Cfg.FlyVal)
+		local vertical = flyMoveDir
 
 		if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
 			vertical = 1
@@ -566,11 +577,26 @@ local function startFly()
 			vertical = -1
 		end
 
-		local dir = move + Vector3.new(0, vertical, 0)
-		if move.Magnitude == 0 and vertical == 0 then
-			velocity.Velocity = Vector3.zero
+		local moveDirVec = Vector3.zero
+		if move.Magnitude > 0.05 and camera then
+			local camCF = camera.CFrame
+			local rightFlat = Vector3.new(camCF.RightVector.X, 0, camCF.RightVector.Z)
+			if rightFlat.Magnitude > 1e-4 then rightFlat = rightFlat.Unit end
+			local forwardFlat = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z)
+			if forwardFlat.Magnitude > 1e-4 then forwardFlat = forwardFlat.Unit end
+
+			local forwardAmt = move:Dot(forwardFlat)
+			local rightAmt = move:Dot(rightFlat)
+			moveDirVec = (camCF.LookVector * forwardAmt) + (rightFlat * rightAmt)
+		elseif move.Magnitude > 0.05 then
+			moveDirVec = move
+		end
+
+		local totalDir = moveDirVec + Vector3.new(0, vertical, 0)
+		if totalDir.Magnitude > 1e-4 then
+			vel.Velocity = totalDir.Unit * spd
 		else
-			velocity.Velocity = dir.Unit * speed
+			vel.Velocity = Vector3.zero
 		end
 
 		if camera then
@@ -606,37 +632,29 @@ local function getAllActiveAnimTracks(hum)
 	return list
 end
 
--- Keeps ONLY idle, walk, and run animations active in Air Walk; stops all other tracks.
-local function keepOnlyIdleWalkRun(hum)
-	if not hum then return end
-	pcall(function()
-		for _, tr in ipairs(getAllActiveAnimTracks(hum)) do
-			local animName = string.lower((tr.Animation and tr.Animation.Name) or "")
-			local isAllowed = string.find(animName, "idle", 1, true)
-				or string.find(animName, "walk", 1, true)
-				or string.find(animName, "run", 1, true)
-			if not isAllowed then
-				tr:Stop(0.05)
-			end
-		end
-	end)
-end
-
 local function setAirWalkState(on)
 	Cfg.AirWalk = (on == true)
 	airMoveDir = 0
 	if airGui then airGui.Enabled = Cfg.AirWalk end
-	local _, hum, hrp = getRig()
+	local char, hum, hrp = getRig()
 	if Cfg.AirWalk and hrp then
 		airY = hrp.Position.Y
+		if char then
+			pcall(function()
+				local animScript = char:FindFirstChild("Animate")
+				if animScript and animScript:IsA("BaseScript") then
+					animScript.Enabled = true
+				end
+			end)
+		end
 		if hum then
 			pcall(function()
 				hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
 				hum:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
-				hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
 				hum:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
-				hum.WalkSpeed = Cfg.Speed and getAppliedSpeed(Cfg.SpeedVal) or 16
-				keepOnlyIdleWalkRun(hum)
+				if Cfg.Speed then
+					hum.WalkSpeed = getAppliedSpeed(Cfg.SpeedVal)
+				end
 			end)
 		end
 	else
@@ -645,9 +663,10 @@ local function setAirWalkState(on)
 			pcall(function()
 				hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
 				hum:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
-				hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
 				hum:SetStateEnabled(Enum.HumanoidStateType.Climbing, not Cfg.Noclip)
-				hum.WalkSpeed = Cfg.Speed and getAppliedSpeed(Cfg.SpeedVal) or 16
+				if Cfg.Speed then
+					hum.WalkSpeed = getAppliedSpeed(Cfg.SpeedVal)
+				end
 				hum:ChangeState(Enum.HumanoidStateType.GettingUp)
 			end)
 		end
@@ -936,7 +955,7 @@ local function syncAllESP()
 end
 
 -- ============================================================================
--- SCREENGUIS (MAIN + AIR WALK PAD)
+-- SCREENGUIS (MAIN + AIR WALK PAD + FLY UP/DOWN PAD)
 -- ============================================================================
 local sg = Instance.new("ScreenGui")
 sg.Name = "MortalEightHub"
@@ -993,6 +1012,56 @@ do
 	end)
 	UI.downBtn.InputEnded:Connect(function(inp)
 		if (inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch) and airMoveDir == -1 then airMoveDir = 0 end
+	end)
+end
+
+flyPadGui = Instance.new("ScreenGui")
+flyPadGui.Name = "MortalFlyPad"
+flyPadGui.ResetOnSpawn = false
+flyPadGui.IgnoreGuiInset = true
+flyPadGui.DisplayOrder = 99
+flyPadGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+flyPadGui.Enabled = false
+flyPadGui.Parent = PlayerGui
+
+do
+	UI.flyUpBtn = Instance.new("TextButton")
+	UI.flyUpBtn.Size = UDim2.new(0, 46, 0, 46)
+	UI.flyUpBtn.Position = UDim2.new(1, -135, 1, -155)
+	UI.flyUpBtn.BackgroundColor3 = BTN_ON
+	UI.flyUpBtn.TextColor3 = TEXT_MAIN
+	UI.flyUpBtn.Text = "UP"
+	UI.flyUpBtn.Font = Enum.Font.GothamBlack
+	UI.flyUpBtn.TextSize = 11
+	UI.flyUpBtn.Active = true
+	UI.flyUpBtn.Parent = flyPadGui
+	Instance.new("UICorner", UI.flyUpBtn).CornerRadius = UDim.new(1, 0)
+	addBorder(UI.flyUpBtn, NEON_RIFT, 1.5, 0.1)
+
+	UI.flyDownBtn = Instance.new("TextButton")
+	UI.flyDownBtn.Size = UDim2.new(0, 46, 0, 46)
+	UI.flyDownBtn.Position = UDim2.new(1, -135, 1, -100)
+	UI.flyDownBtn.BackgroundColor3 = BTN_OFF
+	UI.flyDownBtn.TextColor3 = TEXT_MAIN
+	UI.flyDownBtn.Text = "DOWN"
+	UI.flyDownBtn.Font = Enum.Font.GothamBlack
+	UI.flyDownBtn.TextSize = 9
+	UI.flyDownBtn.Active = true
+	UI.flyDownBtn.Parent = flyPadGui
+	Instance.new("UICorner", UI.flyDownBtn).CornerRadius = UDim.new(1, 0)
+	addBorder(UI.flyDownBtn, NEON_RIFT, 1.5, 0.1)
+
+	UI.flyUpBtn.InputBegan:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then flyMoveDir = 1 end
+	end)
+	UI.flyUpBtn.InputEnded:Connect(function(inp)
+		if (inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch) and flyMoveDir == 1 then flyMoveDir = 0 end
+	end)
+	UI.flyDownBtn.InputBegan:Connect(function(inp)
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then flyMoveDir = -1 end
+	end)
+	UI.flyDownBtn.InputEnded:Connect(function(inp)
+		if (inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch) and flyMoveDir == -1 then flyMoveDir = 0 end
 	end)
 end
 
@@ -1927,7 +1996,6 @@ do
 				end
 
 				if Cfg.AirWalk then
-					keepOnlyIdleWalkRun(hum)
 					if airY == nil then airY = hrp.Position.Y end
 					if airMoveDir ~= 0 then
 						airY = airY + (airMoveDir * Cfg.AirStep * math.clamp(dt * 60, 0.25, 2.5))
