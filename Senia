@@ -1,5 +1,5 @@
 -- ============================================================================
--- MORTAL HUB (SECTIONS 1, 2 & 3 FIXED: SPEED, JUMP, EMOTE SPEED & AIR WALK)
+-- MORTAL HUB (SECTIONS 1, 2 & 3 - CLEAN LOAD & FIXED PLAYER MOVEMENT)
 -- ============================================================================
 local function safeGetService(name)
 	local ok, svc = pcall(function()
@@ -179,7 +179,7 @@ local refreshCallbacks = {}
 local airGui = nil
 
 -- ============================================================================
--- NUMERIC & SAFE SCALING UTILITIES (HANDLES HUGE NUMBERS SAFELY)
+-- NUMERIC & SAFE SCALING UTILITIES
 -- ============================================================================
 local function parseHugeNum(raw, defaultVal, minVal)
 	local str = tostring(raw or ""):gsub("[%s_,]", "")
@@ -205,8 +205,6 @@ local function parseHugeNum(raw, defaultVal, minVal)
 	return n
 end
 
--- Converts huge input numbers into a compressed positive magnitude so Roblox
--- physics & animation engines never NaN, freeze, or spin out of control.
 local function compressHugeMagnitude(v, baseNormal, maxSafe)
 	local n = tonumber(v)
 	if not n or n ~= n or n <= 0 then return baseNormal end
@@ -218,11 +216,11 @@ local function compressHugeMagnitude(v, baseNormal, maxSafe)
 end
 
 local function normalizeMovementSpeed(v)
-	return compressHugeMagnitude(v, 16, 140)
+	return compressHugeMagnitude(v, 16, 120)
 end
 
 local function normalizeJumpPower(v)
-	return compressHugeMagnitude(v, 50, 260)
+	return compressHugeMagnitude(v, 50, 240)
 end
 
 local function normalizeFlySpeed(v)
@@ -244,9 +242,9 @@ end
 local function normalizeEmoteSpeed(v)
 	local n = tonumber(v) or 1
 	if n ~= n then return 1 end
-	if n == math.huge then return 12 end
+	if n == math.huge then return 10 end
 	if n <= 0 then return 0.1 end
-	return compressHugeMagnitude(n, 1, 12)
+	return compressHugeMagnitude(n, 1, 10)
 end
 
 local uiSound = nil
@@ -504,7 +502,7 @@ local function applyJumpBoost(hum, hrp)
 	if now - lastJumpBoostTime >= 0.2 then
 		lastJumpBoostTime = now
 		pcall(function()
-			local upVel = math.clamp(scaledJump * 0.65, 50, 150)
+			local upVel = math.clamp(scaledJump * 0.65, 50, 145)
 			hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, upVel, hrp.AssemblyLinearVelocity.Z)
 		end)
 	end
@@ -642,7 +640,6 @@ local function enforceAirWalkStates(hum)
 	end)
 end
 
--- Stops only fall/jump/climb tracks so idle, walk, and run animations keep playing.
 local function sanitizeAirWalkAnim(hum)
 	if not hum then return end
 	pcall(function()
@@ -1933,72 +1930,71 @@ do
 			end
 
 			local char, hum, hrp = getRig()
-			if not char or not hum or not hrp then return end
-
-			local targetSpeed = Cfg.Speed and normalizeMovementSpeed(Cfg.SpeedVal) or 16
-			if Cfg.Speed then
-				hum.WalkSpeed = targetSpeed
-				if hum.MoveDirection.Magnitude > 0.05 and not Cfg.Fly and not Cfg.Spin then
-					local moveDir = hum.MoveDirection.Unit
-					local extraStep = moveDir * math.max(0, targetSpeed - 16) * safeDt
-					if Cfg.AirWalk then
-						hrp.CFrame = hrp.CFrame + Vector3.new(extraStep.X, 0, extraStep.Z)
-					else
-						hrp.CFrame = hrp.CFrame + extraStep
+			if char and hum and hrp then
+				local targetSpeed = Cfg.Speed and normalizeMovementSpeed(Cfg.SpeedVal) or 16
+				if Cfg.Speed then
+					hum.WalkSpeed = targetSpeed
+					if hum.MoveDirection.Magnitude > 0.05 and not Cfg.Fly and not Cfg.Spin then
+						local moveDir = hum.MoveDirection.Unit
+						local extraStep = moveDir * math.max(0, targetSpeed - 16) * safeDt
+						if Cfg.AirWalk then
+							hrp.CFrame = hrp.CFrame + Vector3.new(extraStep.X, 0, extraStep.Z)
+						else
+							hrp.CFrame = hrp.CFrame + extraStep
+						end
 					end
 				end
-			end
 
-			if Cfg.Jump then
-				hum.UseJumpPower = true
-				hum.JumpPower = normalizeJumpPower(Cfg.JumpVal)
-				if hum:GetState() == Enum.HumanoidStateType.Jumping then
-					applyJumpBoost(hum, hrp)
+				if Cfg.Jump then
+					hum.UseJumpPower = true
+					hum.JumpPower = normalizeJumpPower(Cfg.JumpVal)
+					if hum:GetState() == Enum.HumanoidStateType.Jumping then
+						applyJumpBoost(hum, hrp)
+					end
 				end
-			end
 
-			if Cfg.EmoteSpeed then
-				local safeSpd = normalizeEmoteSpeed(Cfg.EmoteVal)
-				for _, tr in ipairs(getAllActiveAnimTracks(hum)) do
-					pcall(function()
-						if math.abs(tr.Speed - safeSpd) > 0.01 then
-							tr:AdjustSpeed(safeSpd)
-						end
-					end)
+				if Cfg.EmoteSpeed then
+					local safeSpd = normalizeEmoteSpeed(Cfg.EmoteVal)
+					for _, tr in ipairs(getAllActiveAnimTracks(hum)) do
+						pcall(function()
+							if math.abs(tr.Speed - safeSpd) > 0.01 then
+								tr:AdjustSpeed(safeSpd)
+							end
+						end)
+					end
 				end
-			end
 
-			if Cfg.AirWalk then
-				sanitizeAirWalkAnim(hum)
-				enforceAirWalkStates(hum)
-				if airY == nil then airY = hrp.Position.Y end
-				if airMoveDir ~= 0 then
-					airY = airY + (airMoveDir * Cfg.AirStep * math.clamp(dt * 60, 0.25, 2.5))
+				if Cfg.AirWalk then
+					sanitizeAirWalkAnim(hum)
+					enforceAirWalkStates(hum)
+					if airY == nil then airY = hrp.Position.Y end
+					if airMoveDir ~= 0 then
+						airY = airY + (airMoveDir * Cfg.AirStep * math.clamp(dt * 60, 0.25, 2.5))
+					end
+					local walkSpd = Cfg.Speed and targetSpeed or 16
+					hum.WalkSpeed = walkSpd
+					local pos = hrp.Position
+					local moveVec = hum.MoveDirection
+					local nextX, nextZ = pos.X, pos.Z
+					if moveVec.Magnitude > 0.05 then
+						local horizStep = moveVec.Unit * walkSpd * safeDt
+						nextX = pos.X + horizStep.X
+						nextZ = pos.Z + horizStep.Z
+						hrp.AssemblyLinearVelocity = Vector3.new(moveVec.Unit.X * walkSpd, 0, moveVec.Unit.Z * walkSpd)
+					else
+						hrp.AssemblyLinearVelocity = Vector3.zero
+					end
+					hrp.CFrame = CFrame.new(nextX, airY, nextZ) * (hrp.CFrame - hrp.Position)
 				end
-				local walkSpd = Cfg.Speed and targetSpeed or 16
-				hum.WalkSpeed = walkSpd
-				local pos = hrp.Position
-				local moveVec = hum.MoveDirection
-				local nextX, nextZ = pos.X, pos.Z
-				if moveVec.Magnitude > 0.05 then
-					local horizStep = moveVec.Unit * walkSpd * safeDt
-					nextX = pos.X + horizStep.X
-					nextZ = pos.Z + horizStep.Z
-					hrp.AssemblyLinearVelocity = Vector3.new(moveVec.Unit.X * walkSpd, 0, moveVec.Unit.Z * walkSpd)
-				else
+
+				if Cfg.Spin then
+					local angDelta = math.rad(normalizeSpinSpeed(Cfg.SpinVal) * 6 * safeDt)
+					local pos = hrp.Position
+					local rotOnly = (hrp.CFrame - pos) * CFrame.Angles(0, angDelta, 0)
 					hrp.AssemblyLinearVelocity = Vector3.zero
+					hrp.CFrame = CFrame.new(pos) * rotOnly
 				end
-				hrp.CFrame = CFrame.new(nextX, airY, nextZ) * (hrp.CFrame - hrp.Position)
-			end
-
-			if Cfg.Spin then
-				local angDelta = math.rad(normalizeSpinSpeed(Cfg.SpinVal) * 6 * safeDt)
-				local pos = hrp.Position
-				local rotOnly = (hrp.CFrame - pos) * CFrame.Angles(0, angDelta, 0)
-				hrp.AssemblyLinearVelocity = Vector3.zero
-				hrp.CFrame = CFrame.new(pos) * rotOnly
 			end
 		end)
 	end)
 end
-1
