@@ -1,428 +1,118 @@
 -- ============================================================================
--- MORTAL HUB - CLEAN LOADABLE BASE (8 SECTIONS + 1ST EYE + TOP EYE)
+-- 3RD EYE OVERHEAD TAG MODULE (MORTAL HUB)
 -- ============================================================================
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local Stats = game:GetService("Stats")
+local thirdEyeTagStore = {}
 
-local lp = Players.LocalPlayer
-if not lp then
-	repeat task.wait() until Players.LocalPlayer
-	lp = Players.LocalPlayer
-end
-
-local guiParent = lp:FindFirstChildOfClass("PlayerGui")
-if not guiParent then
-	pcall(function() guiParent = lp:WaitForChild("PlayerGui", 5) end)
-end
-if not guiParent then
-	pcall(function() guiParent = game:GetService("CoreGui") end)
-end
-if not guiParent then return end
-
-for _, name in ipairs({ "MortalEightHub", "MortalAuraColorWheelGUI", "MortalAirWalkPad" }) do
-	pcall(function()
-		local old = guiParent:FindFirstChild(name)
-		if old then old:Destroy() end
-	end)
-end
-
--- Colours (exact palette preserved)
-local VOID_BG = Color3.fromRGB(5, 1, 13)
-local CARD_BG = Color3.fromRGB(12, 2, 29)
-local BTN_OFF = Color3.fromRGB(16, 3, 38)
-local BTN_ON = Color3.fromRGB(84, 4, 162)
-local NEON_RING = Color3.fromRGB(112, 0, 218)
-local NEON_RIFT = Color3.fromRGB(142, 0, 255)
-local TEXT_MAIN = Color3.fromRGB(242, 232, 255)
-local TEXT_DIM = Color3.fromRGB(168, 118, 245)
-local TAG_DARK_BAR = Color3.fromRGB(4, 1, 9)
-local TAG_NEON_PURPLE = Color3.fromRGB(148, 35, 255)
-local TAG_NEON_OUTLINE = Color3.fromRGB(112, 0, 218)
-
-local Cfg = {
-	EyeLocked = false,
-	TopEyeOpen = true,
-	AuraEnabled = false,
-	AuraLevel = 1,
-}
-
-local function addBorder(inst, col, thick, trans)
-	local st = Instance.new("UIStroke")
-	st.Color = col
-	st.Thickness = thick or 1.2
-	st.Transparency = trans or 0.15
-	st.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	st.Parent = inst
-	return st
-end
-
-local function createEyeGraphic(parentFrame, eyeW, eyeH, irisSize, pupilSize, zBase)
-	local eWhite = Instance.new("Frame")
-	eWhite.Size = UDim2.new(0, eyeW, 0, eyeH)
-	eWhite.Position = UDim2.new(0.5, -eyeW * 0.5, 0.5, -eyeH * 0.5)
-	eWhite.BackgroundColor3 = Color3.fromRGB(240, 228, 255)
-	eWhite.BorderSizePixel = 0
-	eWhite.ZIndex = zBase
-	eWhite.Parent = parentFrame
-	Instance.new("UICorner", eWhite).CornerRadius = UDim.new(1, 0)
-	addBorder(eWhite, NEON_RIFT, 1.3, 0.08)
-
-	local eIris = Instance.new("Frame")
-	eIris.Size = UDim2.new(0, irisSize, 0, irisSize)
-	eIris.Position = UDim2.new(0.5, -irisSize * 0.5, 0.5, -irisSize * 0.5)
-	eIris.BackgroundColor3 = BTN_ON
-	eIris.BorderSizePixel = 0
-	eIris.ZIndex = zBase + 1
-	eIris.Parent = eWhite
-	Instance.new("UICorner", eIris).CornerRadius = UDim.new(1, 0)
-
-	local ePupil = Instance.new("Frame")
-	ePupil.Size = UDim2.new(0, pupilSize, 0, pupilSize)
-	ePupil.Position = UDim2.new(0.5, -pupilSize * 0.5, 0.5, -pupilSize * 0.5)
-	ePupil.BackgroundColor3 = VOID_BG
-	ePupil.BorderSizePixel = 0
-	ePupil.ZIndex = zBase + 2
-	ePupil.Parent = eIris
-	Instance.new("UICorner", ePupil).CornerRadius = UDim.new(1, 0)
-	return ePupil
-end
-
-local function makeDraggable(frame, handle, lockedFn)
-	local dragHandle = handle or frame
-	local dragging = false
-	local moved = false
-	local startPos = nil
-	local frameStart = nil
-
-	dragHandle.InputBegan:Connect(function(inp)
-		if lockedFn and lockedFn() then return end
-		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-			dragging = true
-			moved = false
-			startPos = inp.Position
-			frameStart = frame.Position
-		end
-	end)
-
-	dragHandle.InputChanged:Connect(function(inp)
-		if not dragging or (lockedFn and lockedFn()) then return end
-		if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
-			local delta = inp.Position - startPos
-			if delta.Magnitude > 6 then moved = true end
-			frame.Position = UDim2.new(
-				frameStart.X.Scale, frameStart.X.Offset + delta.X,
-				frameStart.Y.Scale, frameStart.Y.Offset + delta.Y
-			)
-		end
-	end)
-
-	dragHandle.InputEnded:Connect(function(inp)
-		if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-			dragging = false
-		end
-	end)
-
-	return function()
-		local m = moved
-		moved = false
-		return m
-	end
-end
-
-local sg = Instance.new("ScreenGui")
-sg.Name = "MortalEightHub"
-sg.ResetOnSpawn = false
-sg.IgnoreGuiInset = true
-sg.DisplayOrder = 100
-sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-sg.Parent = guiParent
-
--- 1st Eye
-local eye1Holder = Instance.new("Frame")
-eye1Holder.Name = "MortalFirstEyeHolder"
-eye1Holder.Size = UDim2.new(0, 62, 0, 62)
-eye1Holder.Position = UDim2.new(0.03, 0, 0.25, 0)
-eye1Holder.BackgroundColor3 = CARD_BG
-eye1Holder.Active = true
-eye1Holder.Parent = sg
-Instance.new("UICorner", eye1Holder).CornerRadius = UDim.new(1, 0)
-addBorder(eye1Holder, NEON_RING, 2, 0.05)
-
-local eye1Pupil = createEyeGraphic(eye1Holder, 32, 19, 12, 5, 10)
-
-local eye1FpsLbl = Instance.new("TextLabel")
-eye1FpsLbl.Size = UDim2.new(1, 14, 0, 15)
-eye1FpsLbl.Position = UDim2.new(0, -7, 1, 2)
-eye1FpsLbl.BackgroundColor3 = TAG_DARK_BAR
-eye1FpsLbl.BackgroundTransparency = 0.08
-eye1FpsLbl.Font = Enum.Font.GothamBlack
-eye1FpsLbl.TextSize = 10
-eye1FpsLbl.Text = "60 FPS"
-eye1FpsLbl.TextColor3 = TAG_NEON_PURPLE
-eye1FpsLbl.ZIndex = 12
-eye1FpsLbl.Parent = eye1Holder
-Instance.new("UICorner", eye1FpsLbl).CornerRadius = UDim.new(0, 6)
-addBorder(eye1FpsLbl, TAG_NEON_OUTLINE, 1.1, 0.15)
-
-local eye1TapBtn = Instance.new("TextButton")
-eye1TapBtn.Size = UDim2.new(1, 0, 1, 0)
-eye1TapBtn.BackgroundTransparency = 1
-eye1TapBtn.Text = ""
-eye1TapBtn.ZIndex = 20
-eye1TapBtn.Active = true
-eye1TapBtn.Parent = eye1Holder
-
--- Top Eye
-local topEyeBtn = Instance.new("TextButton")
-topEyeBtn.Name = "MortalThirdEyeCornerBtn"
-topEyeBtn.Size = UDim2.new(0, 44, 0, 32)
-topEyeBtn.Position = UDim2.new(1, -54, 0, 10)
-topEyeBtn.BackgroundColor3 = CARD_BG
-topEyeBtn.Text = ""
-topEyeBtn.Active = true
-topEyeBtn.ZIndex = 25
-topEyeBtn.Parent = sg
-Instance.new("UICorner", topEyeBtn).CornerRadius = UDim.new(0, 10)
-addBorder(topEyeBtn, NEON_RIFT, 1.5, 0.1)
-
-local topEyePupil = createEyeGraphic(topEyeBtn, 26, 15, 10, 4, 26)
-
-local topEyePanel = Instance.new("Frame")
-topEyePanel.Name = "MortalThirdEyePanel"
-topEyePanel.Size = UDim2.new(0, 292, 0, 32)
-topEyePanel.Position = UDim2.new(1, -352, 0, 10)
-topEyePanel.BackgroundColor3 = TAG_DARK_BAR
-topEyePanel.BackgroundTransparency = 0.06
-topEyePanel.Active = true
-topEyePanel.Visible = Cfg.TopEyeOpen
-topEyePanel.ZIndex = 22
-topEyePanel.Parent = sg
-Instance.new("UICorner", topEyePanel).CornerRadius = UDim.new(0, 10)
-addBorder(topEyePanel, TAG_NEON_OUTLINE, 1.6, 0.08)
-
-local topStatsLbl = Instance.new("TextLabel")
-topStatsLbl.Size = UDim2.new(0, 128, 1, 0)
-topStatsLbl.Position = UDim2.new(0, 6, 0, 0)
-topStatsLbl.BackgroundTransparency = 1
-topStatsLbl.Font = Enum.Font.GothamBold
-topStatsLbl.TextSize = 9
-topStatsLbl.Text = "PLAYERS: 1 | PING: 0ms"
-topStatsLbl.TextColor3 = TEXT_MAIN
-topStatsLbl.TextXAlignment = Enum.TextXAlignment.Left
-topStatsLbl.ZIndex = 23
-topStatsLbl.Parent = topEyePanel
-
-local topAuraOnOffBtn = Instance.new("TextButton")
-topAuraOnOffBtn.Size = UDim2.new(0, 72, 0, 22)
-topAuraOnOffBtn.Position = UDim2.new(0, 136, 0.5, -11)
-topAuraOnOffBtn.BackgroundColor3 = BTN_OFF
-topAuraOnOffBtn.Font = Enum.Font.GothamBlack
-topAuraOnOffBtn.TextSize = 9
-topAuraOnOffBtn.Text = "AURA: OFF"
-topAuraOnOffBtn.TextColor3 = TEXT_MAIN
-topAuraOnOffBtn.Active = true
-topAuraOnOffBtn.ZIndex = 26
-topAuraOnOffBtn.Parent = topEyePanel
-Instance.new("UICorner", topAuraOnOffBtn).CornerRadius = UDim.new(0, 6)
-addBorder(topAuraOnOffBtn, NEON_RING, 1, 0.25)
-
-local topMinusBtn = Instance.new("TextButton")
-topMinusBtn.Size = UDim2.new(0, 18, 0, 22)
-topMinusBtn.Position = UDim2.new(0, 212, 0.5, -11)
-topMinusBtn.BackgroundColor3 = BTN_OFF
-topMinusBtn.Font = Enum.Font.GothamBlack
-topMinusBtn.TextSize = 11
-topMinusBtn.Text = "-"
-topMinusBtn.TextColor3 = TEXT_MAIN
-topMinusBtn.Active = true
-topMinusBtn.ZIndex = 26
-topMinusBtn.Parent = topEyePanel
-Instance.new("UICorner", topMinusBtn).CornerRadius = UDim.new(0, 6)
-addBorder(topMinusBtn, NEON_RING, 1, 0.25)
-
-local topAuraLvlLbl = Instance.new("TextLabel")
-topAuraLvlLbl.Size = UDim2.new(0, 34, 0, 22)
-topAuraLvlLbl.Position = UDim2.new(0, 232, 0.5, -11)
-topAuraLvlLbl.BackgroundColor3 = VOID_BG
-topAuraLvlLbl.Font = Enum.Font.GothamBlack
-topAuraLvlLbl.TextSize = 10
-topAuraLvlLbl.Text = "LV.1"
-topAuraLvlLbl.TextColor3 = TAG_NEON_PURPLE
-topAuraLvlLbl.ZIndex = 23
-topAuraLvlLbl.Parent = topEyePanel
-Instance.new("UICorner", topAuraLvlLbl).CornerRadius = UDim.new(0, 6)
-addBorder(topAuraLvlLbl, NEON_RING, 1, 0.25)
-
-local topPlusBtn = Instance.new("TextButton")
-topPlusBtn.Size = UDim2.new(0, 18, 0, 22)
-topPlusBtn.Position = UDim2.new(0, 268, 0.5, -11)
-topPlusBtn.BackgroundColor3 = BTN_OFF
-topPlusBtn.Font = Enum.Font.GothamBlack
-topPlusBtn.TextSize = 11
-topPlusBtn.Text = "+"
-topPlusBtn.TextColor3 = TEXT_MAIN
-topPlusBtn.Active = true
-topPlusBtn.ZIndex = 26
-topPlusBtn.Parent = topEyePanel
-Instance.new("UICorner", topPlusBtn).CornerRadius = UDim.new(0, 6)
-addBorder(topPlusBtn, NEON_RING, 1, 0.25)
-
-topAuraOnOffBtn.Activated:Connect(function()
-	Cfg.AuraEnabled = not Cfg.AuraEnabled
-	topAuraOnOffBtn.Text = "AURA: " .. (Cfg.AuraEnabled and "ON" or "OFF")
-	topAuraOnOffBtn.BackgroundColor3 = Cfg.AuraEnabled and BTN_ON or BTN_OFF
-end)
-
-topMinusBtn.Activated:Connect(function()
-	Cfg.AuraLevel = math.max(1, Cfg.AuraLevel - 1)
-	topAuraLvlLbl.Text = "LV." .. tostring(Cfg.AuraLevel)
-end)
-
-topPlusBtn.Activated:Connect(function()
-	Cfg.AuraLevel = math.min(5, Cfg.AuraLevel + 1)
-	topAuraLvlLbl.Text = "LV." .. tostring(Cfg.AuraLevel)
-end)
-
-topEyeBtn.Activated:Connect(function()
-	Cfg.TopEyeOpen = not Cfg.TopEyeOpen
-	topEyePanel.Visible = Cfg.TopEyeOpen
-end)
-
--- Main Window
-local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MortalMainWindow"
-mainFrame.Size = UDim2.new(0, 440, 0, 320)
-mainFrame.Position = UDim2.new(0.5, -220, 0.5, -160)
-mainFrame.BackgroundColor3 = VOID_BG
-mainFrame.Visible = false
-mainFrame.Active = true
-mainFrame.ZIndex = 30
-mainFrame.Parent = sg
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 14)
-addBorder(mainFrame, NEON_RING, 2, 0.06)
-
-local header = Instance.new("Frame")
-header.Size = UDim2.new(1, 0, 0, 34)
-header.BackgroundColor3 = CARD_BG
-header.Active = true
-header.ZIndex = 31
-header.Parent = mainFrame
-Instance.new("UICorner", header).CornerRadius = UDim.new(0, 14)
-
-local titleLbl = Instance.new("TextLabel")
-titleLbl.Size = UDim2.new(1, -80, 1, 0)
-titleLbl.Position = UDim2.new(0, 12, 0, 0)
-titleLbl.BackgroundTransparency = 1
-titleLbl.Font = Enum.Font.GothamBlack
-titleLbl.TextSize = 13
-titleLbl.Text = "MORTALS HUB | BY MORTAL"
-titleLbl.TextColor3 = TEXT_MAIN
-titleLbl.TextXAlignment = Enum.TextXAlignment.Left
-titleLbl.ZIndex = 32
-titleLbl.Parent = header
-
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 26, 0, 26)
-closeBtn.Position = UDim2.new(1, -32, 0, 4)
-closeBtn.BackgroundColor3 = BTN_ON
-closeBtn.Font = Enum.Font.GothamBlack
-closeBtn.TextSize = 12
-closeBtn.Text = "X"
-closeBtn.TextColor3 = TEXT_MAIN
-closeBtn.ZIndex = 33
-closeBtn.Parent = header
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 7)
-closeBtn.MouseButton1Click:Connect(function() mainFrame.Visible = false end)
-
-local sideScroll = Instance.new("ScrollingFrame")
-sideScroll.Size = UDim2.new(0, 114, 1, -42)
-sideScroll.Position = UDim2.new(0, 6, 0, 38)
-sideScroll.BackgroundColor3 = CARD_BG
-sideScroll.ScrollBarThickness = 2
-sideScroll.ZIndex = 31
-sideScroll.Parent = mainFrame
-Instance.new("UICorner", sideScroll).CornerRadius = UDim.new(0, 10)
-addBorder(sideScroll, NEON_RING, 1.2, 0.25)
-
-local sideList = Instance.new("UIListLayout", sideScroll)
-sideList.Padding = UDim.new(0, 4)
-sideList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-sideList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	sideScroll.CanvasSize = UDim2.new(0, 0, 0, sideList.AbsoluteContentSize.Y + 8)
-end)
-
-local contentHolder = Instance.new("Frame")
-contentHolder.Size = UDim2.new(1, -130, 1, -42)
-contentHolder.Position = UDim2.new(0, 124, 0, 38)
-contentHolder.BackgroundColor3 = CARD_BG
-contentHolder.ZIndex = 31
-contentHolder.Parent = mainFrame
-Instance.new("UICorner", contentHolder).CornerRadius = UDim.new(0, 10)
-addBorder(contentHolder, NEON_RING, 1.2, 0.25)
-
-local sections = { "Info", "Friends", "Player", "Exploits", "Troll", "Players Time", "Aura", "Spams" }
-local pages, tabs = {}, {}
-
-for i, sec in ipairs(sections) do
-	local pg = Instance.new("ScrollingFrame")
-	pg.Size = UDim2.new(1, -8, 1, -8)
-	pg.Position = UDim2.new(0, 4, 0, 4)
-	pg.BackgroundTransparency = 1
-	pg.ScrollBarThickness = 3
-	pg.Visible = (i == 1)
-	pg.ZIndex = 32
-	pg.Parent = contentHolder
-	pages[i] = pg
-
-	local tb = Instance.new("TextButton")
-	tb.Size = UDim2.new(0.92, 0, 0, 28)
-	tb.BackgroundColor3 = (i == 1) and BTN_ON or BTN_OFF
-	tb.Font = Enum.Font.GothamBold
-	tb.TextSize = 10
-	tb.Text = tostring(i) .. ". " .. sec
-	tb.TextColor3 = (i == 1) and TEXT_MAIN or TEXT_DIM
-	tb.ZIndex = 32
-	tb.Parent = sideScroll
-	Instance.new("UICorner", tb).CornerRadius = UDim.new(0, 7)
-	tabs[i] = tb
-
-	tb.MouseButton1Click:Connect(function()
-		for k, p in ipairs(pages) do p.Visible = (k == i) end
-		for k, b in ipairs(tabs) do
-			b.BackgroundColor3 = (k == i) and BTN_ON or BTN_OFF
-			b.TextColor3 = (k == i) and TEXT_MAIN or TEXT_DIM
-		end
-	end)
-end
-
-local consumeMove = makeDraggable(eye1Holder, eye1TapBtn, function() return Cfg.EyeLocked end)
-eye1TapBtn.MouseButton1Click:Connect(function()
-	if not consumeMove() then
-		mainFrame.Visible = not mainFrame.Visible
-	end
-end)
-makeDraggable(mainFrame, header, nil)
-
-local fpsAccum, fpsFrames, lastStat = 0, 0, 0
-RunService.RenderStepped:Connect(function(dt)
-	local now = os.clock()
-	fpsAccum = fpsAccum + dt
-	fpsFrames = fpsFrames + 1
-	if fpsAccum >= 0.4 then
-		eye1FpsLbl.Text = tostring(math.clamp(math.floor((fpsFrames / fpsAccum) + 0.5), 1, 240)) .. " FPS"
-		fpsAccum, fpsFrames = 0, 0
-	end
-	eye1Pupil.Position = UDim2.new(0.5 + math.cos(now * 2.0) * 0.14, -2.5, 0.5 + math.sin(now * 1.5) * 0.12, -2.5)
-	topEyePupil.Position = UDim2.new(0.5 + math.cos(now * 2.2) * 0.12, -2, 0.5 + math.sin(now * 1.8) * 0.1, -2)
-	if now - lastStat >= 0.7 then
-		lastStat = now
-		local pingMs = 0
+local function clearThirdEyeTag(plr)
+	if thirdEyeTagStore[plr] then
 		pcall(function()
-			local dp = Stats.Network.ServerStatsItem["Data Ping"]
-			if dp and dp.GetValue then pingMs = math.floor(dp:GetValue()) end
+			if thirdEyeTagStore[plr].Billboard then
+				thirdEyeTagStore[plr].Billboard:Destroy()
+			end
 		end)
-		topStatsLbl.Text = "PLAYERS: " .. tostring(#Players:GetPlayers()) .. " | PING: " .. tostring(pingMs) .. "ms"
+		thirdEyeTagStore[plr] = nil
+	end
+end
+
+local function updateThirdEyeTag(plr)
+	if not plr or not plr.Parent then
+		clearThirdEyeTag(plr)
+		return
+	end
+	local pChar = plr.Character
+	local head = pChar and pChar:FindFirstChild("Head")
+	if not pChar or not head then
+		clearThirdEyeTag(plr)
+		return
+	end
+
+	local entry = thirdEyeTagStore[plr]
+	if not entry or entry.Char ~= pChar or not entry.Billboard or not entry.Billboard.Parent then
+		clearThirdEyeTag(plr)
+		pcall(function()
+			local dispName = plr.DisplayName
+			local barW = math.clamp(#dispName * 7.2 + 40, 108, 175)
+
+			local bb = Instance.new("BillboardGui")
+			bb.Name = "MortalMemberTag"
+			bb.Size = UDim2.new(0, barW, 0, 24)
+			bb.StudsOffset = Vector3.new(0, 2.8, 0)
+			bb.AlwaysOnTop = true
+			bb.MaxDistance = 9999
+			bb.Parent = head
+
+			local bar = Instance.new("Frame")
+			bar.Size = UDim2.new(1, 0, 1, 0)
+			bar.BackgroundColor3 = TAG_DARK_BAR
+			bar.BackgroundTransparency = 0.04
+			bar.BorderSizePixel = 0
+			bar.Parent = bb
+			Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 8)
+			addBorder(bar, TAG_NEON_OUTLINE, 1.7, 0.05)
+
+			local lay = Instance.new("UIListLayout")
+			lay.FillDirection = Enum.FillDirection.Horizontal
+			lay.HorizontalAlignment = Enum.HorizontalAlignment.Center
+			lay.VerticalAlignment = Enum.VerticalAlignment.Center
+			lay.Padding = UDim.new(0, 4)
+			lay.Parent = bar
+
+			local eyeHolder = Instance.new("Frame")
+			eyeHolder.Size = UDim2.new(0, 20, 0, 14)
+			eyeHolder.BackgroundTransparency = 1
+			eyeHolder.Parent = bar
+			local pupil = createEyeGraphic(eyeHolder, 18, 11, 7, 3, 5)
+
+			local lbl = Instance.new("TextLabel")
+			lbl.Size = UDim2.new(0, barW - 30, 1, 0)
+			lbl.BackgroundTransparency = 1
+			lbl.Font = Enum.Font.GothamBlack
+			lbl.TextSize = 11
+			lbl.TextScaled = true
+			lbl.Text = dispName
+			lbl.TextColor3 = TAG_NEON_PURPLE
+			lbl.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+			lbl.TextStrokeTransparency = 0
+			lbl.Parent = bar
+
+			thirdEyeTagStore[plr] = { Char = pChar, Billboard = bb, Pupil = pupil }
+		end)
+	elseif entry.Pupil then
+		pcall(function()
+			local t = os.clock()
+			entry.Pupil.Position = UDim2.new(0.5 + math.cos(t * 2.2) * 0.12, -1.5, 0.5 + math.sin(t * 1.7) * 0.1, -1.5)
+		end)
+	end
+end
+
+for _, plr in ipairs(Players:GetPlayers()) do
+	pcall(function()
+		updateThirdEyeTag(plr)
+		plr.CharacterAdded:Connect(function()
+			task.defer(function()
+				pcall(updateThirdEyeTag, plr)
+			end)
+		end)
+	end)
+end
+
+Players.PlayerAdded:Connect(function(plr)
+	pcall(function()
+		updateThirdEyeTag(plr)
+		plr.CharacterAdded:Connect(function()
+			task.defer(function()
+				pcall(updateThirdEyeTag, plr)
+			end)
+		end)
+	end)
+end)
+
+Players.PlayerRemoving:Connect(function(plr)
+	clearThirdEyeTag(plr)
+end)
+
+RunService.RenderStepped:Connect(function()
+	for _, plr in ipairs(Players:GetPlayers()) do
+		pcall(updateThirdEyeTag, plr)
 	end
 end)
